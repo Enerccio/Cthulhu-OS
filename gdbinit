@@ -1,0 +1,1 @@
+set archi i386:x86-64

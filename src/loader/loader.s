@@ -23,7 +23,7 @@ align 4
 section .bootstrap_stack, nobits
 align 4
 stack_bottom:
-resb 16384
+resb 409600
 stack_top:
 
 ; The linker script specifies _start as the entry point to the kernel and the
@@ -60,6 +60,7 @@ _start:
 	; We are now ready to actually execute C code. We cannot embed that in an
 	; assembly file, so we'll create a kernel.c file in a moment. In that file,
 	; we'll create a C entry point called kernel_main and call it here.
+	xor ebp, ebp
 	push ebx
 	extern piko_loader
 	call piko_loader

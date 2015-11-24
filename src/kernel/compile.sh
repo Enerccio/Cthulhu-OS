@@ -4,14 +4,17 @@ COMPILE_DIR="../../src/kernel/"
 BUILDDIR="../../build/pikokernel/"
 ASM_ARGS="-f elf64 "
 COMPILER="x86_64-elf-gcc"
-COMPILER_ARGS="-ffreestanding -O2 -std=c99 -Wall -Wextra -fno-exceptions -mcmodel=large -mno-red-zone -mno-mmx -mno-sse -mno-sse2"
+DEFINES="-DKERNEL64BIT"
+COMPILER_ARGS="-ffreestanding -O2 -std=c99 -Wall -Wextra -fno-exceptions -mcmodel=large -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -g $DEFINES "
 LINKER="x86_64-elf-gcc"
-LINKER_ARGS="-ffreestanding -O2 -nostdlib -lgcc"
+LINKER_ARGS="-ffreestanding -O2 -nostdlib -lgcc -z max-page-size=0x1000"
 
 ASM_SOURCES=("../shared/ports")
 COMPILE_SOURCES=("kernel" 
 	"../shared/utils/logger" 
-	"../shared/utils/textinput")
+	"../shared/utils/textinput"
+	"../shared/utils/rsod"
+	"../shared/elf/elf")
 
 for source in "${ASM_SOURCES[@]}"
 do

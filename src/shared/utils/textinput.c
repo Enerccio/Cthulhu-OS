@@ -126,18 +126,19 @@ void kd_newl() {
 	kd_put('\n');
 }
 
-
 void kd_setxy(uint8_t x, uint8_t y) {
 	cursor_x = x;
 	cursor_y = y;
 	move_cursor();
 }
 
-
 void kd_write_hex(uint32_t number) {
 	kd_cwrite_hex(number, 0, 7);
 }
 
+void kd_write_hex64(uint64_t number) {
+	kd_cwrite_hex(number, 0, 7);
+}
 
 static inline void __write_hex_c8(uint8_t num, uint8_t bgcolor, uint8_t fgcolor) {
 	switch (num) {
@@ -173,6 +174,20 @@ static inline void __write_hex_c(uint8_t num, uint8_t bgcolor, uint8_t fgcolor) 
 
 void kd_cwrite_hex(uint32_t number, uint8_t bgcolor, uint8_t fgcolor) {
 	kd_cwrite("0x", bgcolor, fgcolor);
+
+	__write_hex_c(number / (1 << 24), bgcolor, fgcolor);
+	__write_hex_c(number / (1 << 16), bgcolor, fgcolor);
+	__write_hex_c(number / (1 << 8), bgcolor, fgcolor);
+	__write_hex_c(number % 256, bgcolor, fgcolor);
+}
+
+void kd_cwrite_hex64(uint64_t number, uint8_t bgcolor, uint8_t fgcolor) {
+	kd_cwrite("0x", bgcolor, fgcolor);
+
+	__write_hex_c(number / (1ULL << 56), bgcolor, fgcolor);
+	__write_hex_c(number / (1ULL << 48), bgcolor, fgcolor);
+	__write_hex_c(number / (1ULL << 40), bgcolor, fgcolor);
+	__write_hex_c(number / (1ULL << 32), bgcolor, fgcolor);
 
 	__write_hex_c(number / (1 << 24), bgcolor, fgcolor);
 	__write_hex_c(number / (1 << 16), bgcolor, fgcolor);

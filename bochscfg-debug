@@ -1,6 +1,6 @@
 plugin_ctrl: unmapped=1, biosdev=1, speaker=1, extfpuirq=1, parallel=1, serial=1
 config_interface: textconfig
-display_library: x, options="gui_debug"
+display_library: x
 memory: host=32, guest=32
 romimage: file=/usr/share/bochs/BIOS-bochs-latest, address=0x00000
 vgaromimage: file=/usr/share/bochs/VGABIOS-elpin-2.40
@@ -23,9 +23,10 @@ com4: enabled=0
 clock: sync=none
 cpu: count=1, ips=4000000, model=bx_generic, reset_on_triple_fault=1, cpuid_limit_winnt=0, ignore_bad_msrs=1, mwait_is_nop=0
 cpuid: x86_64=1
-magic_break: enabled=1
 keyboard: type=mf, serial_delay=250, paste_delay=100000, keymap=
 panic: action=ask
 error: action=report
 info: action=report
 debug: action=ignore
+gdbstub: enabled=1, port=1234
+magic_break: enabled=0

@@ -36,7 +36,7 @@ static void enable_a20(int step){
 		} else if (step == 100000){
 			seta20_fast();
 		} else if (step > 200000)
-			error(ERROR_UNABLE_TO_ACTIVATE_A20, 0, 0, &enable_a20);
+			error(LOADER_ERROR_A20_ACTIVATION_FAILURE, 0, 0, &enable_a20);
 	}
 }
 

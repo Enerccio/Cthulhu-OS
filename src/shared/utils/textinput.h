@@ -19,5 +19,7 @@ void kd_write(const char* c);
 void kd_cwrite(const char* c, uint8_t bg_color, uint8_t fg_color);
 void kd_setxy(uint8_t x, uint8_t y);
 void kd_write_hex(uint32_t number);
+void kd_write_hex64(uint64_t number);
 void kd_cwrite_hex(uint32_t number, uint8_t bg_color, uint8_t fg_color);
+void kd_cwrite_hex64(uint64_t number, uint8_t bgcolor, uint8_t fgcolor);
 void kd_newl();

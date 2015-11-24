@@ -4,15 +4,17 @@ COMPILE_DIR="../../src/loader/"
 BUILDDIR="../../build/pikoloader/"
 ASM_ARGS="-felf32"
 COMPILER="i686-elf-gcc"
-COMPILER_ARGS="-ffreestanding -O2 -Wall -Wextra -fno-exceptions -std=c99"
+DEFINES=""
+COMPILER_ARGS="-ffreestanding -Wall -Wextra -fno-exceptions -std=c99 -g $DEFINES "
 LINKER="i686-elf-gcc"
-LINKER_ARGS="-ffreestanding -O2 -nostdlib -lgcc"
+LINKER_ARGS="-ffreestanding -nostdlib -lgcc"
 
 ASM_SOURCES=("loader" "inquire" "../shared/ports")
 COMPILE_SOURCES=("entry" "preload"
 	"../shared/utils/logger" 
 	"../shared/utils/textinput"
 	"../shared/utils/rsod"
+	"../shared/elf/elf"
 	)
 
 for source in "${ASM_SOURCES[@]}"

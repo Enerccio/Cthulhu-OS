@@ -14,20 +14,9 @@ void init_errors() {
 	}
 
 	error_codes[UNDEFINED_ERROR] = "UNDEFINED_ERROR";
-	error_codes[ORDERED_ARRAY_ERROR] = "ORDERED_ARRAY_ERROR";
-	error_codes[INTERRUPT_ERROR] = "INTERRUPT_ERROR";
-	error_codes[UNHANDLED_INTERRUPT_ERROR] = "UNHANDLED_INTERRUPT_ERROR";
-	error_codes[HEAP_ERROR_START_UNALIGNED] = "HEAP_ERROR_START_UNALIGNED";
-	error_codes[HEAP_ERROR_REQ_SIZE_SMALLER_THAN_EX] =
-			"HEAP_ERROR_REQ_SIZE_SMALLER_THAN_EX";
-	error_codes[HEAP_ERROR_REQ_SIZE_TOO_BIG] = "HEAP_ERROR_REQ_SIZE_TOO_BIG";
-	error_codes[HEAP_ERROR_REQ_SIZE_LARGER_THAN_EX] =
-			"HEAP_ERROR_REQ_SIZE_LARGER_THAN_EX";
-	error_codes[HEAP_ERROR_MEMORY_GARBAGE] = "HEAP_ERROR_MEMORY_GARBAGE";
-	error_codes[PAGING_ERROR_NOMEM] = "PAGING_ERROR_NOMEM";
-	error_codes[PAGE_FAULT] = "PAGE_FAULT";
-	error_codes[ERROR_NO_VFS] = "ERROR_NO_VFS";
-	error_codes[ERROR_UNABLE_TO_ACTIVATE_A20] = "ERROR_UNABLE_TO_ACTIVATE_A20";
+	error_codes[LOADER_ERROR_A20_ACTIVATION_FAILURE] = "LOADER_ERROR_A20_ACTIVATION_FAILURE";
+	error_codes[LOADER_KERNEL_UNAVAILABLE] = "LOADER_KERNEL_UNAVAILABLE";
+
 }
 
 void error(uint16_t ecode, uint32_t speccode, uint32_t speccode2, void* eaddress) {
@@ -57,7 +46,11 @@ void error(uint16_t ecode, uint32_t speccode, uint32_t speccode2, void* eaddress
 
 	kd_setxy(16, 10);
 	kd_cwrite("Address: ", 4, 0);
+#ifdef KERNEL64BIT
+	kd_cwrite_hex64((uint64_t) eaddress, 4, 0);
+#else
 	kd_cwrite_hex((uint32_t) eaddress, 4, 0);
+#endif
 
 	kd_setxy(10, 19);
 	kd_cwrite(bottom_message, 4, 0);
