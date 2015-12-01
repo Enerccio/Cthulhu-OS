@@ -1,12 +1,8 @@
 #pragma once
 
-#define LOADER_MAIN_VERSION  "0"
-#define LOADER_MINOR_VESION  "0"
-#define LOADER_BUILD_VERSION "1"
-#define LOADER_CODENAME      "Blasting Mangoo"
 #define KERNEL_MAIN_VERSION  "0"
 #define KERNEL_MINOR_VESION  "0"
-#define KERNELBUILD_VERSION "1"
+#define KERNEL_BUILD_VERSION "1"
 #define KERNEL_CODENAME      "Blasting Mangoo"
 
 #include <stdbool.h>
@@ -60,3 +56,13 @@ typedef struct multiboot_header multiboot_header_t;
 
 #define ENABLE_INTERRUPTS() do { __asm __volatile__ ("sti") } while (0)
 #define DISABLE_INTERRUPTS() do { __asm __volatile__ ("sti") } while (0)
+
+typedef int8_t cmpresult_t;
+
+#define UNSAFE_THREAD_CALL
+#define SINGLETON_RETURN
+
+
+#ifndef ALIGN_AMOUNT
+#define ALIGN_AMOUNT 4096
+#endif

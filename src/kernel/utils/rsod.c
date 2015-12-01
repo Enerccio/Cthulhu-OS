@@ -19,7 +19,7 @@ void init_errors() {
 
 }
 
-void error(uint16_t ecode, uint32_t speccode, uint32_t speccode2, void* eaddress) {
+void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress) {
 	__asm  __volatile__ ("cli");
 
 	kd_cclear(4);
@@ -31,18 +31,18 @@ void error(uint16_t ecode, uint32_t speccode, uint32_t speccode2, void* eaddress
 
 	kd_setxy(16, 5);
 	kd_cwrite("Error code: ", 4, 0);
-	kd_cwrite_hex(ecode, 4, 0);
+	kd_cwrite_hex64(ecode, 4, 0);
 
 	kd_setxy(16, 6);
 	kd_cwrite(error_codes[ecode], 4, 0);
 
 	kd_setxy(16, 7);
 	kd_cwrite("Specific code: ", 4, 0);
-	kd_cwrite_hex(speccode, 4, 0);
+	kd_cwrite_hex64(speccode, 4, 0);
 
 	kd_setxy(16, 8);
 	kd_cwrite("Additional code: ", 4, 0);
-	kd_cwrite_hex(speccode2, 4, 0);
+	kd_cwrite_hex64(speccode2, 4, 0);
 
 	kd_setxy(16, 10);
 	kd_cwrite("Address: ", 4, 0);

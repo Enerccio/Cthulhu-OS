@@ -8,4 +8,4 @@
 
 void init_errors();
 
-void error(uint16_t ecode, uint32_t speccode, uint32_t speccode2, void* eaddress);
+void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress);

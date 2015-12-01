@@ -412,3 +412,59 @@ typedef struct elf64_note {
 	Elf64_Word n_descsz; /* Content size */
 	Elf64_Word n_type; /* Content type */
 } Elf64_Nhdr;
+
+
+
+#define R_X86_64_NONE 						0
+#define R_X86_64_64   						1
+#define DO_X86_64_64(S, A)					((S) + (A))
+#define R_X86_64_PC32   					2
+#define DO_X86_64_PC32(S, A, P)				((S) + (A) - (P))
+#define R_X86_64_GOT32   					3
+#define DO_X86_64_GOT32(G, A, P)			((G) + (A) - (P))
+#define R_X86_64_PLT32   					4
+#define DO_X86_64_PLT32(G, A, P)			((G) + (A) - (P))
+#define R_X86_64_COPY   					5
+#define R_X86_64_GLOB_DAT  					6
+#define DO_X86_64_GLOB_DAT(S)				(S)
+#define R_X86_64_JMP_SLOT  					7
+#define DO_X86_64_JMP_SLOT(S)				(S)
+#define R_X86_64_RELATIVE  					8
+#define DO_X86_64_RELATIVE(B, A)			((B) + (A))
+#define R_X86_64_GOTPCREL  					9
+#define DO_X86_64_GOTPCREL(G, GOT, S, P)	((G) + (GOT) + (A) - (P))
+#define R_X86_64_32		   					10
+#define DO_X86_64_32(S, A)					((S) + (A))
+#define R_X86_64_32S	   					11
+#define DO_X86_64_32S(S, A)					((S) + (A))
+#define R_X86_64_16		   					12
+#define DO_X86_64_16(S, A)					((S) + (A))
+#define R_X86_64_PC16   					13
+#define DO_X86_64_PC16(S, A, P)				((S) + (A) - (P))
+#define R_X86_64_8   						14
+#define DO_X86_64_8(S, A)					((S) + (A))
+#define R_X86_64_PC8   						15
+#define DO_X86_64_PC8(S, A, P)				((S) + (A) - (P))
+#define R_X86_64_DTPMOD64   				16
+#define R_X86_64_DTPOFF64   				17
+#define R_X86_64_TPOFF64   					18
+#define R_X86_64_TLSGD   					19
+#define R_X86_64_TLSLD   					20
+#define R_X86_64_DTPOFF32   				21
+#define R_X86_64_GOTTPOFF   				22
+#define R_X86_64_TPOFF32   					23
+#define R_X86_64_PC64   					24
+#define DO_X86_64_PC64(S, A, P)				((S) + (A) - (P))
+#define R_X86_64_GOTOFF64   				25
+#define DO_X86_64_GOTOFF64(S, A, GOT)		((S) + (A) - (GOT))
+#define R_X86_64_GOTPC32   					26
+#define DO_X86_64_GOTPC32(GOT, A, P)		((GOT) + (A) - (P))
+#define R_X86_64_SIZE32   					32
+#define DO_X86_64_SIZE32(Z, A)				((Z) + (A))
+#define R_X86_64_SIZE64   					33
+#define DO_X86_64_SIZE64(Z, A)				((Z) + (A))
+#define R_X86_64_GOTPC32_TLSDESC			34
+#define R_X86_64_TLSDESC_CALL				35
+#define R_X86_64_TLSDESC   					36
+#define R_X86_64_IRELATIVE   				37
+#define DO_X86_64_IRELATIVE(ind, B, A)		(ind((B) + (A)))
