@@ -14,8 +14,6 @@ void init_errors() {
 	}
 
 	error_codes[UNDEFINED_ERROR] = "UNDEFINED_ERROR";
-	error_codes[LOADER_ERROR_A20_ACTIVATION_FAILURE] = "LOADER_ERROR_A20_ACTIVATION_FAILURE";
-	error_codes[LOADER_KERNEL_UNAVAILABLE] = "LOADER_KERNEL_UNAVAILABLE";
 
 }
 
@@ -46,11 +44,7 @@ void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress
 
 	kd_setxy(16, 10);
 	kd_cwrite("Address: ", 4, 0);
-#ifdef KERNEL64BIT
 	kd_cwrite_hex64((uint64_t) eaddress, 4, 0);
-#else
-	kd_cwrite_hex((uint32_t) eaddress, 4, 0);
-#endif
 
 	kd_setxy(10, 19);
 	kd_cwrite(bottom_message, 4, 0);

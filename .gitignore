@@ -1,3 +1,13 @@
 /bochsout.txt
 /disk.img
 /build/
+/bx_enh_dbg.ini
+/newlib/
+/binutils/
+/gcc/
+/build-binutils/
+/build-gcc/
+/build-newlib/
+/root/
+/sysroot/
+/build-newlib-kernel/

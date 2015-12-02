@@ -1,39 +1,5 @@
 #include "kstdlib.h"
 
-void* memcpy(void* destination, const void* source, size_t num) {
-	uint8_t* src = (uint8_t*) source;
-	uint8_t* dst = (uint8_t*) destination;
-	while (num--)
-		*dst++ = *src++;
-	return destination;
-}
-
-void* memset(void* pointer, uint8_t value, size_t num) {
-	uint8_t* ptr = (uint8_t*) pointer;
-	uint32_t i;
-	for (i = 0; i < num; i++) {
-		ptr[i] = value;
-	}
-	return pointer;
-}
-
-uint32_t strlen(const char* string) {
-	uint32_t size = 0;
-	char* test = (char*) string;
-	while (*test++)
-		++size;
-	return size;
-}
-
-cmpresult_t strcmp(const char* first, const char* second) {
-	uint32_t i = 0;
-	char a, b;
-
-	while ((a = first[i]) == (b = second[i]) &&a != 0 && b != 0)
-		i++;
-	return a < b ? -1 : a > b ? 1 : 0;
-}
-
 char* strcpy(char* target, const char* source) {
 	char* returnee = target;
 	char* buffer = (char*) source;
@@ -87,11 +53,7 @@ const char* hextochar(uint32_t num) {
 }
 
 uint32_t int_hash_function(void* integer) {
-#ifdef KERNEL64BIT
 	uint32_t a = (uint32_t) ((uint64_t)integer);
-#else
-	uint32_t a = (uint32_t) (integer);
-#endif
 	a = (a + 0x7ed55d16) + (a << 12);
 	a = (a ^ 0xc761c23c) ^ (a >> 19);
 	a = (a + 0x165667b1) + (a << 5);

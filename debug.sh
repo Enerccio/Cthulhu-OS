@@ -1,12 +1,6 @@
 #!/bin/bash
 
-# compile kernel
-pushd src/kernel
-sudo -u enerccio ./compile.sh
-if [[ $? -ne 0 ]] ; then
-    exit 1
-fi
-popd
+./make.sh
 
 pushd disk
 ./update_image.sh

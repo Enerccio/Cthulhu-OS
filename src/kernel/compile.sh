@@ -4,10 +4,10 @@ COMPILE_DIR="../../src/kernel/"
 BUILDDIR="../../build/pikokernel/"
 ASM_ARGS="-f elf64 "
 COMPILER="x86_64-elf-gcc"
-DEFINES="-DKERNEL64BIT"
-COMPILER_ARGS="-ffreestanding -g -O0 -std=c99 -Wall -Wextra -fno-exceptions -mcmodel=large -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -g $DEFINES "
+DEFINES="-DKERNEL_MODE"
+COMPILER_ARGS="-ffreestanding -g -O0 -std=c99 -Wall -Wextra -fno-exceptions -mcmodel=large -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -g $DEFINES -I../newlib/usr/x86_64-piko/include"
 LINKER="x86_64-elf-gcc"
-LINKER_ARGS="-ffreestanding -O0 -nostdlib -lgcc -z max-page-size=0x1000"
+LINKER_ARGS="-ffreestanding -O0 -nostdlib -lgcc -z max-page-size=0x1000 -L../../src/newlib/usr/x86_64-piko/lib/ -lc"
 
 ASM_SOURCES=("loader" "entry64" "entry" "ports")
 COMPILE_SOURCES=("kernel" 
@@ -15,11 +15,12 @@ COMPILE_SOURCES=("kernel"
 	"utils/logger" 
 	"utils/textinput"
 	"utils/rsod"
-	"elf/elf")
+	"newlib/newlib"
+	)
 
 for source in "${ASM_SOURCES[@]}"
 do
-	target=$(basename $source)
+	target=$(basename $source) 
 	nasm ${source}.s -o ${BUILDDIR}${target}.o $ASM_ARGS
 done
 
