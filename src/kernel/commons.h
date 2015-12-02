@@ -62,7 +62,8 @@ typedef int8_t cmpresult_t;
 #define UNSAFE_THREAD_CALL
 #define SINGLETON_RETURN
 
-
 #ifndef ALIGN_AMOUNT
 #define ALIGN_AMOUNT 4096
 #endif
+
+typedef void* aligned_ptr_t;

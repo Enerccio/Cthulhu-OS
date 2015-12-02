@@ -4,6 +4,7 @@
 #include <sys/times.h>
 #include <sys/errno.h>
 #include <sys/time.h>
+#include <stdint.h>
 
 void _exit() {
 
@@ -81,10 +82,10 @@ int read(int file, char *ptr, int len) {
 
 }
 
+extern uint64_t handle_kernel_memory(int required_amount);
+
 caddr_t sbrk(int incr) {
-
-	return 0;
-
+	return (caddr_t) handle_kernel_memory(incr);
 }
 
 int stat(const char *file, struct stat *st) {

@@ -1,5 +1,6 @@
 #include "commons.h"
 #include "utils/rsod.h"
+#include "memory/heap.h"
 
 #include <stdlib.h>
 
@@ -20,6 +21,8 @@ void kernel_main(multiboot_header_t* mboot_addr, uint64_t heap_start)
 	kd_clear();
 	print_loader_revision();
 	init_errors();
+
+	initialize_temporary_heap(heap_start);
 
 	while (true) ;
 }

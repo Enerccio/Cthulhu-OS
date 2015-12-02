@@ -3,8 +3,8 @@
 global Realm64
 Realm64:
 	mov rsp, stack_top
-	push rbx
-	push rsp
+	mov rdi, rbx
+	mov rsi, rsp
 	xor rbp, rbp
 	extern kernel_main
 	call kernel_main

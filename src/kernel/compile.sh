@@ -11,6 +11,7 @@ LINKER_ARGS="-ffreestanding -O0 -nostdlib -lgcc -z max-page-size=0x1000 -L../../
 
 ASM_SOURCES=("loader" "entry64" "entry" "ports")
 COMPILE_SOURCES=("kernel" 
+	"memory/heap"
 	"utils/kstdlib" 
 	"utils/logger" 
 	"utils/textinput"
