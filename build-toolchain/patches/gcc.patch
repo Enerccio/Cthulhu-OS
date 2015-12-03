@@ -1,0 +1,134 @@
+diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/config.sub gcc/config.sub
+--- build-toolchain/sources/gcc/gcc-5.2.0/config.sub	2015-01-02 10:30:21.000000000 +0100
++++ gcc/config.sub	2015-12-01 16:40:39.714686236 +0100
+@@ -1366,9 +1366,9 @@
+ 		;;
+ 	# First accept the basic system types.
+ 	# The portable systems comes first.
+-	# Each alternative MUST END IN A *, to match a version number.
++	# Each alternative MUST END IN A *, to match a version number. 
+ 	# -sysv* is not here because it comes later, after sysvr4.
+-	-gnu* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
++	-gnu* | -piko* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
+ 	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -cnk* | -sunos | -sunos[34]*\
+ 	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
+ 	      | -sym* | -kopensolaris* | -plan9* \
+diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/fixincludes/mkfixinc.sh gcc/fixincludes/mkfixinc.sh
+--- build-toolchain/sources/gcc/gcc-5.2.0/fixincludes/mkfixinc.sh	2012-10-28 22:42:48.000000000 +0100
++++ gcc/fixincludes/mkfixinc.sh	2015-12-01 16:43:58.745611836 +0100
+@@ -11,6 +11,7 @@
+ 
+ # Check for special fix rules for particular targets
+ case $machine in
++	*-piko* | \
+     i?86-*-cygwin* | \
+     i?86-*-mingw32* | \
+     x86_64-*-mingw32* | \
+diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/i386/t-x86_64-elf gcc/gcc/config/i386/t-x86_64-elf
+--- build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/i386/t-x86_64-elf	1970-01-01 01:00:00.000000000 +0100
++++ gcc/gcc/config/i386/t-x86_64-elf	2015-12-02 21:56:08.781629048 +0100
+@@ -0,0 +1,2 @@
++MULTILIB_OPTIONS  += mno-red-zone
++MULTILIB_DIRNAMES += no-red-zone
+diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/piko.h gcc/gcc/config/piko.h
+--- build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/piko.h	1970-01-01 01:00:00.000000000 +0100
++++ gcc/gcc/config/piko.h	2015-12-01 18:14:29.037314293 +0100
+@@ -0,0 +1,23 @@
++/* Useful if you wish to make target-specific gcc changes. */
++#undef TARGET_PIKO
++#define TARGET_PIKO 1
++ 
++/* Default arguments you want when running your
++   i686-myos-gcc/x86_64-myos-gcc toolchain */
++#define LIB_SPEC "-lc -lg -lm" /* link against C standard libraries */
++                               /* modify this based on your needs */
++ 
++/* Don't automatically add extern "C" { } around header files. */
++#undef  NO_IMPLICIT_EXTERN_C
++#define NO_IMPLICIT_EXTERN_C 1
++ 
++/* Additional predefined macros. */
++#undef TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS()      \
++  do {                                \
++    builtin_define ("__piko__");      \
++    builtin_define ("__unix__");      \
++    builtin_assert ("system=piko");   \
++    builtin_assert ("system=unix");   \
++    builtin_assert ("system=posix");   \
++  } while(0); 
+diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config.gcc gcc/gcc/config.gcc
+--- build-toolchain/sources/gcc/gcc-5.2.0/gcc/config.gcc	2015-07-02 17:53:33.000000000 +0200
++++ gcc/gcc/config.gcc	2015-12-02 22:02:26.503277792 +0100
+@@ -598,6 +598,11 @@
+ 
+ # Common parts for widely ported systems.
+ case ${target} in
++*-*-piko*)
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  ;;
+ *-*-darwin*)
+   tmake_file="t-darwin ${cpu_type}/t-darwin"
+   tm_file="${tm_file} darwin.h"
+@@ -840,7 +845,7 @@
+   ;;
+ *-*-*vms*)
+   extra_options="${extra_options} vms/vms.opt"
+-  xmake_file=vms/x-vms
++  xmake_file=vms/x-vms 
+   tmake_file="vms/t-vms t-slibgcc"
+   extra_objs="vms.o"
+   target_gtfiles="$target_gtfiles \$(srcdir)/config/vms/vms.c"
+@@ -876,6 +881,13 @@
+ esac
+ 
+ case ${target} in
++i[34567]86-*-piko*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h piko.h"
++    ;;
++x86_64-*-piko*)
++	tmake_file="${tmake_file} i386/t-x86_64-elf"
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h i386/x86-64.h piko.h"
++    ;;
+ aarch64*-*-elf)
+ 	tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h"
+ 	tm_file="${tm_file} aarch64/aarch64-elf.h aarch64/aarch64-elf-raw.h"
+diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/libgcc/config.host gcc/libgcc/config.host
+--- build-toolchain/sources/gcc/gcc-5.2.0/libgcc/config.host	2015-06-25 19:55:02.000000000 +0200
++++ gcc/libgcc/config.host	2015-12-01 16:40:59.598112034 +0100
+@@ -317,7 +317,15 @@
+ esac
+ 
+ case ${host} in
+-aarch64*-*-elf)
++i[34567]86-*-piko*)
++	extra_parts="$extra_parts crtbegin.o crtend.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
++x86_64-*-piko*)
++	extra_parts="$extra_parts crtbegin.o crtend.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
++aarch64*-*-elf) 
+ 	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o"
+ 	extra_parts="$extra_parts crtfastmath.o"
+ 	tmake_file="${tmake_file} ${cpu_type}/t-aarch64"
+diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/libstdc++-v3/crossconfig.m4 gcc/libstdc++-v3/crossconfig.m4
+--- build-toolchain/sources/gcc/gcc-5.2.0/libstdc++-v3/crossconfig.m4	2014-04-22 14:30:59.000000000 +0200
++++ gcc/libstdc++-v3/crossconfig.m4	2015-12-01 16:40:55.508093014 +0100
+@@ -5,6 +5,13 @@
+ AC_DEFUN([GLIBCXX_CROSSCONFIG],[
+ # Base decisions on target environment.
+ case "${host}" in
++	*-piko*)
++    GLIBCXX_CHECK_COMPILER_FEATURES
++    GLIBCXX_CHECK_LINKER_FEATURES 
++    GLIBCXX_CHECK_MATH_SUPPORT
++    GLIBCXX_CHECK_STDLIB_SUPPORT
++    ;;
++
+   arm*-*-symbianelf*)
+     # This is a freestanding configuration; there is nothing to do here.
+     ;;

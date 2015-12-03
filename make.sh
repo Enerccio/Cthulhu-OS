@@ -1,16 +1,21 @@
 #!/bin/bash
 
+set -x
+
 # compile libc for kernel
 
-cd build-newlib-kernel
+PATH=$(realpath sysroot/usr/bin):"$PATH" 
+PATH=$(realpath sysroot/bin):"$PATH"
+
+cd build-toolchain/build-newlib-kernel
 make all
-make DESTDIR=/usr2/fast/projects/pikokernel/pikokernel64/src/newlib/ install
-cd ..
+make DESTDIR=$(realpath src/newlib) install
+cd ../..
 
 # compile kernel
 pushd src/kernel
 ./compile.sh
 if [[ $? -ne 0 ]] ; then
-    exit 1
+    exit 1 
 fi
-popd
+popd 

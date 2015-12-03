@@ -67,7 +67,11 @@ int read(int file, char *ptr, int len) {
 extern uint64_t handle_kernel_memory(int required_amount);
 
 caddr_t sbrk(int incr) {
+#ifdef KERNEL_MODE
 	return (caddr_t) handle_kernel_memory(incr);
+#else
+	return -1;
+#endif
 }
 
 int stat(const char *file, struct stat *st) {
@@ -92,6 +96,7 @@ int wait(int *status) {
 
 extern void kd_put(char c);
 int write(int file, char *ptr, int len) {
+#ifdef KERNEL_MODE
 	if (file == 1){
 		// stdout
 		for (int i=0; i<len; i++){
@@ -100,4 +105,7 @@ int write(int file, char *ptr, int len) {
 		return len;
 	}
 	return -1;
+#else
+	return -1;
+#endif
 }

@@ -1,6 +1,7 @@
 #include "commons.h"
 #include "utils/rsod.h"
 #include "memory/heap.h"
+#include "memory/paging.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,8 +25,7 @@ void kernel_main(multiboot_header_t* mboot_addr, uint64_t heap_start)
 	init_errors();
 
 	initialize_temporary_heap(heap_start);
-
-	printf("Anca!!! 0x%X 0x%X \n", (uint64_t)malloc(1024), (uint64_t)malloc(512));
+	initialize_paging();
 
 	while (true) ;
 }
