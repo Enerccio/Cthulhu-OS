@@ -3,6 +3,7 @@
 #include "../commons.h"
 
 #define UNDEFINED_ERROR 						0
+#define ERROR_NO_MEMORY_DETECTED				1
 
 void init_errors();
 

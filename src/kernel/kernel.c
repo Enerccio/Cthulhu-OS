@@ -18,14 +18,14 @@ void print_loader_revision() {
 	kd_newl();
 }
 
-void kernel_main(multiboot_header_t* mboot_addr, uint64_t heap_start)
+void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start)
 {
 	kd_clear();
 	print_loader_revision();
 	init_errors();
 
 	initialize_temporary_heap(heap_start);
-	initialize_paging();
+	initialize_paging(mboot_addr);
 
 	while (true) ;
 }
