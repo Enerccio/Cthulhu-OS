@@ -22,80 +22,100 @@ typedef struct v_address {
 	uint64_t rest :16;
 } v_address_t;
 
-static uint64_t get_pml(cr3_page_entry_t entry) {
-	return ALIGN(entry.pml);
-}
+#define MMU_RECURSIVE_SLOT      (510UL)
 
-static uint64_t get_pdpt(uint64_t* table, uint16_t idx) {
-	return PALIGN(uint64_t*, table)[idx];
-}
+// Convert an address into array index of a structure
+// E.G. int index = MMU_PML4_INDEX(0xFFFFFFFFFFFFFFFF); // index = 511
+#define MMU_PML4_INDEX(addr)    ((((uintptr_t)(addr))>>39) & 511)
+#define MMU_PDPT_INDEX(addr)    ((((uintptr_t)(addr))>>30) & 511)
+#define MMU_PD_INDEX(addr)      ((((uintptr_t)(addr))>>21) & 511)
+#define MMU_PT_INDEX(addr)      ((((uintptr_t)(addr))>>12) & 511)
 
-static uint64_t get_page_directory(uint64_t* table, uint16_t idx) {
-	return PALIGN(uint64_t*, table)[idx];
-}
+// Base address for paging structures
+#define KADDR_MMU_PT            (0xFFFF000000000000UL + (MMU_RECURSIVE_SLOT<<39))
+#define KADDR_MMU_PD            (KADDR_MMU_PT         + (MMU_RECURSIVE_SLOT<<30))
+#define KADDR_MMU_PDPT          (KADDR_MMU_PD         + (MMU_RECURSIVE_SLOT<<21))
+#define KADDR_MMU_PML4          (KADDR_MMU_PDPT       + (MMU_RECURSIVE_SLOT<<12))
 
-static uint64_t get_page_table(uint64_t* table, uint16_t idx) {
-	return PALIGN(uint64_t*, table)[idx];
-}
+// Structures for given address, for example
+// uint64_t* pt = MMU_PT(addr)
+// uint64_t physical_addr = pt[MMU_PT_INDEX(addr)];
+#define MMU_PML4(addr)          ((uint64_t*)  KADDR_MMU_PML4 )
+#define MMU_PDPT(addr)          ((uint64_t*)( KADDR_MMU_PDPT + (((addr)>>27) & 0x00001FF000) ))
+#define MMU_PD(addr)            ((uint64_t*)( KADDR_MMU_PD   + (((addr)>>18) & 0x003FFFF000) ))
+#define MMU_PT(addr)            ((uint64_t*)( KADDR_MMU_PT   + (((addr)>>9)  & 0x7FFFFFF000) ))
 
-static uint64_t get_page(uint64_t* table, uint16_t idx) {
-	return PALIGN(uint64_t*, table)[idx];
-}
-
-static uint64_t get_physical_offset(page_t page) {
-	return ALIGN(page.address);
-}
-
-static uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
+#define PRESENT(addr) (((uint64_t)addr) & 1)
+uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
 	*valid = 1;
-
 	v_address_t virtual_address = *((v_address_t*) &vaddress);
-	cr3_page_entry_t cr3_entry;
-	cr3_entry.number = get_active_page();
 
-	pml4_t pml;
-	pdpt_t pdp;
-	page_directory_t pagedir;
-	page_table_t pagetable;
-	page_t page;
+	uint64_t* address = MMU_PML4(vaddress);
+	address = address[MMU_PML4_INDEX(vaddress)];
 
-	pml.number = get_pml(cr3_entry);
-
-	if (pml.number == 0) {
+	if (!PRESENT(address)) {
 		*valid = 0;
 		return 0;
 	}
 
-	pdp.number = get_pdpt(pml.array, virtual_address.pml);
+	address = MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)];
 
-	if (pdp.number == 0) {
+	if (!PRESENT(address)) {
 		*valid = 0;
 		return 0;
 	}
 
-	pagedir.number = get_page_directory(pdp.array, virtual_address.directory_ptr);
+	address = MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)];
 
-	if (pagedir.number == 0) {
+	if (!PRESENT(address)) {
 		*valid = 0;
 		return 0;
 	}
 
-	pagetable.number = get_page_table(pagedir.array, virtual_address.directory);
+	uint64_t physadd = MMU_PT(vaddress)[MMU_PT_INDEX(vaddress)];
+	return ALIGN(physadd) + virtual_address.offset;
+}
 
-	if (pagetable.number == 0){
-		*valid = 0;
-		return 0;
+static uint64_t* get_page(uint64_t vaddress){
+	uint64_t* plm_addr = MMU_PML4(vaddress);
+	uint64_t* pdpt_addr = plm_addr[MMU_PML4_INDEX(vaddress)];
+
+	if (!PRESENT(pdpt_addr)){
+		pdpt_t pdpt;
+		uint64_t* pdir_table = (uint64_t*)malign_p(sizeof(uint64_t)*512, 0x1000);
+		memset(pdir_table, 0, sizeof(uint64_t)*512);
+		pdpt.array = (uint64_t*)virtual_to_physical((uint64_t)pdir_table, 0);
+		pdpt.flaggable.present = 1;
+		pdpt_addr = (uint64_t*)plm_addr[MMU_PML4_INDEX(vaddress)];
+		*pdpt_addr = pdpt.number;
 	}
 
-	page.address = get_page(pagetable.array, virtual_address.table);
+	uint64_t* pdir_addr = MMU_PDPT(vaddress);
+	pdir_addr = pdir_addr[MMU_PDPT_INDEX(vaddress)];
 
-	if (page.address == 0) {
-		*valid = 0;
-		return 0;
+	if (!PRESENT(pdir_addr)){
+		page_directory_t dir;
+		uint64_t* p_table = (uint64_t*)malign_p(sizeof(uint64_t)*512, 0x1000);
+		memset(p_table, 0, sizeof(uint64_t)*512);
+		dir.array = (uint64_t*)virtual_to_physical((uint64_t)p_table, 0);
+		dir.flaggable.present = 1;
+		MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)] = dir.number;
 	}
 
-	uint64_t physadd = get_physical_offset(page);
-	return physadd + virtual_address.offset;
+	uint64_t* pt_addr = MMU_PD(vaddress);
+	pt_addr = pt_addr[MMU_PD_INDEX(vaddress)];
+
+	if (!PRESENT(pt_addr)){
+		page_table_t pt;
+		page_t* pages = (page_t*)malign_p(sizeof(page_t)*512, 0x1000);
+		memset(pages, 0, sizeof(page_t)*512);
+		pt.array = (uint64_t*)virtual_to_physical((uint64_t)pages, 0);
+		pt.flaggable.present = 1;
+		MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)] = pt.number;
+	}
+
+	uint64_t* pt = MMU_PT(vaddress);
+	return &pt[MMU_PT_INDEX(vaddress)];
 }
 
 typedef struct
@@ -282,7 +302,7 @@ static void create_initial_paging(){
 	}
 
 	// fractal it
-	pdpt_table[511] = pml.number;
+	pdpt_table[MMU_RECURSIVE_SLOT] = pml.number;
 
 	cr3_page_entry_t entry;
 	entry.pml = pml.number;
@@ -308,3 +328,25 @@ void initialize_paging(struct multiboot* mboot_addr) {
 
 	create_initial_paging();
 }
+
+void allocate_frame(uint64_t* paddress, bool kernel, bool readonly)
+{
+	if (!PRESENT(*paddress)){
+		page_t page;
+		page.address = get_free_frame();
+		page.flaggable.present = 1;
+		page.flaggable.rw = readonly ? 0 : 1;
+		page.flaggable.us = kernel ? 0 : 1;
+		*paddress = page.address;
+	}
+}
+
+void allocate(uint64_t from, size_t amount, bool kernel, bool readonly)
+{
+	for (uint64_t addr = from; addr < from+amount; addr += 0x1000)
+	{
+		allocate_frame(get_page(addr), kernel, readonly);
+	}
+}
+
+

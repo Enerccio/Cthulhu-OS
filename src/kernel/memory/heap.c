@@ -24,6 +24,26 @@ void initialize_temporary_heap(uint64_t temp_heap_start)
 	tmp_heap = temp_heap_start;
 }
 
+void* malign_p(size_t amount, uint16_t align)
+{
+	uint64_t unaligned = (uint64_t) malloc(amount+align+sizeof(uint64_t));
+	uint64_t aligned = unaligned + sizeof(uint64_t);
+	uint64_t phys = virtual_to_physical(aligned, 0);
+
+	if (!(phys % align == 0)){
+		aligned = aligned + (align - (phys % align));
+	}
+	uint64_t* ptr = (uint64_t*) aligned;
+	*(ptr-1) = unaligned;
+	return (void*)aligned;
+}
+
+void freealign_p(void* aligned_pointer){
+	uint64_t* ptr = (uint64_t*) aligned_pointer;
+	uint64_t unaligned_address = *(ptr-1);
+	free((void*)unaligned_address);
+}
+
 aligned_ptr_t malign(size_t amount, uint16_t align)
 {
 	uint64_t unaligned = (uint64_t) malloc(amount+align+sizeof(uint64_t));

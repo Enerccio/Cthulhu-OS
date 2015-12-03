@@ -27,5 +27,7 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start)
 	initialize_temporary_heap(heap_start);
 	initialize_paging(mboot_addr);
 
+	allocate(0xCCCC0000, 0x10000, true, false);
+
 	while (true) ;
 }
