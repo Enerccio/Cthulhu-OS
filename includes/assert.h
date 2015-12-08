@@ -8,7 +8,6 @@
 #ifndef ASSERT_H_
 #define ASSERT_H_
 
-#include "_kclib_commons.h"
 #include <stdio.h>
 
 #ifdef __cplusplus
@@ -19,13 +18,17 @@ extern "C" {
 #ifdef NDEBUG
 #define assert(ignore) ((void)0)
 #else
-#error TODO
-
+#include <sys/external.h>
+#ifdef KCLIB_KERNEL_MODE
 #define assert(expression) \
 	do { \
 		if (expression == 0) { \
+			_kclib_assert(__LINE__, __FILE__, __func__); \
 		} \
 	} while (0)
+#else
+#error TODO
+#endif
 #endif
 
 

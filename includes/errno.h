@@ -19,7 +19,6 @@ extern "C" {
 
 extern volatile int errno;
 
-
 #ifdef __cplusplus
 }
 #endif
