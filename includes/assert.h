@@ -8,11 +8,26 @@
 #ifndef ASSERT_H_
 #define ASSERT_H_
 
+#include "_kclib_commons.h"
+#include <stdio.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#error KCLIB does not support this library yet
+#undef assert
+#ifdef NDEBUG
+#define assert(ignore) ((void)0)
+#else
+#error TODO
+
+#define assert(expression) \
+	do { \
+		if (expression == 0) { \
+		} \
+	} while (0)
+#endif
+
 
 #ifdef __cplusplus
 }

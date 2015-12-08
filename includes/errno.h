@@ -12,7 +12,13 @@
 extern "C" {
 #endif
 
-#error KCLIB does not support this library yet
+#define EDEFAULTERR 0
+#define EDOM		1
+#define EILSEQ		2
+#define ERANGE		3
+
+extern volatile int errno;
+
 
 #ifdef __cplusplus
 }
