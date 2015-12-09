@@ -14,7 +14,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="libkclib.a" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.base.674926722" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
+				<configuration artifactName="kclib.a" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.base.674926722" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
 					<folderInfo id="cdt.managedbuild.toolchain.gnu.base.674926722.1409055088" name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.base.961729091" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.base.492228147" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
@@ -38,7 +38,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.1200582205" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base">
 								<option id="gnu.c.link.option.nostdlibs.11078724" name="No startup or default libs (-nostdlib)" superClass="gnu.c.link.option.nostdlibs" value="true" valueType="boolean"/>
 								<option id="gnu.c.link.option.noshared.1733260438" name="No shared libraries (-static)" superClass="gnu.c.link.option.noshared" value="true" valueType="boolean"/>
-								<option id="gnu.c.link.option.shared.2069510585" superClass="gnu.c.link.option.shared" value="true" valueType="boolean"/>
+								<option id="gnu.c.link.option.shared.2069510585" name="Shared (-shared)" superClass="gnu.c.link.option.shared" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1466677661" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>

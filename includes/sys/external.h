@@ -14,6 +14,9 @@ extern "C" {
 #ifdef KCLIB_KERNEL_MODE
 
 #define __noreturn void
+#ifndef PAGE_SIZE
+#define PAGE_SIZE 0x1000
+#endif
 
 extern __noreturn _kclib_assert(unsigned int lineno, const char* file, const char* func);
 

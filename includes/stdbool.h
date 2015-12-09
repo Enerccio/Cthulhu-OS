@@ -12,7 +12,12 @@
 extern "C" {
 #endif
 
-#error KCLIB does not support this library yet
+#include <stdint.h>
+
+#define bool _Bool
+#define true 1
+#define false 0
+#define __bool_true_false_are_defined 1
 
 #ifdef __cplusplus
 }
