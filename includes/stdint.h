@@ -667,6 +667,8 @@ typedef __uintptr_t uintptr_t;
 #endif
 #endif
 
+typedef uint32_t size_t;
+
 #ifdef __cplusplus
 }
 #endif

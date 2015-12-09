@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include <stddef.h>
+#include <stdlib.h>
 
 struct lconv {
 	char* decimal_point;       // "."
@@ -41,7 +41,6 @@ struct lconv {
 	char  int_n_sign_posn;      // CHAR_MAX
 };
 
-#define NULL ((void*)0)
 #define LC_COLLATE  ( 1<<1 )
 #define LC_CTYPE    ( 1<<2 )
 #define LC_MONETARY ( 1<<3 )

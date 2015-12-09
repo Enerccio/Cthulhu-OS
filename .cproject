@@ -33,6 +33,8 @@
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1985430272" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="KCLIB_KERNEL_MODE"/>
 								</option>
+								<option id="gnu.c.compiler.option.preprocessor.nostdinc.656027401" superClass="gnu.c.compiler.option.preprocessor.nostdinc" value="false" valueType="boolean"/>
+								<option id="gnu.c.compiler.option.misc.other.1545383880" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -ffreestanding" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1705499341" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.1200582205" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base">
