@@ -12,13 +12,13 @@
 extern "C" {
 #endif
 
-#define NULL ((void*)0)
+#include <stdbool.h>
+
+#define NULL (0)
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
-#ifdef KCLIB_KERNEL_MODE
 #include <sys/external.h>
-#endif
 
 void* malloc(size_t size);
 void* calloc(size_t nmemb, size_t size);

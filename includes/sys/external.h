@@ -15,16 +15,20 @@ extern "C" {
 
 #include <stdint.h>
 
-#define __noreturn void
-#ifndef PAGE_SIZE
-#define PAGE_SIZE 0x1000
+#ifndef __ALLOC_PAGE_SIZE
+#define __ALLOC_PAGE_SIZE 0x1000
 #endif
+
+#define __noreturn void
 
 extern __noreturn _kclib_assert(uint32_t lineno, const char* file, const char* func);
-extern void		  _kclib_allocate(uint64_t afrom, size_t aamount);
-extern void		  _kclib_deallocate(uint64_t afrom, size_t aamount);
 
 #endif
+
+extern void* 	  _kclib_heap_start();
+extern void*	  _kclib_allocate(uint64_t afrom, size_t aamount);
+extern void 	  _kclib_deallocate(uint64_t afrom, size_t aamount);
+
 #ifdef __cplusplus
 }
 #endif
