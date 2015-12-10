@@ -1,10 +1,3 @@
-/*
- * _alloc.c
- *
- *  Created on: Dec 9, 2015
- *      Author: enerccio
- */
-
 #include <stdlib.h>
 
 #define __HEADER_VERIFIER  0xDEADD00D

@@ -1,10 +1,3 @@
-/*
- * stdlib.h
- *
- *  Created on: Dec 8, 2015
- *      Author: enerccio
- */
-
 #ifndef STDLIB_H_
 #define STDLIB_H_
 
@@ -22,14 +15,19 @@ extern "C" {
 
 #include <sys/external.h>
 
+/* _stdlib_alloc.c */
 void* malloc(size_t size);
 void* calloc(size_t nmemb, size_t size);
 void* realloc(void* ptr, size_t size);
 void  free(void* ptr);
 
+/* _stdlib_rand.c */
 #define RAND_MAX 65535
 int rand();
 void srand(unsigned int seed);
+
+/* _stdlib_exit.c */
+int atexit(void (*func)(void));
 
 #ifdef __cplusplus
 }

@@ -1,10 +1,3 @@
-/*
- * _string_memcpy.c
- *
- *  Created on: Dec 9, 2015
- *      Author: enerccio
- */
-
 #include <string.h>
 #include <stdlib.h>
 

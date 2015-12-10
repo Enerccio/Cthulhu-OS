@@ -1,11 +1,3 @@
-/*
- * _stdlib_rand.c
- *
- *  Created on: Dec 10, 2015
- *      Author: enerccio
- */
-
-
 #include <stdlib.h>
 
 uint32_t __seed = 3;
