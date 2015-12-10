@@ -65,10 +65,10 @@ stdio.h
 stdlib.h
 ==================================================================
 * malloc {__kclib_heap_start, __kclib_allocate}  
-* calloc {}
+* calloc {__kclib_heap_start, __kclib_allocate}
 * realloc {__kclib_allocate, __kclib_deallocate, 
 			__kclib_isreclaimed} 
-* free {}
+* free {__kclib_deallocate, __kclib_isreclaimed}
 * rand 
 * srand 
 * bsearch 
