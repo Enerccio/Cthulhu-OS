@@ -54,6 +54,16 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<folderInfo id="cdt.managedbuild.toolchain.gnu.base.674926722.1765952851" name="/" resourcePath="kclib">
+						<toolChain id="cdt.managedbuild.toolchain.gnu.base.1000832303" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.base" unusedChildren="">
+							<tool id="cdt.managedbuild.tool.gnu.archiver.base.623356401" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base.1279957675"/>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.274549004" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1812581381"/>
+							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.965635062" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base.529743841"/>
+							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.2036137045" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base.1200582205"/>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.622017842" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base.670520209"/>
+							<tool id="cdt.managedbuild.tool.gnu.assembler.base.991792448" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base.1921337766"/>
+						</toolChain>
+					</folderInfo>
 					<sourceEntries>
 						<entry excluding="kclib|includes" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="includes"/>

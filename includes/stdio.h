@@ -12,7 +12,15 @@
 extern "C" {
 #endif
 
-#error KCLIB does not support this library yet
+#include <sys/external.h>
+
+typedef struct FILE FILE;
+
+extern FILE* stderr;
+extern FILE* stdout;
+
+int fclose(FILE* stream);
+int fflush(FILE* stream);
 
 #ifdef __cplusplus
 }

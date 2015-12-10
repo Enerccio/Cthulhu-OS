@@ -20,7 +20,7 @@ extern "C" {
 #define __ASSERT_INTERNAL(expression) \
 	do { \
 		if ((expression) == 0) { \
-			__kclib_assert_failure(__LINE__, __FILE__, __func__); \
+			__kclib_assert_failure_k(__LINE__, __FILE__, __func__); \
 		} \
 	} while (0)
 

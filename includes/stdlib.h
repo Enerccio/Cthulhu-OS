@@ -29,6 +29,7 @@ void srand(unsigned int seed);
 
 /* _stdlib_exit.c */
 int atexit(void (*func)(void));
+void abort(void);
 
 /* _stdlib_searchops.c */
 void* bsearch(const void* key, const void* base,

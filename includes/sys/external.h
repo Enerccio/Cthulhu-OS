@@ -27,7 +27,9 @@ extern "C" {
  * should do is up to the implementer. However, any calls to kclib
  * functions are now undefined behavior.
  */
-extern __noreturn __kclib_assert_failure(uint32_t lineno, const char* file, const char* func);
+extern __noreturn __kclib_assert_failure_k(uint32_t lineno, const char* file, const char* func);
+
+extern void __kclib_stdputc_k(char c);
 
 #endif
 
