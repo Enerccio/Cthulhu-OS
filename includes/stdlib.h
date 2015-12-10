@@ -8,6 +8,7 @@ extern "C" {
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+#include <stdint.h>
 
 #define NULL (0)
 #define EXIT_SUCCESS 0
@@ -28,6 +29,13 @@ void srand(unsigned int seed);
 
 /* _stdlib_exit.c */
 int atexit(void (*func)(void));
+
+/* _stdlib_searchops.c */
+void* bsearch(const void* key, const void* base,
+		size_t nmemb, size_t size,
+		int (*compar)(const void *, const void *));
+void qsort(void* base, size_t nmemb, size_t size,
+		int (*compar)(const void *, const void *));
 
 #ifdef __cplusplus
 }
