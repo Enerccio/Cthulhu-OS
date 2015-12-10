@@ -27,6 +27,10 @@ void* calloc(size_t nmemb, size_t size);
 void* realloc(void* ptr, size_t size);
 void  free(void* ptr);
 
+#define RAND_MAX 65535
+int rand();
+void srand(unsigned int seed);
+
 #ifdef __cplusplus
 }
 #endif
