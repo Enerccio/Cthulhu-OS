@@ -12,7 +12,11 @@
 extern "C" {
 #endif
 
-#error KCLIB does not support this library yet
+#include <stdint.h>
+
+void memset(void* ptr, uint32_t c, size_t n);
+void* memcpy(void* restrict s1, const void* restrict s2, size_t n);
+void* memmove(void* s1, const void* s2, size_t n);
 
 #ifdef __cplusplus
 }

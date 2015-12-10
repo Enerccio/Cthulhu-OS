@@ -21,13 +21,37 @@ extern "C" {
 
 #define __noreturn void
 
-extern __noreturn _kclib_assert(uint32_t lineno, const char* file, const char* func);
+/**
+ * Called when libc has detected unrecoverable error. Only called in
+ * kernel mode, in user mode abort() is called instead. What kernel
+ * should do is up to the implementer. However, any calls to kclib
+ * functions are now undefined behavior.
+ */
+extern __noreturn __kclib_assert_failure(uint32_t lineno, const char* file, const char* func);
 
 #endif
 
-extern void* 	  _kclib_heap_start();
-extern void*	  _kclib_allocate(uint64_t afrom, size_t aamount);
-extern void 	  _kclib_deallocate(uint64_t afrom, size_t aamount);
+/**
+ * Returns kernel heap start for kernel space, or returns start of the heap
+ * section in user space.
+ */
+extern void* 	  __kclib_heap_start();
+/**
+ * Allocates the physical memory to that virtual address or syscall for more
+ * memory from kernel.
+ */
+extern void*	  __kclib_allocate(uintptr_t afrom, size_t aamount);
+/**
+ * Deallocate the physical memory in kernel space or marks memory as unused
+ * in user space
+ */
+extern void 	  __kclib_deallocate(uintptr_t afrom, size_t aamount);
+/***
+ * Should return 1 if address is reclaimed by kernel in kernel space or
+ * not used in user space, so malloc library can modify it's highest used
+ * address
+ */
+extern uint8_t    __kclib_isreclaimed(uintptr_t afrom, size_t aamount);
 
 #ifdef __cplusplus
 }

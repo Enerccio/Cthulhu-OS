@@ -8,24 +8,28 @@
 #ifndef ASSERT_H_
 #define ASSERT_H_
 
-#include <stdio.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <sys/external.h>
+#ifndef KCLIB_KERNEL_MODE
+#include <stdio.h>
+#endif
+
+#define __ASSERT_INTERNAL(expression) \
+	do { \
+		if ((expression) == 0) { \
+			__kclib_assert_failure(__LINE__, __FILE__, __func__); \
+		} \
+	} while (0)
 
 #undef assert
 #ifdef NDEBUG
 #define assert(ignore) ((void)0)
 #else
-#include <sys/external.h>
 #ifdef KCLIB_KERNEL_MODE
-#define assert(expression) \
-	do { \
-		if (expression == 0) { \
-			_kclib_assert(__LINE__, __FILE__, __func__); \
-		} \
-	} while (0)
+#define assert(expression) __ASSERT_INTERNAL(expression)
 #else
 #error TODO
 #endif
