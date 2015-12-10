@@ -8,13 +8,13 @@
 
 #include <stdlib.h>
 
-uint32_t seed = 3;
+uint32_t __seed = 3;
 
 int rand(){
-	seed = (((seed * 214013L + 2531011L) >> 16) & 32767);
-	return ((seed % RAND_MAX));
+	__seed = (((__seed * 214013L + 2531011L) >> 16) & 32767);
+	return ((__seed % RAND_MAX));
 }
 
-void srand(unsigned int _seed){
-	seed = _seed + 2;
+void srand(unsigned int ___seed){
+	__seed = ___seed + 2;
 }

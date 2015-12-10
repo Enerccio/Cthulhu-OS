@@ -87,13 +87,13 @@ uintptr_t    __heap_address;
 uintptr_t	 __highest_unused_address;
 alloc_map_t  __map;
 
-void initialize_malloc(){
+void __initialize_malloc(){
 	__heap_initialized = true;
 	__heap_address = (uintptr_t)__kclib_heap_start();
 	__highest_unused_address = __heap_address;
 }
 
-void* find_hole(uint32_t size, ainfo_t** valids,
+void* __find_hole(uint32_t size, ainfo_t** valids,
 		ainfo_t*** invalids){
 	if (__map.amap == NULL){
 		*valids = NULL;
@@ -152,7 +152,7 @@ void* __malloc(size_t osize){
 	uintptr_t size = osize;
 
 	if (__heap_initialized == false){
-		initialize_malloc();
+		__initialize_malloc();
 	}
 
 	if (size > __MAX_MIN_HEADER_ALLOC_SIZE){
@@ -162,7 +162,7 @@ void* __malloc(size_t osize){
 	ainfo_t* valid_start;
 	ainfo_t** invalid_start;
 
-	void* addr = find_hole(size, &valid_start, &invalid_start);
+	void* addr = __find_hole(size, &valid_start, &invalid_start);
 
 	if (invalid_start != NULL){
 		// we have no valid start, it means we need to allocate starting set of maps
