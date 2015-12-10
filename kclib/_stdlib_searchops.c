@@ -1,24 +1,33 @@
 
 #include <stdlib.h>
 
+#define __VARRAY_ACCESS(idx) (((uint8_t*)base) + (size*idx))
+
 void* bsearch(const void* key, const void* base,
 		size_t nmemb, size_t size,
 		int (*compar)(const void *, const void *)){
-	uint8_t* sf = (uint8_t*)base;
-	for (uint32_t start = 0; start < nmemb; start++){
-		if (compar(key, (void*) sf)<0){
-			return (void*) sf;
+	uint32_t start = 0;
+	uint32_t end = nmemb-1;
+
+	while (start<=end){
+		uint32_t mid = start + ((end - start) / 2);
+		int32_t cmp = compar(__VARRAY_ACCESS(mid), key) == 0;
+		if (cmp == 0)
+			return __VARRAY_ACCESS(mid);
+		else if (cmp < 0) {
+			start = mid + 1;
+		} else {
+			end = mid - 1;
 		}
-		sf += size;
 	}
+
 	return NULL;
 }
 
-#define __QSORT_ACCESS(idx) (((uint8_t*)base) + (size*idx))
 #define __QSORT_SWAP(id1, id2) \
-	memmove(*tmp, __QSORT_ACCESS(id1), size); \
-	memmove(__QSORT_ACCESS(id1), __QSORT_ACCESS(id2), size); \
-	memmove(__QSORT_ACCESS(id2), *tmp, size)
+	memmove(*tmp, __VARRAY_ACCESS(id1), size); \
+	memmove(__VARRAY_ACCESS(id1), __VARRAY_ACCESS(id2), size); \
+	memmove(__VARRAY_ACCESS(id2), *tmp, size)
 
 void __qsort(void* base, size_t size,
 		int (*compar)(const void *, const void *),
@@ -31,9 +40,9 @@ void __qsort(void* base, size_t size,
 	int64_t j = end;
 
 	while (i <= j){
-		while (compar(__QSORT_ACCESS(i), __QSORT_ACCESS(pivot_idx))<0)
+		while (compar(__VARRAY_ACCESS(i), __VARRAY_ACCESS(pivot_idx))<0)
 			++i;
-		while (compar(__QSORT_ACCESS(j), __QSORT_ACCESS(pivot_idx))>0)
+		while (compar(__VARRAY_ACCESS(j), __VARRAY_ACCESS(pivot_idx))>0)
 			--j;
 		if (i <= j){
 			__QSORT_SWAP(i, j);

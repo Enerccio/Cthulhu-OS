@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef KCLIB_KERNEL_MODE
+#ifdef __KCLIB_KERNEL_MODE
 
 #include <stdint.h>
 

@@ -1,0 +1,1 @@
+SYSDEF_CFLAGS := -fPIC

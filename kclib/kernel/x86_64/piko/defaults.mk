@@ -1,0 +1,2 @@
+SYSDEF_CFLAGS ?= -mno-red-zone
+SYSDEF_CPPFLAGS ?= -DKERNEL_MODE

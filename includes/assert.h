@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 #include <sys/external.h>
-#ifndef KCLIB_KERNEL_MODE
+#ifndef __KCLIB_KERNEL_MODE
 #include <stdio.h>
 #endif
 
@@ -28,7 +28,7 @@ extern "C" {
 #ifdef NDEBUG
 #define assert(ignore) ((void)0)
 #else
-#ifdef KCLIB_KERNEL_MODE
+#ifdef __KCLIB_KERNEL_MODE
 #define assert(expression) __ASSERT_INTERNAL(expression)
 #else
 #error TODO
