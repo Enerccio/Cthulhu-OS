@@ -6,7 +6,7 @@ void* bsearch(const void* key, const void* base,
 		int (*compar)(const void *, const void *)){
 	uint8_t* sf = (uint8_t*)base;
 	for (uint32_t start = 0; start < nmemb; start++){
-		if (compar(key, (void*) sf)){
+		if (compar(key, (void*) sf)<0){
 			return (void*) sf;
 		}
 		sf += size;
@@ -14,45 +14,43 @@ void* bsearch(const void* key, const void* base,
 	return NULL;
 }
 
-inline uint32_t __select_pivot(uint32_t s, uint32_t e){
-	return (e-s)/2;
-}
-
-uint32_t __partition(void* base, size_t size,
-		int (*compar)(const void *, const void *), uint32_t start, uint32_t end,
-		uint32_t pidx){
-	void* pivot = malloc(size);
-	void* tmp = malloc(size);
-
-	memmove(pivot, ((uint8_t*)base)+(pidx*size), size);
-	uint32_t i = start;
-	for (uint32_t j=start; j<end; j++)
-		if (compar(((uint8_t*)base)+(j*size), pivot)){
-			memmove(tmp, ((uint8_t*)base)+(j*size), size);
-			memmove(((uint8_t*)base)+(j*size), ((uint8_t*)base)+(i*size), size);
-			memmove(((uint8_t*)base)+(i*size), tmp, size);
-			++i;
-		}
-	memmove(tmp, ((uint8_t*)base)+(i*size), size);
-	memmove(((uint8_t*)base)+(i*size), ((uint8_t*)base)+((end-1)*size), size);
-	memmove(((uint8_t*)base)+((end-1)*size), tmp, size);
-
-	free(pivot);
-	free(tmp);
-	return i;
-}
+#define __QSORT_ACCESS(idx) (((uint8_t*)base) + (size*idx))
+#define __QSORT_SWAP(id1, id2) \
+	memmove(*tmp, __QSORT_ACCESS(id1), size); \
+	memmove(__QSORT_ACCESS(id1), __QSORT_ACCESS(id2), size); \
+	memmove(__QSORT_ACCESS(id2), *tmp, size)
 
 void __qsort(void* base, size_t size,
-		int (*compar)(const void *, const void *), uint32_t start, uint32_t end){
-	if (start >= end-1)
+		int (*compar)(const void *, const void *),
+		uint32_t start, uint32_t end, void** tmp){
+	if (start >= end)
 		return;
-	uint32_t pivot_idx = __select_pivot(start, end);
-	pivot_idx = __partition(base, size, compar, start, end, pivot_idx);
-	__qsort(base, size, compar, start, pivot_idx-1);
-	__qsort(base, size, compar, pivot_idx+1, end);
+	int64_t pivot_idx = start + (end - start) / 2;
+
+	int64_t i = start;
+	int64_t j = end;
+
+	while (i <= j){
+		while (compar(__QSORT_ACCESS(i), __QSORT_ACCESS(pivot_idx))<0)
+			++i;
+		while (compar(__QSORT_ACCESS(j), __QSORT_ACCESS(pivot_idx))>0)
+			--j;
+		if (i <= j){
+			__QSORT_SWAP(i, j);
+			++i;
+			--j;
+		}
+	}
+
+	if (start < j)
+		__qsort(base, size, compar, start, (uint32_t)j, tmp);
+	if (end > i)
+		__qsort(base, size, compar, (uint32_t)i, end, tmp);
 }
 
 void qsort(void* base, size_t nmemb, size_t size,
 		int (*compar)(const void *, const void *)){
-	__qsort(base, size, compar, 0, nmemb);
+	void* tmp = malloc(size);
+	__qsort(base, size, compar, 0, nmemb-1, &tmp);
+	free(tmp);
 }

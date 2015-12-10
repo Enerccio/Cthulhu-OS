@@ -296,7 +296,7 @@ void* __malloc(size_t osize){
 	}
 }
 
-inline void* malloc(size_t s){
+void* malloc(size_t s){
 	return __malloc(s);
 }
 
@@ -461,7 +461,7 @@ void __free(void* ptr){
 	}
 }
 
-inline void free(void* ptr){
+void free(void* ptr){
 	__free(ptr);
 }
 
@@ -555,7 +555,7 @@ void* __realloc(void* ptr, size_t size){
 	}
 }
 
-inline void* realloc(void *ptr, size_t size){
+void* realloc(void *ptr, size_t size){
 	if (size == 0){
 		free(ptr);
 		return NULL;
