@@ -8,12 +8,13 @@
 #ifndef SYS_EXTERNAL_H_
 #define SYS_EXTERNAL_H_
 
+#include <stdint.h>
+#include <stdlib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 #ifdef __KCLIB_KERNEL_MODE
-
-#include <stdint.h>
 
 #ifndef __ALLOC_PAGE_SIZE
 #define __ALLOC_PAGE_SIZE 0x1000

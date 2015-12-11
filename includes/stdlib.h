@@ -38,6 +38,31 @@ void* bsearch(const void* key, const void* base,
 void qsort(void* base, size_t nmemb, size_t size,
 		int (*compar)(const void *, const void *));
 
+/* _stdlib_numconv.c */
+double atof(const char *nptr);
+int atoi(const char *nptr);
+long int atol(const char *nptr);
+long long int atoll(const char *nptr);
+double strtod(const char* restrict nptr,
+		char** restrict endptr);
+float strtof(const char* restrict nptr,
+		char** restrict endptr);
+long double strtold(const char* restrict nptr,
+		char** restrict endptr);
+long int strtol(const char* restrict nptr,
+		char** restrict endptr,
+		int base);
+long long int strtoll(const char* restrict nptr,
+		char** restrict endptr,
+		int base);
+unsigned long int strtoul(const char* restrict nptr,
+		char** restrict endptr,
+		int base);
+unsigned long long int strtoull(const char* restrict nptr,
+		char** restrict endptr,
+		int base);
+
+
 #ifdef __cplusplus
 }
 #endif

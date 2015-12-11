@@ -9,15 +9,18 @@ MACHINE != expr $(TARGET) : '\([^-]*\)-.*'
 OS != expr $(TARGET) : '.*-\([^-]*\)'
 
 include  $(MODE).mk
+include  machine/$(MACHINE).mk
 -include $(MODE)/$(MACHINE)/$(OS)/defaults.mk
 -include $(MODE)/$(MACHINE)/defaults.mk
 -include $(MODE)/defaults.mk
 
-CFLAGS:= -ffreestanding -pedantic -pedantic-errors -Wall -Wextra \
+CFLAGS:= -ffreestanding -std=c99 -Wall -Wextra \
 	-fmessage-length=0 -nostdlib -fPIC \
-	 $(DEBUG) $(MODE_CFLAGS) $(SYSDEF_CFLAGS) $(CFLAGS_FOR_TARGET) 
-CPPFLAGS = $(MODE_CPPFLAGS) $(SYSDEF_CPPFLAGS) $(CPPFLAGS_FOR_TARGET)
-LDFLAGS = -nostdlib -static $(MODE_LDFLAGS) $(SYSDEF_LDFLAGS) $(LDFLAGS_FOR_TARGET) 
+	 $(DEBUG) $(MODE_CFLAGS) $(MACHINEDEF_CFLAGS) $(SYSDEF_CFLAGS) $(CFLAGS_FOR_TARGET) 
+CPPFLAGS = $(MODE_CPPFLAGS) $(MACHINEDEF_CPPFLAGS) \
+	$(SYSDEF_CPPFLAGS) $(CPPFLAGS_FOR_TARGET)
+LDFLAGS = -nostdlib -static \
+	$(MODE_LDFLAGS) $(MACHINEDEF_LDFLAGS) $(SYSDEF_LDFLAGS) $(LDFLAGS_FOR_TARGET) 
 
 
 SRC := $(wildcard *.c)

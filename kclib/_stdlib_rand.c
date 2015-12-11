@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdarg.h>
 
 uint32_t __seed = 3;
 

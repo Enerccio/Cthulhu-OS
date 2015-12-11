@@ -21,6 +21,10 @@ void memset(void* ptr, uint32_t c, size_t n);
 void* memcpy(void* restrict s1, const void* restrict s2, size_t n);
 void* memmove(void* s1, const void* s2, size_t n);
 
+/* _string_compops.c */
+int memcmp(const void* s1, const void* s2, size_t n);
+int strcmp(const char* s1, const char* s2);
+
 /* _string_string.c */ // yeah I know, very cool name
 size_t strlen(const char *s);
 char* strcpy(char* restrict s1, const char* restrict s2);
