@@ -24,6 +24,11 @@ void* memmove(void* s1, const void* s2, size_t n);
 /* _string_compops.c */
 int memcmp(const void* s1, const void* s2, size_t n);
 int strcmp(const char* s1, const char* s2);
+int strcoll(const char* s1, const char* s2);
+int strncmp(const char* s1, const char* s2, size_t n);
+size_t strxfrm(char* restrict s1, const char* restrict s2,
+		size_t n);
+
 
 /* _string_string.c */ // yeah I know, very cool name
 size_t strlen(const char *s);
