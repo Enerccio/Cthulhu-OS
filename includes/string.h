@@ -12,9 +12,8 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
 #include <stdint.h>
-
-typedef uint32_t size_t;
 
 /* _string_memops.c */
 void memset(void* ptr, uint32_t c, size_t n);
@@ -29,10 +28,12 @@ int strncmp(const char* s1, const char* s2, size_t n);
 size_t strxfrm(char* restrict s1, const char* restrict s2,
 		size_t n);
 
-
 /* _string_string.c */ // yeah I know, very cool name
 size_t strlen(const char *s);
 char* strcpy(char* restrict s1, const char* restrict s2);
+
+/* _string_searchops.c */
+char* strtok(char* restrict s1, const char* restrict s2);
 
 #ifdef __cplusplus
 }

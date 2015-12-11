@@ -6,11 +6,11 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
 
-#define NULL (0)
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
@@ -61,7 +61,6 @@ unsigned long int strtoul(const char* restrict nptr,
 unsigned long long int strtoull(const char* restrict nptr,
 		char** restrict endptr,
 		int base);
-
 
 #ifdef __cplusplus
 }

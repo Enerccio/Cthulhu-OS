@@ -33,8 +33,8 @@
 								<option id="gnu.c.compiler.option.warnings.pedantic.1927911934" name="Pedantic (-pedantic)" superClass="gnu.c.compiler.option.warnings.pedantic" value="true" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.warnings.pedantic.error.1175895373" name="Pedantic warnings as errors (-pedantic-errors)" superClass="gnu.c.compiler.option.warnings.pedantic.error" value="true" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1985430272" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="KCLIB_KERNEL_MODE"/>
 									<listOptionValue builtIn="false" value="__SIZEOF_POINTER__=8"/>
+									<listOptionValue builtIn="false" value="__KCLIB_KERNEL_MODE"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.nostdinc.656027401" name="Do not search system directories (-nostdinc)" superClass="gnu.c.compiler.option.preprocessor.nostdinc" value="false" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.misc.other.1545383880" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -ffreestanding -mno-red-zone -fPIC -Wno-error=unused-parameter -Wno-error=unused-variable" valueType="string"/>
