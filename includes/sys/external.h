@@ -14,11 +14,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef __KCLIB_KERNEL_MODE
 
 #ifndef __ALLOC_PAGE_SIZE
 #define __ALLOC_PAGE_SIZE 0x1000
 #endif
+
+#ifdef __KCLIB_KERNEL_MODE
 
 #define __noreturn void
 

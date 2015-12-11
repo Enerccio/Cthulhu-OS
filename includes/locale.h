@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 #include <stdlib.h>
+#include <stdint.h>
 
 struct lconv {
 	char* decimal_point;       // "."
@@ -41,14 +42,22 @@ struct lconv {
 	char  int_n_sign_posn;      // CHAR_MAX
 };
 
-#define LC_COLLATE  ( 1<<1 )
-#define LC_CTYPE    ( 1<<2 )
-#define LC_MONETARY ( 1<<3 )
-#define LC_NUMERIC  ( 1<<4 )
-#define LC_TIME     ( 1<<5 )
+#define LC_COLLATE  ( 1 )
+#define LC_CTYPE    ( 1<<1 )
+#define LC_MONETARY ( 1<<2 )
+#define LC_NUMERIC  ( 1<<3 )
+#define LC_TIME     ( 1<<4 )
 #define LC_ALL 		( LC_COLLATE | LC_CTYPE | LC_MONETARY | LC_NUMERIC | LC_TIME )
 
-#error KCLIB does not support this library yet
+#define __LC_COLLATE 	"LC_COLLATE"
+#define __LC_CTYPE		"LC_CTYPE"
+#define __LC_MONETARY 	"LC_MONETARY"
+#define __LC_NUMERIC  	"LC_NUMERIC"
+#define __LC_TIME       "LC_TIME"
+#define __LC_ALL 		"LC_ALL"
+
+struct lconv* localeconv();
+char* setlocale(int category, const char* locale);
 
 #ifdef __cplusplus
 }
