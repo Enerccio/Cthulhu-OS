@@ -16,7 +16,7 @@ extern "C" {
 #include <stdint.h>
 
 /* _string_memops.c */
-void memset(void* ptr, uint32_t c, size_t n);
+void memset(void* ptr, int32_t c, size_t n);
 void* memcpy(void* restrict s1, const void* restrict s2, size_t n);
 void* memmove(void* s1, const void* s2, size_t n);
 

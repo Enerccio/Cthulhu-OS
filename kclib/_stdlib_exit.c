@@ -5,7 +5,6 @@
 // kernel mode does not support any of this shit
 
 int atexit(void (*func)(void)){
-	func = func;
 	return -1;
 }
 

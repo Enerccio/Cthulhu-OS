@@ -6,11 +6,11 @@
 void* bsearch(const void* key, const void* base,
 		size_t nmemb, size_t size,
 		int (*compar)(const void *, const void *)){
-	uint32_t start = 0;
-	uint32_t end = nmemb-1;
+	size_t start = 0;
+	size_t end = nmemb-1;
 
 	while (start<=end){
-		uint32_t mid = start + ((end - start) / 2);
+		size_t mid = start + ((end - start) / 2);
 		int32_t cmp = compar(__VARRAY_ACCESS(mid), key) == 0;
 		if (cmp == 0)
 			return __VARRAY_ACCESS(mid);
@@ -31,13 +31,13 @@ void* bsearch(const void* key, const void* base,
 
 void __qsort(void* base, size_t size,
 		int (*compar)(const void *, const void *),
-		uint32_t start, uint32_t end, void** tmp){
+		size_t start, size_t end, void** tmp){
 	if (start >= end)
 		return;
-	int64_t pivot_idx = start + (end - start) / 2;
+	size_t pivot_idx = start + (end - start) / 2;
 
-	int64_t i = start;
-	int64_t j = end;
+	size_t i = start;
+	size_t j = end;
 
 	while (i <= j){
 		while (compar(__VARRAY_ACCESS(i), __VARRAY_ACCESS(pivot_idx))<0)
@@ -52,9 +52,9 @@ void __qsort(void* base, size_t size,
 	}
 
 	if (start < j)
-		__qsort(base, size, compar, start, (uint32_t)j, tmp);
+		__qsort(base, size, compar, start, j, tmp);
 	if (end > i)
-		__qsort(base, size, compar, (uint32_t)i, end, tmp);
+		__qsort(base, size, compar, i, end, tmp);
 }
 
 void qsort(void* base, size_t nmemb, size_t size,

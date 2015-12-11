@@ -102,5 +102,5 @@ wctype.h
 ==================================================================
 
 Statistics:
-18 supported user mode functions
-19 supported kernel mode functions
+19 supported user mode functions
+20 supported kernel mode functions
