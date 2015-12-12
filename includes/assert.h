@@ -31,7 +31,9 @@ extern "C" {
 #ifdef __KCLIB_KERNEL_MODE
 #define assert(expression) __ASSERT_INTERNAL(expression)
 #else
-#error TODO
+
+// TODO
+
 #endif
 #endif
 

@@ -18,7 +18,7 @@
 					<folderInfo id="cdt.managedbuild.toolchain.gnu.base.674926722.1409055088" name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.base.961729091" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.base.492228147" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
-							<builder arguments="PREFIX=../" buildPath="${workspace_loc:/kclib}" command="make" id="cdt.managedbuild.target.gnu.builder.base.1142895496" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.base"/>
+							<builder arguments="PREFIX=../ CPP_FOR_TARGET=-D__KCLIB_EXTENSIONS" buildPath="${workspace_loc:/kclib}" command="make" enableAutoBuild="true" id="cdt.managedbuild.target.gnu.builder.base.1142895496" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.1279957675" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1812581381" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.529743841" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
@@ -35,6 +35,7 @@
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1985430272" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__SIZEOF_POINTER__=8"/>
 									<listOptionValue builtIn="false" value="__KCLIB_KERNEL_MODE"/>
+									<listOptionValue builtIn="false" value="__KCLIB_EXTENSIONS"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.nostdinc.656027401" name="Do not search system directories (-nostdinc)" superClass="gnu.c.compiler.option.preprocessor.nostdinc" value="false" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.misc.other.1545383880" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -ffreestanding -mno-red-zone -fPIC -Wno-error=unused-parameter -Wno-error=unused-variable" valueType="string"/>

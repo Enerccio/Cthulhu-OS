@@ -6,6 +6,9 @@ no mark means support in user more
 after each function, required externals are listed in parenthesis
 () for kernel mode only, [] for user mode only, {} if same call is
 used for both
+
+If function name is in <>, it is an extension function and has to 
+be enabled with defining __KCLIB_EXTENSIONS
 ==================================================================
 assert.h
 ==================================================================
@@ -87,6 +90,14 @@ string.h
 * memcmp
 * strcmp
 * strncmp
+* memchr
+* strchr
+* strcspn
+* strpbrk
+* <strcpbrk>
+* strrchr
+* strspn
+* strstr
 * strtok
 ==================================================================
 tgmath.h
@@ -100,7 +111,3 @@ wchar.h
 ==================================================================
 wctype.h
 ==================================================================
-
-Statistics:
-19 supported user mode functions
-20 supported kernel mode functions
