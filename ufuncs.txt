@@ -1,18 +1,19 @@
-| Available functions from libc |
+| Unavailable functions from libc |
 ==================================================================
-# marks support is for kernel mode only
-* marks support for both kernel and user mode
-no mark means support in user more
-after each function, required externals are listed in parenthesis
-() for kernel mode only, [] for user mode only, {} if same call is
-used for both
+List of functions not available in kclib in any mode and which 
+will probably won't be available in any near future. Many more 
+functions can be unavailable because library is wip, but these 
+probably never will.
 
-If function name is in <>, it is an extension function and has to 
-be enabled with defining __KCLIB_EXTENSIONS
+! marks functions that are present, but their semantics is comple-
+telly wrong
+? marks functions that might work, but I am not sure if they are 
+working correctly
+Functions without any symbols are simply not present in sources (
+might exist in headers)
 ==================================================================
 assert.h
 ==================================================================
-assert (__kclib_assert_failure_k)
 ==================================================================
 complex.h
 ==================================================================
@@ -40,9 +41,6 @@ limits.h
 ==================================================================
 locale.h
 ==================================================================
-* localeconv
-* setlocale
-- works in kernel, but the only locale available is "C"/""/NULL
 ==================================================================
 math.h
 ==================================================================
@@ -70,35 +68,11 @@ stdio.h
 ==================================================================
 stdlib.h
 ==================================================================
-* malloc {__kclib_heap_start, __kclib_allocate}  
-* calloc {__kclib_heap_start, __kclib_allocate}
-* realloc {__kclib_allocate, __kclib_deallocate, 
-			__kclib_isreclaimed} 
-* free {__kclib_deallocate, __kclib_isreclaimed}
-* rand 
-* srand 
-* bsearch 
-* qsort 
 ==================================================================
 string.h
 ==================================================================
-* memset
-* memmove
-* memcpy
-* strlen
-* strcpy
-* memcmp
-* strcmp
-* strncmp
-* memchr
-* strchr
-* strcspn
-* strpbrk
-* <strcpbrk>
-* strrchr
-* strspn
-* strstr
-* strtok
+? strcoll
+! strxfrm - does nothing, returns 0
 ==================================================================
 tgmath.h
 ==================================================================
