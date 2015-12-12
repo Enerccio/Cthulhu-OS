@@ -1,4 +1,5 @@
 #include <string.h>
+#include "intinc/locale.h"
 
 int memcmp(const void* s1, const void* s2, size_t n){
 	if (s1 == s2)
@@ -32,6 +33,22 @@ int strcmp(const char* s1, const char* s2){
 }
 
 int strcoll(const char* s1, const char* s2){
+	if (s1 == s2)
+		return 0;
+
+	char* a = (char*)s1;
+	char* b = (char*)s2;
+
+	while (1){
+		if (*a == 0 && *b != 0)
+			return -1;
+		if (*a != 0 && *b == 0)
+			return 1;
+
+		int colval = __compare_collate(&a, &b);
+		if (colval != 0)
+			return colval;
+	}
 
 }
 

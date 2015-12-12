@@ -116,7 +116,7 @@ void* __find_hole(uint32_t size, ainfo_t** valids,
 				return (void*)ptr->start_address;
 			} else if (ptr->residue_address != 0){
 				// there is empty residue map check if it could be available
-				cell_t* map = (cell_t*) ptr->start_address;
+				cell_t* map = (cell_t*) ptr->residue_address;
 				for (uint16_t i=0; i<ptr->residue_count; i++){
 					sheader_t* sh = (sheader_t*)&map[i];
 					if (sh->used == 0){

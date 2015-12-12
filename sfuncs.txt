@@ -90,6 +90,7 @@ string.h
 * memcmp
 * strcmp
 * strncmp
+* strcoll
 * memchr
 * strchr
 * strcspn
