@@ -2,7 +2,10 @@
 ==================================================================
 # marks support is for kernel mode only
 * marks support for both kernel and user mode
-no mark means support in user more
+? marks support for both, but kernel mode only returning some
+  sentinel value
+no mark means support in user mode
+
 after each function, required externals are listed in parenthesis
 () for kernel mode only, [] for user mode only, {} if same call is
 used for both
@@ -19,6 +22,7 @@ complex.h
 ==================================================================
 ctype.h
 ==================================================================
+* isspace
 ==================================================================
 errno.h
 ==================================================================
@@ -79,6 +83,7 @@ stdlib.h
 * srand 
 * bsearch 
 * qsort 
+? getenv
 ==================================================================
 string.h
 ==================================================================

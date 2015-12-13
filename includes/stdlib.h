@@ -10,6 +10,7 @@ extern "C" {
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
+#include <ctype.h>
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
@@ -61,6 +62,9 @@ unsigned long int strtoul(const char* restrict nptr,
 unsigned long long int strtoull(const char* restrict nptr,
 		char** restrict endptr,
 		int base);
+
+/* _stdlib_envc.c */
+char* getenv(const char* name);
 
 #ifdef __cplusplus
 }

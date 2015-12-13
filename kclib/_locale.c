@@ -13,6 +13,7 @@ typedef struct locale {
 
 	struct lconv conversion_locale;
 	lcoll_t collation_locale;
+	lctype_h ctype_maps;
 } locale_t;
 
 #ifndef __DEFAULT_LOCALE
@@ -26,9 +27,11 @@ locale_t locales[__SUPPORTED_LOCALE_COUNT];
 char* localenames[__SUPPORTED_LOCALE_COUNT];
 
 struct lconv* localeconv(){
-	static struct lconv conv;
-	memmove(&active_locale.conversion_locale, &conv, sizeof(struct lconv));
-	return &conv;
+	return &active_locale.conversion_locale;
+}
+
+lctype_h* __getlctype(){
+	return &active_locale.ctype_maps;
 }
 
 char* setlocale(int category, const char* locale){
@@ -71,7 +74,8 @@ char* setlocale(int category, const char* locale){
 		active_locale.collation_locale = newlocale->collation_locale;
 	}
 	if ((category & LC_CTYPE) == LC_CTYPE){
-
+		active_locale.lc_ctype = newlocale->lc_ctype;
+		active_locale.ctype_maps = newlocale->ctype_maps;
 	}
 	if ((category & LC_MONETARY) == LC_MONETARY){
 		active_locale.lc_monetary = newlocale->lc_monetary;
@@ -102,6 +106,39 @@ char* setlocale(int category, const char* locale){
 	}
 
 	return ret;
+}
+
+#define CLONE_BASE(from, whereto) \
+	whereto = malloc(sizeof(uint8_t)*256); \
+	memmove(whereto, from, sizeof(uint8_t)*256);
+
+void __initialize_ctype_tables(lctype_h* ctype){
+	int8_t etable [] = {
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	};
+	CLONE_BASE(&etable, ctype->space_table);
+
+	ctype->space_table[' '] = 1;
+	ctype->space_table['\f'] = 1;
+	ctype->space_table['\n'] = 1;
+	ctype->space_table['\r'] = 1;
+	ctype->space_table['\t'] = 1;
+	ctype->space_table['\v'] = 1;
 }
 
 void __generate_stdasciicollate(lcoll_t* collate){

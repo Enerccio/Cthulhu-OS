@@ -12,6 +12,7 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
 #include <stdint.h>
 
 void __initialize_locale();
@@ -32,7 +33,13 @@ typedef struct lcoll {
 	size_t defe_wcount;
 } lcoll_t;
 
+typedef struct lctype {
+	uint8_t* space_table;
+} lctype_h;
+
 int __compare_collate(char** a, char** b);
+
+lctype_h* __getlctype();
 
 #ifdef __cplusplus
 }

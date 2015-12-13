@@ -15,7 +15,6 @@ extern "C" {
 #include <stdint.h>
 
 typedef uint64_t id_t;
-typedef id_t pid_t;
 
 #ifdef __cplusplus
 }

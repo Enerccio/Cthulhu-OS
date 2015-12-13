@@ -21,6 +21,8 @@ extern "C" {
 
 #ifdef __KCLIB_KERNEL_MODE
 
+// kernel space required functions
+
 #define __noreturn void
 
 /**
@@ -32,6 +34,14 @@ extern "C" {
 extern __noreturn __kclib_assert_failure_k(uint32_t lineno, const char* file, const char* func);
 
 extern void __kclib_stdputc_k(char c);
+
+#else
+// user space only required functions
+
+/**
+ * Returns value for key in environment, null if there is none
+ */
+extern char*	  __kclib_environ_search_u(char* key);
 
 #endif
 
@@ -50,12 +60,17 @@ extern void*	  __kclib_allocate(uintptr_t afrom, size_t aamount);
  * in user space
  */
 extern void 	  __kclib_deallocate(uintptr_t afrom, size_t aamount);
-/***
+/**
  * Should return 1 if address is reclaimed by kernel in kernel space or
  * not used in user space, so malloc library can modify it's highest used
  * address
  */
 extern uint8_t    __kclib_isreclaimed(uintptr_t afrom, size_t aamount);
+/**
+ * Request standard stream file descriptor
+ * Sent parameters are 1 - stdin, 2 - stderr, 3 - stdin
+ */
+extern void*	  __kclib_open_std_stream(uint8_t request_mode);
 
 #ifdef __cplusplus
 }
