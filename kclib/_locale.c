@@ -139,6 +139,31 @@ void __initialize_ctype_tables(lctype_h* ctype){
 	ctype->space_table['\r'] = 1;
 	ctype->space_table['\t'] = 1;
 	ctype->space_table['\v'] = 1;
+
+	CLONE_BASE(&etable, ctype->blank_table);
+
+	ctype->blank_table[' '] = 1;
+	ctype->blank_table['\t'] = 1;
+
+	CLONE_BASE(&etable, ctype->upper_table);
+	CLONE_BASE(&etable, ctype->lower_table);
+
+	for (char c='A'; c<='Z'; c++)
+		ctype->upper_table[(int8_t)c] = 1;
+	for (char c='a'; c<='z'; c++)
+		ctype->lower_table[(int8_t)c] = 1;
+
+	CLONE_BASE(&etable, ctype->digit_table);
+
+	for (char c='0'; c<='9'; c++)
+		ctype->digit_table[(int8_t)c] = 1;
+
+	CLONE_BASE(ctype->digit_table, ctype->xdigit_table);
+
+	for (char c='A'; c<='F'; c++)
+		ctype->xdigit_table[(int8_t)c] = 1;
+	for (char c='a'; c<='f'; c++)
+		ctype->xdigit_table[(int8_t)c] = 1;
 }
 
 void __generate_stdasciicollate(lcoll_t* collate){

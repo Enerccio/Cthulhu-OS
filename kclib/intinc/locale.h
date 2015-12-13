@@ -35,6 +35,12 @@ typedef struct lcoll {
 
 typedef struct lctype {
 	uint8_t* space_table;
+	uint8_t* blank_table;
+	uint8_t* lower_table;
+	uint8_t* upper_table;
+	uint8_t* digit_table;
+	uint8_t* xdigit_table;
+	uint8_t* graph_table;
 } lctype_h;
 
 int __compare_collate(char** a, char** b);
