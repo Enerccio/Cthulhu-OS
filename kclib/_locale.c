@@ -110,7 +110,7 @@ char* setlocale(int category, const char* locale){
 
 #define CLONE_BASE(from, whereto) \
 	whereto = malloc(sizeof(uint8_t)*256); \
-	memmove(whereto, from, sizeof(uint8_t)*256);
+	memcpy(whereto, from, sizeof(uint8_t)*256);
 
 void __initialize_ctype_tables(lctype_h* ctype){
 	int8_t etable [] = {

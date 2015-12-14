@@ -496,7 +496,9 @@ void* __realloc_new_chunk(void* ptr, size_t osize){
 
 	if (osize < __MAX_MIN_HEADER_ALLOC_SIZE){
 		void* newptr = malloc(osize);
-		memmove(ptr, newptr, osize);
+		if (newptr == NULL)
+			return NULL;
+		memcpy(ptr, newptr, osize);
 		free(ptr);
 		return newptr;
 	}
@@ -517,7 +519,7 @@ void* __realloc_new_chunk(void* ptr, size_t osize){
 	void* newptr = ptr;
 	if (osize > chunklen){
 		newptr = malloc(osize);
-		memmove(ptr, newptr, osize);
+		memcpy(ptr, newptr, osize);
 	}
 
 	__free_chunk(cdifference, difbytes, alloca);
@@ -540,7 +542,9 @@ void* __realloc_new_small(void* ptr, size_t osize){
 		return ptr; // nothing to be done, we are lowering the amount
 	} else {
 		void* newptr = malloc(osize);
-		memmove(ptr, newptr, __MAX_MIN_HEADER_ALLOC_SIZE);
+		if (newptr == NULL)
+			return NULL;
+		memcpy(ptr, newptr, __MAX_MIN_HEADER_ALLOC_SIZE);
 		free(ptr);
 		return newptr;
 	}

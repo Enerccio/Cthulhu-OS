@@ -2,6 +2,23 @@
 #include <stdlib.h>
 
 void* memmove(void* s1, const void* s2, size_t n){
+	if (s1 == s2)
+		return s1;
+
+	unsigned char* dest = (unsigned char*) s1;
+	const unsigned char* src = (const unsigned char*) s2;
+	if ((uintptr_t)dest < (uintptr_t)src){
+		for ( size_t i = 0; i < n; i++ )
+			dest[i] = src[i];
+	} else {
+		for ( size_t i = 0; i < n; i++ )
+			dest[n-(i+1)] = src[n-(i+1)];
+	}
+	return s1;
+
+}
+
+void* memcpy(void* restrict s1, const void* restrict s2, size_t n){
 	uint8_t* b1 = (uint8_t*)s1;
 	uint8_t* b2 = (uint8_t*)s2;
 
@@ -12,16 +29,6 @@ void* memmove(void* s1, const void* s2, size_t n){
 		b1[i] = b2[i];
 	}
 	return b2;
-}
-
-void* memcpy(void* restrict s1, const void* restrict s2, size_t n){
-	if (s1 == s2)
-		return s1;
-
-	void* buffer = malloc(n * sizeof(uint8_t));
-	memmove(s1, buffer, n);
-	memmove(buffer, s2, n);
-	return (void*)s2;
 }
 
 void memset(void* ptr, int32_t c, size_t n){
