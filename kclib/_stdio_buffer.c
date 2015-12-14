@@ -79,3 +79,12 @@ size_t __buffer_ftell(__buffer_t* buffer, size_t newpos){
 	buffer->cpos = newpos;
 	return newpos;
 }
+
+void __free_buffer(__buffer_t* buffer){
+	free(buffer->buffer);
+}
+
+uint8_t* __buffer_get_data(__buffer_t* buffer, size_t* len){
+	*len = buffer->cpos;
+	return buffer->buffer;
+}

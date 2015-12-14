@@ -29,6 +29,8 @@ extern FILE* stderr;
 extern FILE* stdout;
 extern FILE* stdin;
 
+#define EOF -1
+
 /* _stdio_file.c */
 int fclose(FILE* stream);
 int fflush(FILE* stream);
