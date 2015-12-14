@@ -8,6 +8,10 @@
 #ifndef ASSERT_H_
 #define ASSERT_H_
 
+#ifdef __CDT_INDEXER__
+#include <gcc_defs.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

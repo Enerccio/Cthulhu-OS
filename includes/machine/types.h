@@ -8,6 +8,10 @@
 #ifndef MACHINE_TYPES_H_
 #define MACHINE_TYPES_H_
 
+#ifdef __CDT_INDEXER__
+#include <gcc_defs.h>
+#endif
+
 #include <machine/defaults.h>
 
 #ifdef __cplusplus

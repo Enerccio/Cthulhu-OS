@@ -8,6 +8,10 @@
 #ifndef SYS_EXTERNAL_H_
 #define SYS_EXTERNAL_H_
 
+#ifdef __CDT_INDEXER__
+#include <gcc_defs.h>
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 

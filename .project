@@ -3,6 +3,7 @@
 	<name>kclib</name>
 	<comment></comment>
 	<projects>
+		<project>test</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

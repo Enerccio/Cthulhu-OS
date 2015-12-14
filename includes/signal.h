@@ -8,6 +8,10 @@
 #ifndef SIGNAL_H_
 #define SIGNAL_H_
 
+#ifdef __CDT_INDEXER__
+#include <gcc_defs.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

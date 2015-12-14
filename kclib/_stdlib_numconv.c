@@ -6,9 +6,9 @@
 #include <errno.h>
 #include <ctype.h>
 
-#if __GNUC__ > 5
-#define __WILL_OVERFLOW_ADD(a, b, where) __builtin_add_overflow(a, b, &where)
-#define __WILL_OVERFLOW_MUL(a, b, where) __builtin_mul_overdlow(a, b, &where)
+#if __GNUC__ >= 5
+#define __WILL_OVERFLOW_ADD(a, b, where) __builtin_add_overflow(a, b, where)
+#define __WILL_OVERFLOW_MUL(a, b, where) __builtin_mul_overflow(a, b, where)
 #else
 bool __safe_addition(uintmax_t a, uintmax_t b, uintmax_t* place){
 	if (a > (UINTMAX_MAX - b)) {
@@ -37,6 +37,10 @@ int atoi(const char *nptr){
 }
 
 long int atol(const char *nptr){
+	return strtol(nptr, (char **)NULL, 10);
+}
+
+long long int atoll(const char *nptr){
 	return strtoll(nptr, (char **)NULL, 10);
 }
 
@@ -45,10 +49,14 @@ const char* __filter(const char* nptr){
 	do {
 		c = *(nptr++);
 	} while (c == '\0' || isspace(c));
+	if (!c == '\0' && !isspace(c))
+		--nptr;
 	return nptr;
 }
 
-size_t __countnumeric(const char* ptr, int* base, bool* minus, const char** newstart){
+size_t __countnumeric(const char** ptraddr, int* base, bool* minus, const char** end){
+	const char* ptr = *ptraddr;
+
 	size_t blen = strlen(ptr);
 	if (blen == 0)
 		return 0;
@@ -67,7 +75,7 @@ size_t __countnumeric(const char* ptr, int* base, bool* minus, const char** news
 	if (*base == 0){
 		// detect base
 		*base = 10; // default base
-		if (blen > 2 && (strcmp(ptr, "0x") == 0 || strcmp(ptr, "0X") == 0)){
+		if (blen > 2 && ((strncmp(ptr, "0x", 2) == 0 || strncmp(ptr, "0X", 2) == 0))){
 			ptr += 2;
 			blen -= 2;
 			*base = 16;
@@ -82,7 +90,7 @@ size_t __countnumeric(const char* ptr, int* base, bool* minus, const char** news
 	}
 
 	if (!detected_base && *base == 16 && blen > 2){
-		if (strcmp(ptr, "0x") == 0 || strcmp(ptr, "0X") == 0){
+		if (strncmp(ptr, "0x", 2) == 0 || strncmp(ptr, "0X", 2) == 0){
 			ptr += 2;
 			blen -= 2;
 		}
@@ -94,6 +102,8 @@ size_t __countnumeric(const char* ptr, int* base, bool* minus, const char** news
 			--blen;
 		}
 	}
+
+	*ptraddr = ptr;
 
 	size_t validlen = 0;
 	static char detection_radix_upper[] = {
@@ -122,7 +132,7 @@ size_t __countnumeric(const char* ptr, int* base, bool* minus, const char** news
 		++ptr;
 	}
 
-	*newstart = ptr;
+	*end = ptr;
 	return validlen;
 }
 
@@ -141,12 +151,13 @@ uintmax_t __radixval(char c){
 	return 0;
 }
 
-uintmax_t __strtomax(const char* restrict nptr, int base, bool* overflow, bool* sign, const char** remainder){
+uintmax_t __strtomax(const char* restrict nptr, int base, bool* overflow, bool* sign, char** restrict remainder){
 	const char* start = __filter(nptr);
-	size_t safelen = __countnumeric(start, &base, sign, &start);
+	const char* end;
+	size_t safelen = __countnumeric(&start, &base, sign, &end);
 
 	if (remainder != NULL){
-		*remainder = start;
+		*remainder = (char*)end;
 	}
 
 	uintmax_t result = 0;
@@ -187,13 +198,79 @@ uintmax_t __strtomax(const char* restrict nptr, int base, bool* overflow, bool* 
 long int strtol(const char* restrict nptr,
 		char** restrict endptr,
 		int base){
+	bool overflow = false, sign = false;
+	uintmax_t pval = __strtomax(nptr, base, &overflow, &sign, endptr);
 
+	if (overflow || pval > LONG_MAX){
+		errno = ERANGE;
+		if (sign){
+			return LONG_MIN;
+		} else {
+			return LONG_MAX;
+		}
+	} else {
+		if (sign)
+			return 0 - (long int)pval;
+		else
+			return (long int)pval;
+	}
 }
 
 long long int strtoll(const char* restrict nptr,
 		char** restrict endptr,
 		int base){
+	bool overflow = false, sign = false;
+	uintmax_t pval = __strtomax(nptr, base, &overflow, &sign, endptr);
 
+	if (overflow || pval > LLONG_MAX){
+		errno = ERANGE;
+		if (sign){
+			return LLONG_MIN;
+		} else {
+			return LLONG_MAX;
+		}
+	} else {
+		if (sign)
+			return 0 - (long long int)pval;
+		else
+			return (long long int)pval;
+	}
+}
 
+unsigned long int strtoul(const char* restrict nptr,
+		char** restrict endptr,
+		int base){
+	bool overflow = false, sign = false;
+	uintmax_t pval = __strtomax(nptr, base, &overflow, &sign, endptr);
 
+	if (sign){
+		errno = ERANGE;
+		return 0;
+	}
+
+	if (overflow || pval > LONG_MAX){
+		errno = ERANGE;
+		return LONG_MAX;
+	} else {
+		return (long int)pval;
+	}
+}
+
+unsigned long long int strtoull(const char* restrict nptr,
+		char** restrict endptr,
+		int base){
+	bool overflow = false, sign = false;
+	uintmax_t pval = __strtomax(nptr, base, &overflow, &sign, endptr);
+
+	if (sign){
+		errno = ERANGE;
+		return 0;
+	}
+
+	if (overflow || pval > LLONG_MAX){
+		errno = ERANGE;
+		return LLONG_MAX;
+	} else {
+		return (long long int)pval;
+	}
 }

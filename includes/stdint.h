@@ -8,6 +8,10 @@
 #ifndef STDINT_H_
 #define STDINT_H_
 
+#ifdef __CDT_INDEXER__
+#include <gcc_defs.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

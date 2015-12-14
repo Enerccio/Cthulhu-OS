@@ -94,6 +94,13 @@ stdlib.h
 ==================================================================
 string.h
 ==================================================================
+* atoi
+* atol
+* atoll
+* strtol
+* strtoll
+* strtoul
+* strtoull
 * memset
 * memmove
 * memcpy

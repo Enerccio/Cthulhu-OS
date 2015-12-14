@@ -202,6 +202,7 @@ void __initialize_locale(){
 
 	memmove(&std_locale->conversion_locale, &def_loc_conv, sizeof(struct lconv));
 	__generate_stdasciicollate(&std_locale->collation_locale);
+	__initialize_ctype_tables(&std_locale->ctype_maps);
 
 	std_locale->lc_collate = "C:LC_COLLATE";
 	std_locale->lc_ctype = "C:LC_CTYPE";

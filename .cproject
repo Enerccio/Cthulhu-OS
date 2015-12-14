@@ -3,7 +3,9 @@
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="cdt.managedbuild.toolchain.gnu.base.674926722">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.toolchain.gnu.base.674926722" moduleId="org.eclipse.cdt.core.settings" name="Default">
-				<externalSettings/>
+				<externalSettings>
+					<externalSetting/>
+				</externalSettings>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
@@ -27,15 +29,16 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/includes}&quot;"/>
 									<listOptionValue builtIn="false" value="/usr2/fast/projects/pikokernel/pikokernel64/sysroot/usr/lib/gcc/x86_64-piko/5.1.0/include"/>
 									<listOptionValue builtIn="false" value="/usr2/fast/projects/pikokernel/pikokernel64/sysroot/usr/lib/gcc/x86_64-piko/5.1.0/include-fixed"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/kclib/external}&quot;"/>
 								</option>
 								<option id="gnu.c.compiler.option.warnings.extrawarn.1465089296" name="Extra warnings (-Wextra)" superClass="gnu.c.compiler.option.warnings.extrawarn" value="true" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.warnings.toerrors.563670022" name="Warnings as errors (-Werror)" superClass="gnu.c.compiler.option.warnings.toerrors" value="true" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.warnings.pedantic.1927911934" name="Pedantic (-pedantic)" superClass="gnu.c.compiler.option.warnings.pedantic" value="true" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.warnings.pedantic.error.1175895373" name="Pedantic warnings as errors (-pedantic-errors)" superClass="gnu.c.compiler.option.warnings.pedantic.error" value="true" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1985430272" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="__SIZEOF_POINTER__=8"/>
 									<listOptionValue builtIn="false" value="__KCLIB_KERNEL_MODE"/>
 									<listOptionValue builtIn="false" value="__KCLIB_EXTENSIONS"/>
+									<listOptionValue builtIn="false" value="__CDT_INDEXER__"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.nostdinc.656027401" name="Do not search system directories (-nostdinc)" superClass="gnu.c.compiler.option.preprocessor.nostdinc" value="false" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.misc.other.1545383880" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -ffreestanding -mno-red-zone -fPIC -Wno-error=unused-parameter -Wno-error=unused-variable" valueType="string"/>
@@ -64,7 +67,9 @@
 					</sourceEntries>
 				</configuration>
 			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings">
+				<externalSettings containerId="test;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+			</storageModule>
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">

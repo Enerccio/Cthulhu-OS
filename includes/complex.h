@@ -8,6 +8,10 @@
 #ifndef COMPLEX_H_
 #define COMPLEX_H_
 
+#ifdef __CDT_INDEXER__
+#include <gcc_defs.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
