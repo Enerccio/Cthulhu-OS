@@ -18,6 +18,8 @@ extern "C" {
 #define __STDERR 2
 #define __STDIN  3
 
+#define __STDBUFFER_SIZE 2048
+
 typedef struct {
 	uint8_t* buffer;
 	size_t   cpos;
@@ -34,6 +36,10 @@ void __initialize_streams();
 
 void     __initialize_buffer(__buffer_t* buffer, size_t initial_size, bool resizeable);
 size_t   __write_to_buffer(__buffer_t* buffer, uint8_t* data, size_t size);
+size_t	 __buffer_maxsize(__buffer_t* buffer);
+size_t	 __buffer_freesize(__buffer_t* buffer);
+size_t	 __buffer_fseek(__buffer_t* buffer);
+size_t	 __buffer_ftell(__buffer_t* buffer, size_t newpos);
 
 #ifdef __cplusplus
 }

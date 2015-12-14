@@ -2,6 +2,7 @@
 #include "intinc/stdio.h"
 #include <stdlib.h>
 #include <string.h>
+#include "intinc/shmath.h"
 
 void __initialize_buffer(__buffer_t* buffer, size_t initial_size, bool resize){
 	memset(buffer, 0, sizeof(__buffer_t));
@@ -58,4 +59,23 @@ size_t __write_to_buffer(__buffer_t* buffer, uint8_t* data, size_t size){
 		awbytes += __write_to_buffer(buffer, data+awbytes, ltwbytes);
 	}
 	return awbytes;
+}
+
+size_t __buffer_maxsize(__buffer_t* buffer){
+	return buffer->limit;
+}
+
+size_t __buffer_freesize(__buffer_t* buffer){
+	return buffer->limit - buffer->cpos;
+}
+
+size_t __buffer_fseek(__buffer_t* buffer){
+	return buffer->cpos;
+}
+
+size_t __buffer_ftell(__buffer_t* buffer, size_t newpos){
+	if (newpos >= buffer->limit)
+		return buffer->cpos;
+	buffer->cpos = newpos;
+	return newpos;
 }

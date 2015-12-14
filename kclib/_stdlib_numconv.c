@@ -5,32 +5,7 @@
 #include <stdint.h>
 #include <errno.h>
 #include <ctype.h>
-
-#if __GNUC__ >= 5
-#define __WILL_OVERFLOW_ADD(a, b, where) __builtin_add_overflow(a, b, where)
-#define __WILL_OVERFLOW_MUL(a, b, where) __builtin_mul_overflow(a, b, where)
-#else
-bool __safe_addition(uintmax_t a, uintmax_t b, uintmax_t* place){
-	if (a > (UINTMAX_MAX - b)) {
-		*place = 0;
-		return true;
-	} else {
-		*place = a+b;
-		return false;
-	}
-}
-#define __WILL_OVERFLOW_ADD(a, b, where) __safe_addition(a, b, where)
-bool __safe_multiplication(uintmax_t a, uintmax_t b, uintmax_t* place){
-	if (a > UINTMAX_MAX / b) {
-		*place = 0;
-		return true;
-	} else {
-		*place = a * b;
-		return false;
-	}
-}
-#define __WILL_OVERFLOW_MUL(a, b, where) __safe_multiplication(a, b, where)
-#endif
+#include "intinc/shmath.h"
 
 int atoi(const char *nptr){
 	return (int)strtol(nptr, (char **)NULL, 10);
