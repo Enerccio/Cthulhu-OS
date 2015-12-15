@@ -22,8 +22,8 @@ extern "C" {
 #define ERANGE		3
 #define EIO			4
 
-extern int errno;
-#define errno errno
+extern int err;
+#define errno err
 
 #ifdef __cplusplus
 }

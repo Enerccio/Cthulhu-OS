@@ -8,4 +8,4 @@
 #include <errno.h>
 #include <stdint.h>
 
-volatile int errno;
+int err;
