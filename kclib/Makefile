@@ -34,7 +34,7 @@ clean:
 	rm -f $(OBJ)
 
 %.o : %.c
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) -I"../includes" $< -o $@
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) -I"../include" $< -o $@
 
 libc.a: $(OBJ)
 	$(AR) -rcs $(LIBDIR)/$@ $(OBJ)
