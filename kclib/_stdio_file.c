@@ -98,7 +98,82 @@ FILE* fopen(const char* restrict filename,
 	if (fp == NULL)
 		return NULL;
 
+	int mmode = 0;
+	size_t modelen = strlen(mode);
+	if (modelen == 3){
+		if (strncmp(mode, "a+b") == 0 || strncmp(mode, "ab+") == 0){
+			mmode = __MODE_APPEND | __MODE_BINARY | __MODE_UPDATE;
+		}
+
+		if (strncmp(mode, "w+b") == 0 || strncmp(mode, "wb+") == 0){
+			mmode = __MODE_WRITE | __MODE_BINARY | __MODE_UPDATE;
+		}
+
+		if (strncmp(mode, "r+b") == 0 || strncmp(mode, "rb+") == 0){
+			mmode = __MODE_READ | __MODE_BINARY | __MODE_UPDATE;
+		}
+	} else if (modelen == 2){
+		if (strncmp(mode, "r+") == 0){
+			mmode = __MODE_READ | __MODE_UPDATE;
+		}
+		if (strncmp(mode, "w+") == 0){
+			mmode = __MODE_WRITE | __MODE_UPDATE;
+		}
+		if (strncmp(mode, "a+") == 0){
+			mmode = __MODE_APPEND | __MODE_UPDATE;
+		}
+		if (strncmp(mode, "rb") == 0){
+			mmode = __MODE_READ | __MODE_BINARY;
+		}
+		if (strncmp(mode, "wb") == 0){
+			mmode = __MODE_WRITE | __MODE_BINARY;
+		}
+		if (strncmp(mode, "ab") == 0){
+			mmode = __MODE_APPEND | __MODE_BINARY;
+		}
+	} else if (modelen == 1){
+		if (strncmp(mode, "r") == 0){
+			mmode = __MODE_READ;
+		}
+		if (strncmp(mode, "w") == 0){
+			mmode = __MODE_WRITE;
+		}
+		if (strncmp(mode, "a") == 0){
+			mmode = __MODE_APPEND;
+		}
+	}
+
+	if (mmode == 0) {
+		free(fp);
+		return NULL;
+	}
+
 	memset(fp, 0, sizeof(FILE));
+	fp->handle = __kclib_open_file_u(filename, mmode);
+
+	if (fp->handle == NULL){
+		free(fp);
+		return NULL;
+	}
+
+	fp->stat = malloc(sizeof(stat_t));
+	if (fp->stat == NULL){
+		free(fp);
+		return NULL;
+	}
+
+	if (__kclib_fstat_u(fp->handle, fp->stat, &errno)){
+		free(fp->stat);
+		free(fp);
+		return NULL;
+	}
+
+	if (fp->stat != NULL && fp->stat->st_mode == S_IFBLK){
+		if (setbuf(fp, NULL)){ // default buffer
+			free(fp->stat);
+			free(fp);
+		}
+	}
 
 	return fp;
 #endif
