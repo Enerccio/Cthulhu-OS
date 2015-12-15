@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/kernel.h>
 
 void print_loader_revision() {
 	kd_cwrite("PIKOKERNEL ", 0, 4);
@@ -26,6 +27,8 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start){
 	initialize_temporary_heap(heap_start);
 	initialize_paging(mboot_addr);
 	initialize_standard_heap();
+	__initialize_kclib();
+
 	// printf("Paging memory and kernel heap initialized\n");
 
 	void* x = malloc(0x100000);
