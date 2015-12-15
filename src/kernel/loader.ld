@@ -2,34 +2,60 @@ ENTRY(_start)
 
 SECTIONS
 {
+	. = 0;
+	
+	.mboot BLOCK(4K) : ALIGN(4K)
+	{
+		*(.mboot)
+	}
+
 	. = 1M;
 
-	/* First put the multiboot header, as it is required to be put very early
-	   early in the image or the bootloader won't recognize the file format.
-	   Next we'll put the .text section. */
-	.text BLOCK(4K) : ALIGN(4K)
+	.init BLOCK(4K) : ALIGN(4K)
 	{
-		*(.multiboot)
-		*(.text)
+		*(.init)
 	}
+	
+	_init_end = .;
+	. =  0xFFFFFFFF80000000 + _init_end;
 
-	/* Read-only data. */
-	.rodata BLOCK(4K) : ALIGN(4K)
-	{
-		*(.rodata)
-	}
+	.text : AT(ADDR(.text) - 0xFFFFFFFF80000000)
+    {
+        _code = .;
+        *(.text)
+        *(.rodata*)
+        *(.stack)
+        . = ALIGN(4096);
+    }
 
-	/* Read-write data (initialized) */
-	.data BLOCK(4K) : ALIGN(4K)
-	{
-		*(.data)
-	}
+   .data : AT(ADDR(.data) - 0xFFFFFFFF80000000)
+   {
+        _data = .;
+        *(.data)
+        . = ALIGN(4096);
+   }
+   
+   .eh_frame : AT(ADDR(.eh_frame) - 0xFFFFFFFF80000000)
+   {
+       _ehframe = .;
+       *(.eh_frame)
+       . = ALIGN(4096);
+   }
 
-	/* Read-write data (uninitialized) and stack */
-	.bss BLOCK(4K) : ALIGN(4K)
-	{
-		*(COMMON)
-		*(.bss)
-		*(.bootstrap_stack)
-	}
+   .bss : AT(ADDR(.bss) - 0xFFFFFFFF80000000)
+   {
+       _bss = .;
+       *(.bss)
+       *(.rodata)
+       *(COMMON)
+       . = ALIGN(4096);
+   }
+
+   _end = .;
+
+   /DISCARD/ :
+   {
+        *(.comment)
+   }
+   
 }

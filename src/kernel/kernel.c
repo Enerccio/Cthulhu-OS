@@ -18,16 +18,21 @@ void print_loader_revision() {
 	kd_newl();
 }
 
-void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start)
-{
+void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start){
 	kd_clear();
 	print_loader_revision();
 	init_errors();
 
 	initialize_temporary_heap(heap_start);
 	initialize_paging(mboot_addr);
+	initialize_standard_heap();
+	// printf("Paging memory and kernel heap initialized\n");
 
-	allocate(0xCCCC0000, 0x10000, true, false);
+	void* x = malloc(0x100000);
+	free(x);
+
+	x = malloc(0x100050);
+	free(x);
 
 	while (true) ;
 }

@@ -67,3 +67,5 @@ typedef int8_t cmpresult_t;
 #endif
 
 typedef void* aligned_ptr_t;
+
+#define RESERVED_KBLOCK_REVERSE_MAPPINGS (510UL)

@@ -125,3 +125,4 @@ void initialize_paging(struct multiboot* mb);
 uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid);
 
 void allocate(uint64_t from, size_t amount, bool kernel, bool readonly);
+void deallocate(uint64_t from, size_t amount);

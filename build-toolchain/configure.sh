@@ -21,5 +21,7 @@ cd ..
 
 cd build-newlib-kernel
 rm * -rfv || true
+export CFLAGS_FOR_TARGET="-fPIC -DKERNEL_MODE"
 ../sources/newlib/newlib-2.2.0-1-patched/configure --prefix="$KERNELLIB" --target=x86_64-piko
+export CFLAGS_FOR_TARGET=""
 cd ..

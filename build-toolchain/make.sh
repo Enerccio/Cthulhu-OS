@@ -28,12 +28,16 @@ PATH=$(pwd):$PATH
 cd ..
 
 cd build-newlib
+export EX_CPPFLAGS_FOR_TARGET=" "
+export EX_LFLAGS_FOR_TARGET=" "
 make all
 make DESTDIR=$SYSROOT install
 cd ..
 cp -ar ${SYSROOT}/${SYSROOT}/usr/x86_64-piko/* ${SYSROOT}/usr/
 
 cd build-newlib-kernel
+export EX_CPPFLAGS_FOR_TARGET=" -mcmodel=kernel -DKERNEL_MODE"
+export EX_LFLAGS_FOR_TARGET=" "
 make all
 make DESTDIR=$KERNELLIB install
 cd ..

@@ -1,6 +1,6 @@
 plugin_ctrl: unmapped=1, biosdev=1, speaker=1, extfpuirq=1, parallel=1, serial=1
 config_interface: textconfig
-display_library: x, #options="gui_debug"
+display_library: x , options="gui_debug"
 memory: host=32, guest=32
 romimage: file=/usr/share/bochs/BIOS-bochs-latest, address=0x00000
 vgaromimage: file=/usr/share/bochs/VGABIOS-elpin-2.40
