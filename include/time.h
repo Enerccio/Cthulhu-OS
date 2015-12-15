@@ -16,8 +16,6 @@
 extern "C" {
 #endif
 
-#error KCLIB does not support this library yet
-
 #ifdef __cplusplus
 }
 #endif
