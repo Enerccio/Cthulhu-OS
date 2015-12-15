@@ -9,9 +9,6 @@ FILE*  stdout;
 FILE __stdin;
 FILE*  stdin;
 
-FILE** __buffered_handles;
-size_t __buffered_handles_len;
-
 int fclose(FILE* stream){
 	if (!__IS_CLOSEABLE(stream->fflags))
 		return 0;
@@ -61,43 +58,18 @@ int fflush(FILE* stream){
 	}
 }
 
-int __buffered_io_stream(FILE* file, void* stream_descriptor, size_t buffer_size){
-	memset(file, 0, sizeof(FILE));
-	file->handle = stream_descriptor;
-	__initialize_buffer(&file->buffer, buffer_size, false);
-	if (__buffer_freesize(&file->buffer) > 0){
-		file->fflags |= __FLAG_HASBUFFER;
-		if (__buffered_handles_len == 0){
-			__buffered_handles_len = __BUF_FILES_STARTLEN;
-			__buffered_handles = malloc(sizeof(FILE)*__buffered_handles_len);
-			__buffered_handles[0] = file;
-		} else {
-			bool inserted = false;
-	reinsert:
-			for (size_t i = 0; i < __buffered_handles_len; i++){
-				if (__buffered_handles[i] == NULL){
-					__buffered_handles[i] = file;
-					inserted = true;
-					break;
-				}
-			}
-			if (!inserted){
-				void* nptr = realloc(__buffered_handles, __buffered_handles_len*2);
-				if (nptr == NULL)
-					return 1;
-				memset(nptr+(sizeof(FILE*)*__buffered_handles_len), 0, sizeof(FILE*)*__buffered_handles_len);
-				__buffered_handles = nptr;
-				__buffered_handles_len *= 2;
-				goto reinsert;
-			}
-		}
-	}
-
-	return 0;
+FILE* __create_filehandle(void* pd){
+	FILE* f = malloc(sizeof(FILE));
+	if (f == NULL)
+		return NULL;
+	memset(f, 0, sizeof(FILE));
+	f->handle = pd;
+	return f;
 }
 
-void __std_stream(FILE* file){
-
+void __init_std_stream(FILE* stream, void* fd, int mode){
+	stream->handle = fd;
+	setvbuf(stream, NULL, mode, BUFSIZ);
 }
 
 void __initialize_streams(){
@@ -108,13 +80,13 @@ void __initialize_streams(){
 	stderr = &__stderr;
 	stdin  = &__stdin;
 
-	__buffered_io_stream(stderr, __kclib_open_std_stream(__STDERR), __STDBUFFER_SIZE);
-	__buffered_io_stream(stdout, __kclib_open_std_stream(__STDOUT), __STDBUFFER_SIZE);
-	__buffered_io_stream(stdin, __kclib_open_std_stream(__STDIN), 0);
+	memset(stdout, 0, sizeof(FILE));
+	memset(stderr, 0, sizeof(FILE));
+	memset(stdin, 0, sizeof(FILE));
 
-	__std_stream(stdout);
-	__std_stream(stderr);
-	__std_stream(stdin);
+	__init_std_stream(stdout, __kclib_open_std_stream(__STDOUT), _IOLBF);
+	__init_std_stream(stderr, __kclib_open_std_stream(__STDERR), _IOLBF);
+	__init_std_stream(stdin, __kclib_open_std_stream(__STDIN), _IONBF);
 }
 
 FILE* fopen(const char* restrict filename,

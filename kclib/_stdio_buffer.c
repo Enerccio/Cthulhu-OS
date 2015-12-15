@@ -4,40 +4,14 @@
 #include <string.h>
 #include "intinc/shmath.h"
 
-void __initialize_buffer(__buffer_t* buffer, size_t initial_size, bool resize){
-	memset(buffer, 0, sizeof(__buffer_t));
-	buffer->cpos = 0;
-	buffer->limit = initial_size;
-	buffer->resize = resize;
-	buffer->buffer = malloc(sizeof(uint8_t)*buffer->limit);
-	if (buffer->buffer == NULL)
-		buffer->limit = 0;
-}
 
-int __resize_buffer(__buffer_t* buffer){
-	size_t old_limit = buffer->limit;
-	uint8_t* old_ptr = buffer->buffer;
-
-	buffer->limit *= 2;
-	buffer->buffer = realloc(buffer->buffer, buffer->limit);
-
-	if (buffer->buffer == NULL){
-		buffer->limit = old_limit;
-		buffer->buffer = old_ptr;
-		return 1;
-	}
-	return 0;
-}
+FILE** __buffered_handles;
+size_t __buffered_handles_len;
 
 size_t __write_to_buffer(__buffer_t* buffer, uint8_t* data, size_t size){
 	size_t rembytes = buffer->limit - buffer->cpos;
 
-	if (rembytes == 0 && buffer->resize){
-		if (__resize_buffer(buffer)){
-			return 0;
-		}
-		return __write_to_buffer(buffer, data, size);
-	} else if (rembytes == 0 && !buffer->resize){
+	if (rembytes == 0){
 		// buffer full, no resize
 		return 0;
 	}
@@ -80,11 +54,78 @@ size_t __buffer_ftell(__buffer_t* buffer, size_t newpos){
 	return newpos;
 }
 
-void __free_buffer(__buffer_t* buffer){
-	free(buffer->buffer);
-}
-
 uint8_t* __buffer_get_data(__buffer_t* buffer, size_t* len){
 	*len = buffer->cpos;
 	return buffer->buffer;
+}
+
+void __free_buffer(__buffer_t* buffer){
+	if (buffer->autoalloc){
+		free(buffer->buffer);
+		buffer->buffer = NULL;
+		buffer->limit = 0;
+		buffer->cpos = 0;
+	} else {
+		buffer->buffer = NULL;
+		buffer->limit = 0;
+		buffer->cpos = 0;
+	}
+}
+
+int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size){
+	if (stream->buffer.inited){
+		__free_buffer(&stream->buffer);
+		memset(&stream->buffer, 0, sizeof(__buffer_t));
+	}
+
+	stream->buffer.mode = mode;
+	stream->buffer.inited = true;
+
+	stream->buffer.cpos = 0;
+	stream->buffer.limit = 0;
+
+	if (stream->buffer.mode != _IONBF){
+		stream->fflags |= __FLAG_HASBUFFER;
+		if (buf == NULL){
+			buf = malloc(size);
+			if (buf == NULL)
+				return __BUF_ERROR_MALLOC_FAILURE;
+			stream->buffer.autoalloc = true;
+		} else {
+			stream->buffer.autoalloc = false;
+		}
+		stream->buffer.buffer = (uint8_t*)buf;
+		stream->buffer.limit = size;
+
+		if (__buffered_handles_len == 0){
+				__buffered_handles_len = __BUF_FILES_STARTLEN;
+				__buffered_handles = malloc(sizeof(FILE)*__buffered_handles_len);
+				__buffered_handles[0] = stream;
+			} else {
+				bool inserted = false;
+		reinsert:
+				for (size_t i = 0; i < __buffered_handles_len; i++){
+					if (__buffered_handles[i] == NULL){
+						__buffered_handles[i] = stream;
+						inserted = true;
+						break;
+					}
+				}
+				if (!inserted){
+					void* nptr = realloc(__buffered_handles, __buffered_handles_len*2);
+					if (nptr == NULL)
+						return 1;
+					memset(nptr+(sizeof(FILE*)*__buffered_handles_len), 0, sizeof(FILE*)*__buffered_handles_len);
+					__buffered_handles = nptr;
+					__buffered_handles_len *= 2;
+					goto reinsert;
+				}
+			}
+	}
+
+	return 0;
+}
+
+int setbuf(FILE* restrict stream, char* restrict buf){
+	return setvbuf(stream, buf, _IOFBF, BUFSIZ);
 }
