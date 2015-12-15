@@ -15,7 +15,7 @@ include  machine/$(MACHINE).mk
 -include $(MODE)/defaults.mk
 
 CFLAGS:= -ffreestanding -std=c99 -Wall -Wextra \
-	-fmessage-length=0 -nostdlib -fPIC \
+	-fmessage-length=0 -nostdlib \
 	 $(DEBUG) $(MODE_CFLAGS) $(MACHINEDEF_CFLAGS) $(SYSDEF_CFLAGS) $(CFLAGS_FOR_TARGET) 
 CPPFLAGS = $(MODE_CPPFLAGS) $(MACHINEDEF_CPPFLAGS) \
 	$(SYSDEF_CPPFLAGS) $(CPPFLAGS_FOR_TARGET)

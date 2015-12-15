@@ -1,0 +1,1 @@
+MODE_CFLAGS := -fPIC

@@ -1,2 +1,2 @@
-SYSDEF_CFLAGS ?= -mno-red-zone
+SYSDEF_CFLAGS ?= -mcmodel=kernel -mno-red-zone
 SYSDEF_CPPFLAGS ?= -DKERNEL_MODE
