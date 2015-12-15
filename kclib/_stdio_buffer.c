@@ -121,6 +121,8 @@ int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size){
 					goto reinsert;
 				}
 			}
+	} else {
+		stream->fflags ^= __FLAG_HASBUFFER;
 	}
 
 	return 0;
