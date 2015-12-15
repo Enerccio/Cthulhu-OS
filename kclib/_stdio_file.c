@@ -300,3 +300,11 @@ size_t fwrite(const void* restrict ptr,
 		} while (true);
 	}
 }
+
+int fseek(FILE *stream, long int offset, int whence){
+	return 0;
+}
+
+long int ftell(FILE *stream){
+	return 0;
+}

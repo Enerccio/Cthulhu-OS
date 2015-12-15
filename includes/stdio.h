@@ -42,6 +42,8 @@ size_t fread(void* restrict ptr,
 size_t fwrite(const void* restrict ptr,
 		size_t size, size_t nmemb,
 		FILE* restrict stream);
+int fseek(FILE *stream, long int offset, int whence);
+long int ftell(FILE *stream);
 
 #define BUFSIZ 2048
 
