@@ -1,18 +1,23 @@
 #!/bin/bash
 
-set -x
-
 # compile libc for kernel
-PATH=$(realpath sysroot/bin):"$PATH"
-PATH=$(realpath sysroot/usr/bin):"$PATH" 
+PATH=$(realpath toolchain/usr/bin):"$PATH" 
 
 rm -rfv $(realpath src/newlib)
 mkdir $(realpath src/newlib)
 
-cd build-toolchain/build-newlib-kernel
-make -j
-make DESTDIR=$(realpath src/newlib) install
-cd ../..
+cd build-toolchain
+KERNELLIB=$(realpath ../src/kclib)
+rm -rfv ${KERNELLIB}/* || true
+mkdir ${KERNELLIB}/usr
+mkdir ${KERNELLIB}/usr/include
+mkdir ${KERNELLIB}/usr/lib
+make clean
+make all PREFIX=${KERNELLIB}/usr CC=x86_64-piko-gcc AR=x86_64-piko-ar
+pushd sources/kclib/kclib
+cp -RT include ${KERNELLIB}/usr/include
+popd
+cd ..
 
 # compile kernel
 pushd src/kernel

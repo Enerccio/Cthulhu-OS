@@ -1,13 +1,19 @@
 #!/bin/bash
 
-PREFIX=$(realpath ../sysroot/usr)
-SYSROOT=$(realpath ../sysroot)
-KERNELLIB=$(realpath ../src/newlib)
-OLDP=$PATH
+PREFIX=$(realpath ../toolchain/usr)
+SYSROOT=$(realpath ../osroot)
+KERNELLIB=$(realpath ../src/kclib)
 
-rm -rfv $SYSROOT/* || true
+PATH="$PREFIX/bin:$PATH"
+
+rm -rfv ${SYSROOT}/* || true
+rm -rfv ${KERNELLIB}/* || true
 mkdir ${SYSROOT}/usr
+mkdir ${SYSROOT}/usr/lib
 mkdir ${SYSROOT}/usr/include
+mkdir ${KERNELLIB}/usr
+mkdir ${KERNELLIB}/usr/include
+mkdir ${KERNELLIB}/usr/lib
 
 cd build-binutils
 make
@@ -15,41 +21,28 @@ make install
 cd ..
 
 rm -rfv temp || true
-mkdir temp
-cd temp
 
-ln -s /usr/bin/x86_64-elf-ar x86_64-piko-ar
-ln -s /usr/bin/x86_64-elf-as x86_64-piko-as
-ln -s /usr/bin/x86_64-elf-gcc x86_64-piko-gcc
-ln -s /usr/bin/x86_64-elf-gcc x86_64-piko-cc
-ln -s /usr/bin/x86_64-elf-ranlib x86_64-piko-ranlib
-
-PATH=$(pwd):$PATH
-cd ..
-
-cd build-newlib
-export EX_CPPFLAGS_FOR_TARGET=" "
-export EX_LFLAGS_FOR_TARGET=" "
-make all
-make DESTDIR=$SYSROOT install
-cd ..
-cp -ar ${SYSROOT}/${SYSROOT}/usr/x86_64-piko/* ${SYSROOT}/usr/
-
-cd build-newlib-kernel
-export EX_CPPFLAGS_FOR_TARGET=" -mcmodel=kernel -DKERNEL_MODE"
-export EX_LFLAGS_FOR_TARGET=" "
-make all
-make DESTDIR=$KERNELLIB install
-cd ..
-
-PATH=$OLDP
+pushd sources/kclib/kclib
+cp -RT include ${SYSROOT}/usr/include
+cp -RT include ${KERNELLIB}/usr/include
+popd
 
 cd build-gcc
 make all-gcc all-target-libgcc
 make install-gcc install-target-libgcc
+cd ..
+
+pushd sources/kclib/kclib
+make clean
+make all PREFIX=${SYSROOT}/usr  CC=x86_64-piko-gcc AR=x86_64-piko-ar
+popd
+
+pushd sources/kclib/kclib
+make clean
+make all PREFIX=${KERNELLIB}/usr CC=x86_64-piko-gcc AR=x86_64-piko-ar
+popd
+
+cd build-gcc
 make all-target-libstdc++-v3
 make install-target-libstdc++-v3
-
-/bin/cp -ar ${SYSROOT}/usr/lib/gcc ${SYSROOT}/lib/ -rf
-cp ${SYSROOT}/bin/x86_64-piko-gcc ${SYSROOT}/bin/x86_64-piko-cc
 cd ..

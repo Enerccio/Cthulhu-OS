@@ -86,11 +86,11 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config.gcc gcc/gcc/config.g
  
  case ${target} in
 +i[34567]86-*-piko*)
-+    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h piko.h"
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h piko.h"
 +    ;;
 +x86_64-*-piko*)
 +	tmake_file="${tmake_file} i386/t-x86_64-elf"
-+    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h i386/x86-64.h piko.h"
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h piko.h"
 +    ;;
  aarch64*-*-elf)
  	tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h"

@@ -1,1 +1,3 @@
 config.log
+/build-binutils/
+/build-gcc/
