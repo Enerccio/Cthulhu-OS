@@ -43,6 +43,7 @@ struct FILE {
 
 void __initialize_streams();
 
+/* _stdio_buffer.h */
 void     __initialize_buffer(__buffer_t* buffer, size_t initial_size, bool resizeable);
 size_t   __write_to_buffer(__buffer_t* buffer, uint8_t* data, size_t size);
 size_t	 __buffer_maxsize(__buffer_t* buffer);

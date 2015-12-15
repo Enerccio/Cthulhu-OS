@@ -116,3 +116,18 @@ void __initialize_streams(){
 	__std_stream(stderr);
 	__std_stream(stdin);
 }
+
+FILE* fopen(const char* restrict filename,
+		const char * restrict mode){
+#ifdef __KCLIB_KERNEL_MODE
+	return NULL; // no support in kernel mode
+#else
+	FILE* fp = malloc(sizeof(FILE));
+	if (fp == NULL)
+		return NULL;
+
+	memset(fp, 0, sizeof(FILE));
+
+	return fp;
+#endif
+}

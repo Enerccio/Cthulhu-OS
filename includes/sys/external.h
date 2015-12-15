@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +45,20 @@ extern __noreturn __kclib_assert_failure_k(uint32_t lineno, const char* file, co
  * Returns value for key in environment, null if there is none
  */
 extern char*	  __kclib_environ_search_u(char* key);
+
+#define __MODE_READ   (1<<1)
+#define __MODE_WRITE  (1<<2)
+#define __MODE_APPEND (1<<3)
+#define __MODE_BINARY (1<<4)
+#define __MODE_UPDATE (1<<5)
+/**
+ * Opens file with mode and path
+ */
+extern void*	  __kclib_open_file_u(const char* path, uint32_t mode);
+/**
+ * Fills the stat parameter for provided descriptor
+ */
+extern int		  __kclib_fstat_u(void* descriptor, struct stat* stat, int* errno);
 
 #endif
 

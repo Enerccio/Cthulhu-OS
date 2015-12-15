@@ -34,6 +34,8 @@ extern FILE* stdin;
 /* _stdio_file.c */
 int fclose(FILE* stream);
 int fflush(FILE* stream);
+FILE* fopen(const char* restrict filename,
+		const char * restrict mode);
 /* _stdio_printf.c */
 
 int vfprintf(FILE* restrict stream,
