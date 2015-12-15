@@ -90,9 +90,19 @@ extern uint8_t    __kclib_isreclaimed(uintptr_t afrom, size_t aamount);
 extern void*	  __kclib_open_std_stream(uint8_t request_mode);
 /**
  * Sends the buffer to specified stream
- * Returns actual written data
+ * Returns actual written data or -1 on failure
  */
 extern ptrdiff_t  __kclib_send_data(void* stream, uint8_t* array, size_t buffer_size);
+/**
+ * Reads the data to buffer from file
+ * Returns actually read data or -1 on failure
+ */
+extern ptrdiff_t  __kclib_read_data(void* stream, uint8_t* buffer, size_t read_amount);
+/**
+ * Unreads the data in buffer with amount specified (buffer might not be used, if necessary)
+ * Returns unreaded count or -1 on error
+ */
+extern ptrdiff_t  __kclib_unread_data(void* stream, uint8_t* buffer, size_t unread_amount);
 
 #ifdef __cplusplus
 }

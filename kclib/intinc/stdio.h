@@ -36,15 +36,15 @@ typedef struct {
 } __buffer_t;
 
 struct FILE {
-	void* handle;
-	__buffer_t buffer;
-	uint32_t fflags;
-	size_t lastpos;
+	void* 		handle;
+	__buffer_t  buffer;
+	uint32_t 	fflags;
 
-	int	 error;
-	bool eof;
-	bool closed;
-	stat_t* stat;
+	int	 		error;
+	bool 		eof;
+	bool 		closed;
+	bool		lastwrite;
+	stat_t* 	stat;
 };
 typedef struct FILE FILE;
 
@@ -56,6 +56,8 @@ FILE* __create_filehandle(void* pd);
 extern FILE** __buffered_handles;
 extern size_t __buffered_handles_len;
 size_t   __write_to_buffer(__buffer_t* buffer, uint8_t* data, size_t size);
+size_t	 __read_from_buffer(__buffer_t* buffer, uint8_t* source, size_t amount);
+size_t	 __buffer_usedsize(__buffer_t* buffer);
 size_t	 __buffer_maxsize(__buffer_t* buffer);
 size_t	 __buffer_freesize(__buffer_t* buffer);
 size_t	 __buffer_fseek(__buffer_t* buffer);

@@ -35,6 +35,26 @@ size_t __write_to_buffer(__buffer_t* buffer, uint8_t* data, size_t size){
 	return awbytes;
 }
 
+size_t __read_from_buffer(__buffer_t* buffer, uint8_t* source, size_t amount){
+	size_t reminbuffer, readamount;
+	if (buffer->cpos >= amount){
+		reminbuffer = buffer->cpos - amount;
+		readamount = amount;
+	} else {
+		reminbuffer = 0;
+		readamount = buffer->cpos;
+	}
+
+	memmove(source, buffer->buffer, readamount);
+	memmove(buffer->buffer, buffer->buffer+readamount, reminbuffer);
+	buffer->cpos = reminbuffer;
+	return readamount;
+}
+
+size_t __buffer_usedsize(__buffer_t* buffer){
+	return buffer->cpos;
+}
+
 size_t __buffer_maxsize(__buffer_t* buffer){
 	return buffer->limit;
 }

@@ -36,11 +36,22 @@ int fclose(FILE* stream);
 int fflush(FILE* stream);
 FILE* fopen(const char* restrict filename,
 		const char * restrict mode);
+size_t fread(void* restrict ptr,
+		size_t size, size_t nmemb,
+		FILE* restrict stream);
+size_t fwrite(const void* restrict ptr,
+		size_t size, size_t nmemb,
+		FILE* restrict stream);
 
 #define BUFSIZ 2048
+
 #define _IONBF 0
 #define _IOFBF 1
 #define _IOLBF 2
+
+#define __FERROR_READ    1
+#define __FERROR_WRITE   2
+#define __FERROR_BUFFULL 3
 
 /* _stdio_buffer.h */
 #define __BUF_ERROR_MALLOC_FAILURE 1
@@ -51,9 +62,9 @@ int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size);
 int vfprintf(FILE* restrict stream,
 	const char* restrict format,
 	va_list arg);
-
 int fprintf(FILE* restrict stream,
 		const char* restrict format, ...);
+int printf(const char* restrict format, ...);
 
 
 #ifdef __cplusplus

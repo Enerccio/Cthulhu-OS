@@ -40,21 +40,44 @@ int fflush(FILE* stream){
 		return 0;
 	}
 
-	size_t len;
-	uint8_t* data = __buffer_get_data(&stream->buffer, &len);
+	if (stream->lastwrite){
+		size_t len;
+		uint8_t* data = __buffer_get_data(&stream->buffer, &len);
 
-	ptrdiff_t datasent = __kclib_send_data(stream->handle, data, len);
-	if (datasent == EOF){
-		return 1;
-	}
+		ptrdiff_t datasent = __kclib_send_data(stream->handle, data, len);
 
-	__buffer_ftell(&stream->buffer, 0);
+		__buffer_ftell(&stream->buffer, 0);
+		stream->lastwrite = false;
 
-	if ((size_t)datasent < len){
-		__write_to_buffer(&stream->buffer, data+datasent, len-datasent);
-		return 1;
+		if (datasent < 0){
+			stream->error = __FERROR_WRITE;
+			return EOF;
+		} else {
+			if ((size_t)datasent < len){
+				return EOF;
+			} else {
+				return 0;
+			}
+		}
 	} else {
-		return 0;
+		size_t len;
+		uint8_t* data = __buffer_get_data(&stream->buffer, &len);
+
+		ptrdiff_t datasent = __kclib_unread_data(stream->handle, data, len);
+
+		__buffer_ftell(&stream->buffer, 0);
+		stream->lastwrite = true;
+
+		if (datasent < 0){
+			stream->error = __FERROR_WRITE;
+			return EOF;
+		} else {
+			if ((size_t)datasent < len){
+				return EOF;
+			} else {
+				return 0;
+			}
+		}
 	}
 }
 
@@ -177,4 +200,103 @@ FILE* fopen(const char* restrict filename,
 
 	return fp;
 #endif
+}
+
+size_t fread(void* restrict ptr,
+		size_t size, size_t nmemb,
+		FILE* restrict stream){
+	if (size == 0 || nmemb == 0)
+		return 0;
+
+	size_t readcount = size * nmemb;
+	uint8_t* resbuf = (uint8_t*)ptr;
+
+	if (!__IS_HASBUFFER(stream->fflags)){
+		// no buffer, read directly from stream
+		ptrdiff_t ra =  __kclib_read_data(stream->handle, resbuf, readcount);
+		if (ra < 0){
+			stream->error = __FERROR_READ;
+			return 0;
+		} else
+			return ra;
+	} else {
+		if (stream->lastwrite){
+			if (fflush(stream) != 0)
+				return 0;
+		}
+
+		size_t readc = 0;
+		do {
+			size_t rc = __read_from_buffer(&stream->buffer, resbuf, readcount);
+			resbuf += rc;
+			readcount -= rc;
+			readc += rc;
+
+			if (__buffer_usedsize(&stream->buffer) != 0){
+				return readc;
+			}
+
+			ptrdiff_t osra = __kclib_read_data(stream->handle, stream->buffer.buffer, stream->buffer.limit);
+			if (osra < 0){
+				stream->error = __FERROR_READ;
+				return readc;
+			}
+			stream->buffer.cpos = (size_t)osra;
+
+
+			if (readcount == 0)
+				return readc;
+			else {
+				if (__buffer_freesize(&stream->buffer) == __buffer_maxsize(&stream->buffer)){
+					return readc;
+				}
+			}
+		} while (true);
+	}
+}
+
+size_t fwrite(const void* restrict ptr,
+		size_t size, size_t nmemb,
+		FILE* restrict stream){
+	if (size == 0 || nmemb == 0)
+		return 0;
+
+	size_t writecount = size * nmemb;
+	uint8_t* writebuf = (uint8_t*)ptr;
+
+	if (!__IS_HASBUFFER(stream->fflags)){
+		// no buffer, read directly from stream
+		ptrdiff_t ra =  __kclib_send_data(stream->handle, writebuf, writecount);
+		if (ra < 0){
+			stream->error = __FERROR_READ;
+			return 0;
+		} else
+			return ra;
+	} else {
+		if (!stream->lastwrite){
+			if (fflush(stream) != 0)
+				return 0;
+		}
+
+		size_t writec = 0;
+		do {
+			ptrdiff_t oswa = __kclib_send_data(stream->handle, stream->buffer.buffer, stream->buffer.cpos);
+			if (oswa < 0){
+				stream->error = __FERROR_WRITE;
+				return writec;
+			} else if (oswa == 0 && __buffer_freesize(&stream->buffer) == 0){
+				stream->error = __FERROR_BUFFULL;
+				return writec;
+			}
+			stream->buffer.cpos = (size_t)oswa;
+
+			size_t wc = __write_to_buffer(&stream->buffer, writebuf, writecount);
+			writebuf += wc;
+			writecount -= wc;
+			writec += wc;
+
+			if (writecount == 0)
+				return writec;
+		} while (true);
+	}
 }
