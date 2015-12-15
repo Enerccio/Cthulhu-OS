@@ -15,6 +15,7 @@ void init_errors() {
 
 	error_codes[UNDEFINED_ERROR] = "UNDEFINED_ERROR";
 	error_codes[ERROR_NO_MEMORY_DETECTED] = "ERROR_NO_MEMORY_DETECTED";
+	error_codes[ERROR_INTERNAL_LIBC] = "ERROR_INTERNAL_LIBC";
 
 }
 

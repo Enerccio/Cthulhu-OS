@@ -6,7 +6,7 @@ COMPILE_DIR="../../src/kernel/"
 BUILDDIR="../../build/pikokernel/"
 ASM_ARGS="-f elf64"
 COMPILER="x86_64-piko-gcc"
-DEFINES="-DKERNEL_MODE"
+DEFINES="-DKERNEL_MODE -D__KCLIB_KERNEL_MODE"
 COMPILER_ARGS="-mcmodel=kernel -ffreestanding -mno-red-zone -g -O0 -std=c99 -Wall -Wextra -Wno-unused-parameter -fno-exceptions -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -g $DEFINES -I../kclib/usr/include"
 LINKER="x86_64-piko-gcc"
 LINKER_ARGS="  -ffreestanding -mno-red-zone -O0 -nostdlib -lgcc -z max-page-size=0x1000 -L../../src/kclib/usr/lib -lc -Xlinker -M"
@@ -20,7 +20,7 @@ COMPILE_SOURCES=("kernel"
 	"utils/logger" 
 	"utils/textinput"
 	"utils/rsod"
-	"newlib/newlib"
+	"kclib/kclib"
 	)
 
 pushd ${BUILDDIR}	

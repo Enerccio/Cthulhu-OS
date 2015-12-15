@@ -26,6 +26,15 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1030800880" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.1424440779" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.1974180683" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.97160986" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="__CDT_INDEXER__"/>
+									<listOptionValue builtIn="false" value="__KCLIB_KERNEL_MODE"/>
+								</option>
+								<option id="gnu.c.compiler.option.include.paths.1429173683" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/pikokernel64/src/kernel}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/pikokernel64/src/kclib/usr/include}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/enerccio/git/kclib/external"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.625030009" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1397533251" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug"/>

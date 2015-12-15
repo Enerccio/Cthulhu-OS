@@ -4,6 +4,7 @@
 
 #define UNDEFINED_ERROR 						0
 #define ERROR_NO_MEMORY_DETECTED				1
+#define ERROR_INTERNAL_LIBC						2
 
 void init_errors();
 

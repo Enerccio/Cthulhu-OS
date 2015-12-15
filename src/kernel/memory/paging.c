@@ -310,3 +310,11 @@ void deallocate(uint64_t from, size_t amount) {
 	}
 }
 
+bool allocated(uint64_t addr){
+	uint64_t* page = get_page(addr, false);
+	if (page == NULL)
+		return false;
+	if (!PRESENT(*page))
+		return false;
+	return true;
+}
