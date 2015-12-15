@@ -13,4 +13,5 @@ int vfprintf(FILE* restrict stream,
 		const char* restrict format,
 		va_list arg){
 
+	return 0;
 }
