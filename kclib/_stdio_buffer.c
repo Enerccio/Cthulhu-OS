@@ -1,14 +1,18 @@
+#include <sys/external.h>
 #include <stdio.h>
-#include "intinc/stdio.h"
 #include <stdlib.h>
 #include <string.h>
-#include "intinc/shmath.h"
 
+#include "intinc/shmath.h"
+#include "intinc/stdio.h"
+#include "intinc/string.h"
 
 FILE** __buffered_handles;
 size_t __buffered_handles_len;
 
-size_t __write_to_buffer(__buffer_t* buffer, uint8_t* data, size_t size){
+size_t __write_to_buffer(__buffer_t* buffer, uint8_t* data, size_t size, bool* flushit){
+	*flushit = false;
+
 	size_t rembytes = buffer->limit - buffer->cpos;
 
 	if (rembytes == 0){
@@ -26,11 +30,17 @@ size_t __write_to_buffer(__buffer_t* buffer, uint8_t* data, size_t size){
 		ltwbytes = 0;
 	}
 
-	memmove(buffer->buffer + buffer->cpos, data, awbytes);
+#ifdef __NEWLINE
+	if (buffer->mode == _IOLBF)
+		__memmove_cb(buffer->buffer + buffer->cpos, data, awbytes, flushit, __NEWLINE);
+	else
+#endif
+		memmove(buffer->buffer + buffer->cpos, data, awbytes);
+
 	buffer->cpos += awbytes;
 
 	if (ltwbytes != 0){
-		awbytes += __write_to_buffer(buffer, data+awbytes, ltwbytes);
+		awbytes += __write_to_buffer(buffer, data+awbytes, ltwbytes, flushit);
 	}
 	return awbytes;
 }
@@ -90,6 +100,11 @@ void __free_buffer(__buffer_t* buffer){
 		buffer->limit = 0;
 		buffer->cpos = 0;
 	}
+}
+
+void __buffer_shift(__buffer_t* buffer, size_t sa){
+	memmove(buffer->buffer, buffer->buffer+sa, sa);
+	buffer->cpos = buffer->cpos-sa;
 }
 
 int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size){

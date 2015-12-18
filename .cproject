@@ -5,12 +5,12 @@
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.toolchain.gnu.base.674926722" moduleId="org.eclipse.cdt.core.settings" name="Default">
 				<externalSettings/>
 				<extensions>
-					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
@@ -28,12 +28,10 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.529743841" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
 								<option id="gnu.c.compiler.option.dialect.std.329875622" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.1405934739" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/usr2/fast/projects/pikokernel/pikokernel64/sysroot/usr/lib/gcc/x86_64-piko/5.1.0/include"/>
-									<listOptionValue builtIn="false" value="/usr2/fast/projects/pikokernel/pikokernel64/sysroot/usr/lib/gcc/x86_64-piko/5.1.0/include-fixed"/>
-									<listOptionValue builtIn="false" value="/usr/lib/gcc/x86_64-unknown-linux-gnu/5.2.0/include"/>
-									<listOptionValue builtIn="false" value="/usr/lib/gcc/x86_64-unknown-linux-gnu/5.2.0/include-fixed"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/kclib/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/kclib/external}&quot;"/>
+									<listOptionValue builtIn="false" value="/usr/lib/gcc/x86_64-unknown-linux-gnu/5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/usr/lib/gcc/x86_64-unknown-linux-gnu/5.3.0/include-fixed"/>
 								</option>
 								<option id="gnu.c.compiler.option.warnings.extrawarn.1465089296" name="Extra warnings (-Wextra)" superClass="gnu.c.compiler.option.warnings.extrawarn" value="true" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.warnings.toerrors.563670022" name="Warnings as errors (-Werror)" superClass="gnu.c.compiler.option.warnings.toerrors" value="true" valueType="boolean"/>
@@ -61,10 +59,10 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.670520209" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.base.1921337766" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base">
 								<option id="gnu.both.asm.option.include.paths.1562925485" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/kclib/kclib/external}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/kclib/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/kclib/external}&quot;"/>
 									<listOptionValue builtIn="false" value="/usr2/fast/projects/pikokernel/pikokernel64/sysroot/usr/lib/gcc/x86_64-piko/5.1.0/include"/>
 									<listOptionValue builtIn="false" value="/usr2/fast/projects/pikokernel/pikokernel64/sysroot/usr/lib/gcc/x86_64-piko/5.1.0/include-fixed"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/kclib/kclib/include}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.818714344" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>

@@ -4,6 +4,8 @@
 * marks support for both kernel and user mode
 ? marks support for both, but kernel mode only returning some
   sentinel value
+x marks partial support in functionality 
+   (see header doc for missing stuff)
 no mark means support in user mode
 
 after each function, required externals are listed in parenthesis
@@ -85,6 +87,14 @@ stdio.h
 * fwrite {__kclib_send_data,}
 * setbuf
 * setvbuf
+x fprintf
+* vfprintf
+* printf
+* vprintf
+* sprintf
+* vsprintf
+* snprintf
+* vsnprintf
 ==================================================================
 stdlib.h
 ==================================================================

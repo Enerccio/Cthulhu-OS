@@ -2,10 +2,44 @@
 #include <errno.h>
 #include "intinc/stdio.h"
 
+int vprintf(const char* restrict format, va_list arg){
+	return vfprintf(stdout, format, arg);
+}
+
+int vsprintf(char* restrict s, const char* restrict format, va_list arg){
+	return vsnprintf(s, (size_t)-1, format, arg);
+}
+
+int vsnprintf(char* restrict s, size_t n, const char* restrict format, va_list arg){
+	FILE* vfs = __create_vstream((uint8_t*)s, n, _IOLBF);
+	if (vfs == NULL)
+		return EOF;
+	int retval = vfprintf(vfs, format, arg);
+	fclose(vfs);
+	free(vfs);
+	return retval;
+}
+
+int snprintf(char* restrict s, size_t n, const char* restrict format, ...){
+	va_list args;
+	va_start(args, format);
+	int retval = vsnprintf(s, n, format, args);
+	va_end(args);
+	return retval;
+}
+
+int sprintf(char* restrict s, const char* restrict format, ...){
+	va_list args;
+	va_start(args, format);
+	int retval = vsprintf(s, format, args);
+	va_end(args);
+	return retval;
+}
+
 int printf(const char* restrict format, ...){
 	va_list args;
 	va_start(args, format);
-	int retval = vfprintf(stdout, format, args);
+	int retval = vprintf(format, args);
 	va_end(args);
 	return retval;
 }
@@ -53,10 +87,10 @@ int __printf_flags(char** format, uint64_t* flags){
 	case ' ': __PRINTF_S_SIGNCONV_SPACE_ALLWAYS(flags); break;
 	case '#': __PRINTF_S_ALTERF_YES(flags); break;
 	default:
-		return 1;
+		return 0;
 	}
 	++*format;
-	return 0;
+	return 1;
 }
 
 #define __PRINTF_CHECKMOD(format, target, spec, type) \

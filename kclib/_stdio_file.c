@@ -294,13 +294,18 @@ size_t fwrite(const void* restrict ptr,
 					stream->error = __FERROR_BUFFULL;
 					return writec;
 				}
-				stream->buffer.cpos = (size_t)oswa;
+				__buffer_shift(&stream->buffer, (size_t)oswa);
 			}
 
-			size_t wc = __write_to_buffer(&stream->buffer, writebuf, writecount);
+			bool flushit;
+			size_t wc = __write_to_buffer(&stream->buffer, writebuf, writecount, &flushit);
 			writebuf += wc;
 			writecount -= wc;
 			writec += wc;
+
+			if (flushit){
+				fflush(stream);
+			}
 
 			if (writecount == 0)
 				return writec;
@@ -308,14 +313,14 @@ size_t fwrite(const void* restrict ptr,
 	}
 }
 
-FILE* __create_vstream(uint8_t* backing_array, size_t n){
+FILE* __create_vstream(uint8_t* backing_array, size_t n, uint8_t mode){
 	FILE* vf = malloc(sizeof(FILE));
 	if (vf == NULL)
 		return NULL;
 
 	memset(vf, 0, sizeof(FILE));
 	vf->virtual = true;
-	if (setvbuf(vf, (char*)backing_array, _IOLBF, n)){
+	if (setvbuf(vf, (char*)backing_array, mode, n)){
 		free(vf);
 		return NULL;
 	}

@@ -65,13 +65,18 @@ int setbuf(FILE* restrict stream, char* restrict buf);
 int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size);
 
 /* _stdio_printf.c */
-int vfprintf(FILE* restrict stream,
-	const char* restrict format,
-	va_list arg);
-int fprintf(FILE* restrict stream,
-		const char* restrict format, ...);
+/**
+ * Completed stuff: s, n, %
+ * Missing stuff: everything else
+ */
+int fprintf(FILE* restrict stream, const char* restrict format, ...);
+int vfprintf(FILE* restrict stream, const char* restrict format, va_list arg);
 int printf(const char* restrict format, ...);
-
+int vprintf(const char* restrict format, va_list arg);
+int sprintf(char* restrict s, const char* restrict format, ...);
+int vsprintf(char* restrict s, const char* restrict format, va_list arg);
+int snprintf(char* restrict s, size_t n, const char* restrict format, ...);
+int vsnprintf(char* restrict s, size_t n, const char* restrict format, va_list arg);
 
 #ifdef __cplusplus
 }

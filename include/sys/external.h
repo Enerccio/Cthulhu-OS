@@ -24,6 +24,10 @@ extern "C" {
 #define __ALLOC_PAGE_SIZE 0x1000
 #endif
 
+#ifndef __NEWLINE
+#define __NEWLINE '\n'
+#endif
+
 #ifdef __KCLIB_KERNEL_MODE
 
 // kernel space required functions
