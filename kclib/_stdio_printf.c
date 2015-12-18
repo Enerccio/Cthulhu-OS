@@ -53,6 +53,14 @@ int fprintf(FILE* restrict stream,
 	return retval;
 }
 
+// TODO: Use ferror
+#define __PRINTF_WRITE(source, target, size) \
+	do { \
+		size_t wa = fwrite(source, size, 1, target); \
+		if (wa!=size || target->error != 0) \
+			return EOF; \
+	} while (0)
+
 #define __CHECK_INVALID(format) \
 	do { if (*format == '\0') return __FORMAT_ERROR_NOT_ENOUGH_DATA; } while (0)
 
@@ -112,32 +120,38 @@ int __printf_flags(char** format, uint64_t* flags){
 #define __PRINTF_LENMOD_BIGL 8
 #define __PRINTF_LENMOD_BIGL_TEST(format, target) __PRINTF_CHECKMOD(format, target, "L", __PRINTF_LENMOD_BIGL)
 
-#define __PRINTF_CONV_INT_TO_SINT 0
-#define __PRINTF_CONV_UINT_TO_UOCT 1
-#define __PRINTF_CONV_UINT_TO_UDEC 2
-#define __PRINTF_CONV_UINT_TO_UHEX_L 3
-#define __PRINTF_CONV_UINT_TO_UHEX_U 4
-#define __PRINTF_CONV_DBL_TO_FLT_DECNOT 5
-#define __PRINTF_CONV_DBL_TO_FLT_DECNOT_U 55
-#define __PRINTF_CONV_DBL_TO_FLT_ENOT 6
-#define __PRINTF_CONV_DBL_TO_FLT_ENOT_U 66
-#define __PRINTF_CONV_DBL_TO_FLT_DECORENOT 7
-#define __PRINTF_CONV_DBL_TO_FLT_DECORENOT_U 77
-#define __PRINTF_CONV_DBL_TO_FLT_HEXNOT 8
-#define __PRINTF_CONV_DBL_TO_FLT_HEXNOT_U 88
-#define __PRINTF_CONV_CHAR 9
-#define __PRINTF_CONV_STRING 10
-#define __PRINTF_CONV_PTR 11
-#define __PRINTF_CONV_WRITETO 12
-#define __PRINTF_CONV_PERC 13
+#define __PRINTF_WRITETO_BODY(type) \
+		type* ptr = va_arg(args, type*); \
+	*ptr = (type)*writelen; \
+	return 0
+#define __PRINTF_WRITETO_DEF(tpref, type) \
+	if (lenmod == tpref){ \
+		__PRINTF_WRITETO_BODY(type); \
+	}
 
-// TODO: Use ferror
-#define __PRINTF_WRITE(source, target, size) \
-	do { \
-		size_t wa = fwrite(source, size, 1, target); \
-		if (wa!=size || target->error != 0) \
-			return EOF; \
-	} while (0)
+#define __PRINTF_NUMCONV_DEF(numconfmacro, tpref, type) \
+	if (type == tpref ) { \
+		numconfmacro(type); \
+	}
+
+#define __PRINTF_CONV_INT_TO_SINT 			 	 1
+#define __PRINTF_CONV_UINT_TO_UOCT 				10
+#define __PRINTF_CONV_UINT_TO_UDEC 				11
+#define __PRINTF_CONV_UINT_TO_UHEX_L 			12
+#define __PRINTF_CONV_UINT_TO_UHEX_U 			13
+#define __PRINTF_CONV_DBL_TO_FLT_DECNOT 		20
+#define __PRINTF_CONV_DBL_TO_FLT_DECNOT_U 		21
+#define __PRINTF_CONV_DBL_TO_FLT_ENOT 			22
+#define __PRINTF_CONV_DBL_TO_FLT_ENOT_U 		23
+#define __PRINTF_CONV_DBL_TO_FLT_DECORENOT  	24
+#define __PRINTF_CONV_DBL_TO_FLT_DECORENOT_U 	25
+#define __PRINTF_CONV_DBL_TO_FLT_HEXNOT 		26
+#define __PRINTF_CONV_DBL_TO_FLT_HEXNOT_U 		27
+#define __PRINTF_CONV_CHAR 						30
+#define __PRINTF_CONV_STRING 					40
+#define __PRINTF_CONV_PTR 						50
+#define __PRINTF_CONV_WRITETO 					60
+#define __PRINTF_CONV_PERC 						70
 
 int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 					uint64_t flags, int widthspec, uint64_t lenmod, uint64_t type, va_list args){
@@ -148,9 +162,14 @@ int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 	}
 
 	if (type == __PRINTF_CONV_WRITETO){
-		int* ptr = va_arg(args, int*);
-		*ptr = *writelen;
-		return 0;
+		__PRINTF_WRITETO_DEF(__PRINTF_LENMOD_HH, signed char);
+		__PRINTF_WRITETO_DEF(__PRINTF_LENMOD_H, short int);
+		__PRINTF_WRITETO_DEF(__PRINTF_LENMOD_L, long int);
+		__PRINTF_WRITETO_DEF(__PRINTF_LENMOD_LL, long long int);
+		__PRINTF_WRITETO_DEF(__PRINTF_LENMOD_J, intmax_t);
+		__PRINTF_WRITETO_DEF(__PRINTF_LENMOD_Z, size_t);
+		__PRINTF_WRITETO_DEF(__PRINTF_LENMOD_T, ptrdiff_t);
+		__PRINTF_WRITETO_BODY(int);
 	}
 
 	if (type == __PRINTF_CONV_STRING){
@@ -164,6 +183,17 @@ int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 		__PRINTF_WRITE(ptr, stream, (unsigned int)widthspec);
 
 		*writelen += widthspec;
+	}
+
+	if (type == __PRINTF_CONV_INT_TO_SINT){
+		char buffer[64];
+		memset(buffer, 0, 64);
+
+		int value = va_arg(args, int);
+
+
+		bool minus = false;
+
 	}
 
 	// TODO rest
@@ -198,6 +228,8 @@ int vfprintf(FILE* restrict stream,
 			int widthspec = -1;
 			if (*fmt == '*') {
 				widthspec = va_arg(arg, int);
+				if (widthspec < 0)
+					widthspec = -widthspec;
 				++fmt;
 			} else {
 				widthspec = (int)strtol((const char*)fmt, &fmt, 10);
