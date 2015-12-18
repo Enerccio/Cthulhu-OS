@@ -55,6 +55,10 @@ long int ftell(FILE *stream);
 #define __FERROR_WRITE   2
 #define __FERROR_BUFFULL 3
 
+#define __FORMAT_ERROR_NOT_ENOUGH_DATA -2
+#define __FORMAT_ERROR_LENSPEC_INCORRECT -3
+#define __FORMAT_ERROR_WRONG_SPECS -4
+
 /* _stdio_buffer.h */
 #define __BUF_ERROR_MALLOC_FAILURE 1
 int setbuf(FILE* restrict stream, char* restrict buf);
