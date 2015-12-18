@@ -125,12 +125,20 @@ int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size){
 				bool inserted = false;
 		reinsert:
 				for (size_t i = 0; i < __buffered_handles_len; i++){
-					if (__buffered_handles[i] == NULL){
-						__buffered_handles[i] = stream;
-						inserted = true;
-						break;
+						if (__buffered_handles[i] == stream){
+							inserted = true;
+							break;
+						}
 					}
-				}
+
+				if (!inserted)
+					for (size_t i = 0; i < __buffered_handles_len; i++){
+						if (__buffered_handles[i] == NULL){
+							__buffered_handles[i] = stream;
+							inserted = true;
+							break;
+						}
+					}
 				if (!inserted){
 					void* nptr = realloc(__buffered_handles, __buffered_handles_len*2);
 					if (nptr == NULL)

@@ -44,6 +44,7 @@ struct FILE {
 	bool 		eof;
 	bool 		closed;
 	bool		lastwrite;
+	bool 		virtual;
 	stat_t* 	stat;
 };
 typedef struct FILE FILE;
@@ -51,6 +52,7 @@ typedef struct FILE FILE;
 /* _stdio_file.c */
 void __initialize_streams();
 FILE* __create_filehandle(void* pd);
+FILE* __create_vstream(uint8_t* backing_array, size_t n);
 
 /* _stdio_buffer.h */
 extern FILE** __buffered_handles;
