@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include "intinc/string.h"
 
 void* memchr(const void* s, int c, size_t n){
 	register uint8_t ch = (uint8_t)c;
@@ -113,29 +114,32 @@ char* strstr(const char* s1, const char* s2){
 	return NULL;
 }
 
-char* strtok(char* restrict s1, const char* restrict s2){
-	static char* __token;
-
+char* __strtok_ts(char** __token, char* restrict s1, const char* restrict s2){
 	if (s2 == NULL)
 		s2 = "";
 
 	if (s1 != NULL)
-		__token = s1;
+		*__token = s1;
 
-	if (__token == NULL)
+	if (*__token == NULL)
 		return NULL;
 
-	__token = __token + strspn(__token, s2);
+	*__token = *__token + strspn(*__token, s2);
 
-	char* pos = strpbrk(__token, s2);
+	char* pos = strpbrk(*__token, s2);
 	if (pos == NULL){
-		char* ret = __token;
-		__token = NULL;
+		char* ret = *__token;
+		*__token = NULL;
 		return ret;
 	}
 
 	*pos = '\0';
-	char* ret = __token;
-	__token = pos+1;
+	char* ret = *__token;
+	*__token = pos+1;
 	return ret;
+}
+
+char* strtok(char* restrict s1, const char* restrict s2){
+	static char* __token = NULL;
+	return __strtok_ts(&__token, s1, s2);
 }

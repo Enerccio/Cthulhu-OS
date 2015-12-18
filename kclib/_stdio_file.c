@@ -34,6 +34,9 @@ int fflush(FILE* stream){
 		return retv;
 	}
 
+	if (stream->virtual)
+		return 0; // virtual stream does not do anything except operating with buffer
+
 	if (__IS_CLOSEABLE(stream->fflags) && stream->closed)
 		return EOF;
 	if (!__IS_HASBUFFER(stream->fflags)){
@@ -236,12 +239,14 @@ size_t fread(void* restrict ptr,
 				return readc;
 			}
 
-			ptrdiff_t osra = __kclib_read_data(stream->handle, stream->buffer.buffer, stream->buffer.limit);
-			if (osra < 0){
-				stream->error = __FERROR_READ;
-				return readc;
+			if (!stream->virtual){
+				ptrdiff_t osra = __kclib_read_data(stream->handle, stream->buffer.buffer, stream->buffer.limit);
+				if (osra < 0){
+					stream->error = __FERROR_READ;
+					return readc;
+				}
+				stream->buffer.cpos = (size_t)osra;
 			}
-			stream->buffer.cpos = (size_t)osra;
 
 
 			if (readcount == 0)
@@ -280,15 +285,17 @@ size_t fwrite(const void* restrict ptr,
 
 		size_t writec = 0;
 		do {
-			ptrdiff_t oswa = __kclib_send_data(stream->handle, stream->buffer.buffer, stream->buffer.cpos);
-			if (oswa < 0){
-				stream->error = __FERROR_WRITE;
-				return writec;
-			} else if (oswa == 0 && __buffer_freesize(&stream->buffer) == 0){
-				stream->error = __FERROR_BUFFULL;
-				return writec;
+			if (!stream->virtual){
+				ptrdiff_t oswa = __kclib_send_data(stream->handle, stream->buffer.buffer, stream->buffer.cpos);
+				if (oswa < 0){
+					stream->error = __FERROR_WRITE;
+					return writec;
+				} else if (oswa == 0 && __buffer_freesize(&stream->buffer) == 0){
+					stream->error = __FERROR_BUFFULL;
+					return writec;
+				}
+				stream->buffer.cpos = (size_t)oswa;
 			}
-			stream->buffer.cpos = (size_t)oswa;
 
 			size_t wc = __write_to_buffer(&stream->buffer, writebuf, writecount);
 			writebuf += wc;
@@ -299,6 +306,21 @@ size_t fwrite(const void* restrict ptr,
 				return writec;
 		} while (true);
 	}
+}
+
+FILE* __create_vstream(uint8_t* backing_array, size_t n){
+	FILE* vf = malloc(sizeof(FILE));
+	if (vf == NULL)
+		return NULL;
+
+	memset(vf, 0, sizeof(FILE));
+	vf->virtual = true;
+	if (setvbuf(vf, (char*)backing_array, _IOLBF, n)){
+		free(vf);
+		return NULL;
+	}
+
+	return vf;
 }
 
 int fseek(FILE *stream, long int offset, int whence){
