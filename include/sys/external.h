@@ -102,11 +102,6 @@ extern ptrdiff_t  __kclib_send_data(void* stream, uint8_t* array, size_t buffer_
  * Returns actually read data or -1 on failure
  */
 extern ptrdiff_t  __kclib_read_data(void* stream, uint8_t* buffer, size_t read_amount);
-/**
- * Unreads the data in buffer with amount specified (buffer might not be used, if necessary)
- * Returns unreaded count or -1 on error
- */
-extern ptrdiff_t  __kclib_unread_data(void* stream, uint8_t* buffer, size_t unread_amount);
 
 #ifdef __cplusplus
 }

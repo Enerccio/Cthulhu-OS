@@ -62,26 +62,8 @@ int fflush(FILE* stream){
 				return 0;
 			}
 		}
-	} else {
-		size_t len;
-		uint8_t* data = __buffer_get_data(&stream->buffer, &len);
-
-		ptrdiff_t datasent = __kclib_unread_data(stream->handle, data, len);
-
-		__buffer_ftell(&stream->buffer, 0);
-		stream->lastwrite = true;
-
-		if (datasent < 0){
-			stream->error = __FERROR_WRITE;
-			return EOF;
-		} else {
-			if ((size_t)datasent < len){
-				return EOF;
-			} else {
-				return 0;
-			}
-		}
 	}
+	return 0;
 }
 
 FILE* __create_filehandle(void* pd){
@@ -224,8 +206,7 @@ size_t fread(void* restrict ptr,
 			return ra;
 	} else {
 		if (stream->lastwrite){
-			if (fflush(stream) != 0)
-				return 0;
+			__buffer_ftell(&stream->buffer, 0);
 		}
 
 		size_t readc = 0;
