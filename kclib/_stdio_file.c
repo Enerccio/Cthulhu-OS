@@ -285,7 +285,7 @@ size_t fwrite(const void* restrict ptr,
 
 		size_t writec = 0;
 		do {
-			if (!stream->virtual){
+			if (!stream->virtual && __buffer_freesize(&stream->buffer)<writecount){
 				ptrdiff_t oswa = __kclib_send_data(stream->handle, stream->buffer.buffer, stream->buffer.cpos);
 				if (oswa < 0){
 					stream->error = __FERROR_WRITE;
@@ -308,7 +308,7 @@ size_t fwrite(const void* restrict ptr,
 			}
 
 			if (writecount == 0)
-				return writec;
+				return writec/size;
 		} while (true);
 	}
 }

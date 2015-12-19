@@ -57,7 +57,8 @@ long int ftell(FILE *stream);
 
 #define __FORMAT_ERROR_NOT_ENOUGH_DATA -2
 #define __FORMAT_ERROR_LENSPEC_INCORRECT -3
-#define __FORMAT_ERROR_WRONG_SPECS -4
+#define __FORMAT_ERROR_PERCISION_INCORRECT -4
+#define __FORMAT_ERROR_WRONG_SPECS -5
 
 /* _stdio_buffer.h */
 #define __BUF_ERROR_MALLOC_FAILURE 1
@@ -66,7 +67,7 @@ int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size);
 
 /* _stdio_printf.c */
 /**
- * Completed stuff: s, n, %
+ * Completed stuff: s, n, %, d, i
  * Missing stuff: everything else
  */
 int fprintf(FILE* restrict stream, const char* restrict format, ...);
