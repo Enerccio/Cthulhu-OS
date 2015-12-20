@@ -67,8 +67,8 @@ int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size);
 
 /* _stdio_printf.c */
 /**
- * Completed stuff: s, n, %, d, i, o, u, x, X
- * Missing stuff: f, F, e, E, g, G, a, A, c, s
+ * Completed stuff: s (no wchar support), n, %, d, i, o, u, x, X, p
+ * Missing stuff: f, F, e, E, g, G, a, A, c
  */
 int fprintf(FILE* restrict stream, const char* restrict format, ...);
 int vfprintf(FILE* restrict stream, const char* restrict format, va_list arg);

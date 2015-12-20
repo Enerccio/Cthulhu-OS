@@ -126,6 +126,7 @@ int __printf_flags(char** format, uint64_t* flags){
 #define __PRINTF_LENMOD_T_TEST(format, target) __PRINTF_CHECKMOD(format, target, "t", __PRINTF_LENMOD_T)
 #define __PRINTF_LENMOD_BIGL 8
 #define __PRINTF_LENMOD_BIGL_TEST(format, target) __PRINTF_CHECKMOD(format, target, "L", __PRINTF_LENMOD_BIGL)
+#define __PRINTF_LENMOD_PTR 9
 
 #define __PRINTF_WRITETO_BODY(type) \
 	type* ptr = va_arg(args, type*); \
@@ -225,13 +226,30 @@ int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 		// TODO: handle l modifier / wchar_t
 
 		char* ptr = va_arg(args, char*);
-		if (widthspec == -1){
-			widthspec = strlen(ptr);
+		if (precision == -1){
+			precision = strlen(ptr);
 		}
 
-		__PRINTF_WRITE(ptr, stream, (unsigned int)widthspec);
+		__PRINTF_WRITE(ptr, stream, (unsigned int)precision);
 
-		*writelen += widthspec;
+		*writelen += precision;
+	}
+
+	if (type == __PRINTF_CONV_CHAR){
+
+	}
+
+	if (type == __PRINTF_CONV_PTR){
+		type = __PRINTF_CONV_UINT_TO_UHEX_L;
+
+		__PRINTF_S_SIGNCONV_NEGATIVE(&flags);
+		__PRINTF_S_SIGNCONV_SPACE_NEGATIVE(&flags);
+		__PRINTF_S_ZEROPAD_NO(&flags);
+		__PRINTF_S_ALTERF_YES(&flags);
+
+		if (lenmod == 0){
+			lenmod = __PRINTF_LENMOD_PTR;
+		}
 	}
 
 	if (type == __PRINTF_CONV_INT_TO_SINT){
@@ -355,6 +373,7 @@ int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_J, uintmax_t, __PRINTF_CONV_TO_RADIX(type))
 		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_Z, size_t, __PRINTF_CONV_TO_RADIX(type))
 		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_T, ptrdiff_t, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_PTR, uintptr_t, __PRINTF_CONV_TO_RADIX(type))
 		else { __PRINTF_NUMCONVS_BODY(unsigned int, __PRINTF_CONV_TO_RADIX(type)); }
 
 		digit_size += 2; // for 0x
@@ -476,12 +495,16 @@ int vfprintf(FILE* restrict stream,
 					widthspec = -widthspec;
 				++fmt;
 			} else {
-				if (widthspec < 0)
-					widthspec = -widthspec;
-				widthspec = (int)strtol((const char*)fmt, &fmt, 10);
+				char* cpos = fmt;
+				int wwidthspec = (int)strtol((const char*)fmt, &fmt, 10);
 				if (errno == ERANGE){
 					errno = 0;
 					return __FORMAT_ERROR_LENSPEC_INCORRECT;
+				}
+				if (fmt != cpos){
+					if (wwidthspec < 0)
+						wwidthspec = -wwidthspec;
+					widthspec = wwidthspec;
 				}
 			}
 
