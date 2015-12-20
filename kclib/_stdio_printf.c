@@ -236,7 +236,12 @@ int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 	}
 
 	if (type == __PRINTF_CONV_CHAR){
-
+		if (lenmod == 0){
+			lenmod = __PRINTF_LENMOD_HH;
+			type = __PRINTF_CONV_UINT_TO_UDEC;
+		} else {
+			// TODO: handle wchar
+		}
 	}
 
 	if (type == __PRINTF_CONV_PTR){
