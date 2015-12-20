@@ -125,6 +125,7 @@ int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size){
 			buf = malloc(size);
 			if (buf == NULL)
 				return __BUF_ERROR_MALLOC_FAILURE;
+			memset(buf, 0, size);
 			stream->buffer.autoalloc = true;
 		} else {
 			stream->buffer.autoalloc = false;
@@ -135,6 +136,7 @@ int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size){
 		if (__buffered_handles_len == 0){
 				__buffered_handles_len = __BUF_FILES_STARTLEN;
 				__buffered_handles = malloc(sizeof(FILE)*__buffered_handles_len);
+				memset(__buffered_handles, 0, sizeof(FILE)*__buffered_handles_len);
 				__buffered_handles[0] = stream;
 			} else {
 				bool inserted = false;
@@ -165,7 +167,7 @@ int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size){
 				}
 			}
 	} else {
-		stream->fflags ^= __FLAG_HASBUFFER;
+		stream->fflags &= ~__FLAG_HASBUFFER;
 	}
 
 	return 0;

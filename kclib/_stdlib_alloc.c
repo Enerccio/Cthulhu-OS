@@ -108,7 +108,7 @@ void* __find_hole(uint32_t size, ainfo_t** valids,
 		if (size < __MAX_MIN_HEADER_ALLOC_SIZE) {
 			if (ptr->present == 0){
 				// empty alloc page, use it for this small chunkhub
-				ptr->residue_count = __ALLOC_PAGE_SIZE / __MAX_MIN_HEADER_ALLOC_SIZE;
+				ptr->residue_count = __ALLOC_PAGE_SIZE / sizeof(cell_t);
 				ptr->total_hole = 0; // fill up chunk
 				ptr->base_used = 0;
 				*valids = ptr;
@@ -141,7 +141,10 @@ void* __find_hole(uint32_t size, ainfo_t** valids,
 	}
 }
 
+#define __ROUND_UP(a, b) (((a) / (b)) + (((a) % (b)) > 0 ? 1 : 0))
+
 void* __malloc(size_t osize){
+malloc_start:;
 	uintptr_t size = osize;
 
 	if (__heap_initialized == false){
@@ -163,9 +166,10 @@ void* __malloc(size_t osize){
 		request_malloc = true;
 		uint32_t rqc = (size / __ALLOC_PAGE_SIZE) + 1;
 		uint32_t pgc = __ALLOC_PAGE_SIZE / sizeof(ainfo_t);
-		uint32_t cpagec = pgc/rqc;
+		uint32_t cpagec = __ROUND_UP(rqc, pgc);
+		rqc = cpagec * pgc;
 
-		void* address = __kclib_allocate(__ALLOC_PAGE_SIZE * rqc);
+		void* address = __kclib_allocate(__ALLOC_PAGE_SIZE * cpagec);
 
 		if (address == 0){
 			// no mem for boundaries
@@ -173,17 +177,17 @@ void* __malloc(size_t osize){
 		}
 
 		uintptr_t nsizeb = cpagec * __ALLOC_PAGE_SIZE;
-		for (uint32_t i = 0; i < cpagec; i++){
+		for (uint32_t i = 0; i < rqc; i++){
 			ainfo_t* ainfo = (ainfo_t*)(address + (i*sizeof(ainfo_t)));
-			ainfo->total_hole = (cpagec-i) * __ALLOC_PAGE_SIZE;
+			ainfo->total_hole = (rqc-i) * __ALLOC_PAGE_SIZE;
 			ainfo->present = 0;
 			ainfo->previous = 0;
-			ainfo->next = (void*) ((i < (cpagec-1)) ?
+			ainfo->next = (void*) ((i < (rqc-1)) ?
 					  (void*) (address + ((i+1)*sizeof(ainfo_t)))
 					: 0);
 			ainfo->start_address = 0;
 			if (i == 0){
-				ainfo->starter_size = __ALLOC_PAGE_SIZE * rqc;
+				ainfo->starter_size = nsizeb;
 				ainfo->previous = valid_start != NULL? valid_start : 0;
 			} else {
 				ainfo->previous = (void*) (address + ((i-1)*sizeof(ainfo_t)));
@@ -201,20 +205,22 @@ void* __malloc(size_t osize){
 		if (valid_start != NULL){
 			// update the empty space before
 			while (true){
-				valid_start = (ainfo_t*)valid_start->previous;
+				if (valid_start == NULL)
+					break;
 				if (valid_start->present == 0 ||
 						valid_start->total_hole > 0){
 					valid_start->total_hole = nsizeb + __ALLOC_PAGE_SIZE;
 				} else
 					break;
 				nsizeb += __ALLOC_PAGE_SIZE;
+				valid_start = (ainfo_t*)valid_start->previous;
 			}
 		}
 	}
 
 	if (request_malloc){
 		// we allocated enough pages right now, call malloc again when we have the pages
-		return __malloc(osize);
+		goto malloc_start;
 	}
 
 	if (size < __MAX_MIN_HEADER_ALLOC_SIZE){
@@ -243,10 +249,14 @@ void* __malloc(size_t osize){
 		uint32_t pguc = 0;
 		ainfo_t* cadr= valid_start;
 		uintptr_t byterq = size;
+		uintptr_t baseaddr = (uintptr_t)
+				__kclib_allocate(byterq + (__ALLOC_PAGE_SIZE-(byterq % __ALLOC_PAGE_SIZE)));
 
 		while (byterq != 0){
 			if (!cadr->present){
-				cadr->start_address = (uintptr_t) __kclib_allocate(__ALLOC_PAGE_SIZE);
+				cadr->start_address = baseaddr;
+				baseaddr += __ALLOC_PAGE_SIZE;
+
 				if (cadr->start_address == 0){
 					// failed to allocate frame
 					return NULL;
@@ -268,6 +278,7 @@ void* __malloc(size_t osize){
 			}
 
 			cadr->total_hole = 0;
+			cadr = cadr->next;
 			++pguc;
 		}
 
@@ -289,7 +300,7 @@ void* __malloc(size_t osize){
 		memset(actual_addr, 0xCD, osize);
 
 		// update old tables
-		uintptr_t nsizeb = __ALLOC_PAGE_SIZE;
+		uintptr_t nsizeb = 0;
 		while (true){
 			valid_start = (ainfo_t*)valid_start->previous;
 			if (valid_start == NULL)
@@ -340,6 +351,7 @@ void __reclaim_chunks(ainfo_t* allocator){
 				} else {
 					// no left chunk, null the main struct
 					__map.amap = 0;
+					return;
 				}
 				break;
 			}
@@ -404,10 +416,8 @@ void __free_chunk(uint32_t cdifference, uint32_t difbytes, uintptr_t alloca){
 		return;
 	}
 
+	ainfo_t* allocator = ((ainfo_t*) alloca);
 	for (uint32_t i=0; i<cdifference; i++){
-		int32_t idx = -i;
-		ainfo_t* allocator = &((ainfo_t*) alloca)[idx];
-
 		if (difbytes > __ALLOC_PAGE_SIZE){
 			if (i == 0){
 				uint32_t cblockdata =
@@ -426,6 +436,8 @@ void __free_chunk(uint32_t cdifference, uint32_t difbytes, uintptr_t alloca){
 
 		if (allocator->base_used == 0)
 			__reclaim_chunk(allocator);
+
+		allocator = allocator->next;
 	}
 
 }
