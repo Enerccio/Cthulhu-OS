@@ -67,32 +67,32 @@ int fprintf(FILE* restrict stream,
 #define __PRINTF_JUSTIFY (1<<1)
 #define __PRINTF_JUSTIFY_LEFT(flags) ((flags & __PRINTF_JUSTIFY) == 0)
 #define __PRINTF_JUSTIFY_RIGHT(flags) ((flags & __PRINTF_JUSTIFY) == __PRINTF_JUSTIFY)
-#define __PRINTF_S_JUSTIFY_LEFT(flags) do {*flags ^= __PRINTF_JUSTIFY; } while (0)
-#define __PRINTF_S_JUSTIFY_RIGHT(flags) do {*flags |= __PRINTF_JUSTIFY; } while (0)
+#define __PRINTF_S_JUSTIFY_LEFT(flags) do {*flags &= __PRINTF_JUSTIFY; } while (0)
+#define __PRINTF_S_JUSTIFY_RIGHT(flags) do {*flags |= ~__PRINTF_JUSTIFY; } while (0)
 
 #define __PRINTF_SIGNCONV (1<<2)
 #define __PRINTF_SIGNCONV_ALLWAYS(flags) ((flags & __PRINTF_SIGNCONV) == __PRINTF_SIGNCONV)
 #define __PRINTF_SIGNCONV_NEGATIVE(flags) ((flags & __PRINTF_SIGNCONV) == 0)
 #define __PRINTF_S_SIGNCONV_ALLWAYS(flags) do {*flags |= __PRINTF_SIGNCONV; } while (0)
-#define __PRINTF_S_SIGNCONV_NEGATIVE(flags) do {*flags ^= __PRINTF_SIGNCONV; } while (0)
+#define __PRINTF_S_SIGNCONV_NEGATIVE(flags) do {*flags &= ~__PRINTF_SIGNCONV; } while (0)
 
 #define __PRINTF_SIGNCONV_SPACE (1<<3)
 #define __PRINTF_SIGNCONV_SPACE_ALLWAYS(flags) ((flags & __PRINTF_SIGNCONV_SPACE) == __PRINTF_SIGNCONV_SPACE)
 #define __PRINTF_SIGNCONV_SPACE_NEGATIVE(flags) ((flags & __PRINTF_SIGNCONV_SPACE) == 0)
 #define __PRINTF_S_SIGNCONV_SPACE_ALLWAYS(flags) do {*flags |= __PRINTF_SIGNCONV_SPACE; } while (0)
-#define __PRINTF_S_SIGNCONV_SPACE_NEGATIVE(flags) do {*flags ^= __PRINTF_SIGNCONV_SPACE; } while (0)
+#define __PRINTF_S_SIGNCONV_SPACE_NEGATIVE(flags) do {*flags &= ~__PRINTF_SIGNCONV_SPACE; } while (0)
 
 #define __PRINTF_ALTERF (1<<4)
 #define __PRINTF_ALTERF_YES(flags) ((flags & __PRINTF_ALTERF) == __PRINTF_ALTERF)
 #define __PRINTF_ALTERF_NO(flags) ((flags & __PRINTF_ALTERF) == 0)
 #define __PRINTF_S_ALTERF_YES(flags) do {*flags |= __PRINTF_ALTERF; } while (0)
-#define __PRINTF_S_ALTERF_NO(flags) do {*flags ^= __PRINTF_ALTERF; } while (0)
+#define __PRINTF_S_ALTERF_NO(flags) do {*flags &= ~__PRINTF_ALTERF; } while (0)
 
 #define __PRINTF_ZEROPAD (1<<5)
 #define __PRINTF_ZEROPAD_YES(flags) ((flags & __PRINTF_ZEROPAD) == __PRINTF_ZEROPAD)
 #define __PRINTF_ZEROPAD_NO(flags) ((flags & __PRINTF_ZEROPAD) == 0)
 #define __PRINTF_S_ZEROPAD_YES(flags) do {*flags |= __PRINTF_ZEROPAD; } while (0)
-#define __PRINTF_S_ZEROPAD_NO(flags) do {*flags ^= __PRINTF_ZEROPAD; } while (0)
+#define __PRINTF_S_ZEROPAD_NO(flags) do {*flags &= ~__PRINTF_ZEROPAD; } while (0)
 
 int __printf_flags(char** format, uint64_t* flags){
 	switch (**format){
@@ -128,7 +128,7 @@ int __printf_flags(char** format, uint64_t* flags){
 #define __PRINTF_LENMOD_BIGL_TEST(format, target) __PRINTF_CHECKMOD(format, target, "L", __PRINTF_LENMOD_BIGL)
 
 #define __PRINTF_WRITETO_BODY(type) \
-		type* ptr = va_arg(args, type*); \
+	type* ptr = va_arg(args, type*); \
 	*ptr = (type)*writelen; \
 	return 0
 #define __PRINTF_WRITETO_DEF(tpref, type) \
@@ -136,19 +136,19 @@ int __printf_flags(char** format, uint64_t* flags){
 		__PRINTF_WRITETO_BODY(type); \
 	}
 
-#define __PRINTF_NUMCONVS_BODY(type) \
-		__DIGIT_SIZE(digit_size, sizeof(type), 10); \
+#define __PRINTF_NUMCONVS_BODY(type, radix) \
+		__DIGIT_SIZE(digit_size, sizeof(type), radix); \
 		value = (type)va_arg(args, type)
-#define __PRINTF_NUMCONVS_BODYS(type) \
-		__DIGIT_SIZE(digit_size, sizeof(type), 10); \
+#define __PRINTF_NUMCONVS_BODYS(type, radix) \
+		__DIGIT_SIZE(digit_size, sizeof(type), radix); \
 		value = (type)va_arg(args, int)
-#define __PRINTF_NUMCONVS_DEF(tpref, type) \
+#define __PRINTF_NUMCONVS_DEF(tpref, type, radix) \
 	if (lenmod == tpref) { \
-		__PRINTF_NUMCONVS_BODY(type); \
+		__PRINTF_NUMCONVS_BODY(type, radix); \
 	}
-#define __PRINTF_NUMCONVS_DEFS(tpref, type) \
+#define __PRINTF_NUMCONVS_DEFS(tpref, type, radix) \
 	if (lenmod == tpref) { \
-		__PRINTF_NUMCONVS_BODYS(type); \
+		__PRINTF_NUMCONVS_BODYS(type, radix); \
 	}
 
 #define __PRINTF_CONV_INT_TO_SINT 			 	 1
@@ -181,6 +181,26 @@ static const int const __digits_to_radix[2048] = {
 		else if (radix == 8) result = (bytesize*8 / 4) * 3; \
 		else if (radix == 16) result = (bytesize*8 / 4); \
 	} while (0)
+
+#define __PRINTF_CONV_TO_RADIX(conv) \
+	((conv == __PRINTF_CONV_INT_TO_SINT || conv == __PRINTF_CONV_UINT_TO_UDEC) ? 10 : \
+	((conv == __PRINTF_CONV_UINT_TO_UOCT) ? 8 : \
+	   16))
+
+char __valradix(uint8_t v, bool uppercase){
+	static char val_radix_upper[] = {
+					'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+					'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+			};
+	static char val_radix_lower[] = {
+			'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+			'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+	};
+	if (uppercase)
+		return val_radix_upper[v];
+	else
+		return val_radix_lower[v];
+}
 
 int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 					uint64_t flags, int widthspec, int precision, uint64_t lenmod, uint64_t type, va_list args){
@@ -218,14 +238,14 @@ int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 		size_t digit_size = 0;
 		intmax_t value;
 
-		__PRINTF_NUMCONVS_DEFS(__PRINTF_LENMOD_HH, signed char)
-		else __PRINTF_NUMCONVS_DEFS(__PRINTF_LENMOD_H, short int)
-		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_L, long int)
-		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_LL, long long int)
-		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_J, intmax_t)
-		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_Z, size_t)
-		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_T, ptrdiff_t)
-		else { __PRINTF_NUMCONVS_BODY(int); }
+		__PRINTF_NUMCONVS_DEFS(__PRINTF_LENMOD_HH, signed char, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEFS(__PRINTF_LENMOD_H, short int, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_L, long int, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_LL, long long int, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_J, intmax_t, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_Z, size_t, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_T, ptrdiff_t, __PRINTF_CONV_TO_RADIX(type))
+		else { __PRINTF_NUMCONVS_BODY(int, __PRINTF_CONV_TO_RADIX(type)); }
 
 		digit_size += 1; // for sign
 		char buffer[digit_size], rbuffer[digit_size];
@@ -233,7 +253,7 @@ int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 
 		if (value == 0 && precision == 0){
 			__PRINTF_WRITE("0", stream, 1);
-			*writelen += 0;
+			*writelen += 1;
 			return 0;
 		}
 
@@ -247,7 +267,7 @@ int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 		do {
 			char digit = value % 10;
 			value /= 10;
-			buffer[used_bytes++] = '0'+digit;
+			buffer[used_bytes++] = __valradix(digit, 0);
 		} while (value != 0);
 
 		bool printed_sign = false;
@@ -268,7 +288,7 @@ int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 		}
 
 		if (__PRINTF_ZEROPAD_YES(flags) && !__PRINTF_JUSTIFY_RIGHT(flags)){
-			precision = widthspec-1;
+			precision = widthspec - (printed_sign ? 1 : 0);
 			if (precision < 0)
 				precision = 0;
 		}
@@ -292,6 +312,8 @@ int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 				__PRINTF_WRITE(rbuffer+1, stream, writesize);
 		} else {
 			size_t diff = (size_t)precision - used_bytes;
+			if ((size_t)precision < used_bytes)
+				diff = 0;
 			size_t difference = writesize - (used_bytes+(printed_sign ? 1 : 0));
 			if (difference < diff) {
 				diff = difference;
@@ -311,6 +333,102 @@ int __vprintf_arg(FILE* stream, char** fplace, size_t* writelen,
 					__PRINTF_WRITE("0", stream, 1);
 			}
 			__PRINTF_WRITE(rbuffer+1, stream, used_bytes); // print data
+			if (__PRINTF_JUSTIFY_RIGHT(flags)){
+				// print right justify
+				for (unsigned int i=0; i<difference; i++)
+					__PRINTF_WRITE(" ", stream, 1);
+			}
+		}
+
+		*writelen += writesize;
+		return 0;
+	}
+
+	if (type >= __PRINTF_CONV_UINT_TO_UOCT && type <= __PRINTF_CONV_UINT_TO_UHEX_U){
+		size_t digit_size = 0;
+		uintmax_t value;
+
+		__PRINTF_NUMCONVS_DEFS(__PRINTF_LENMOD_HH, unsigned char, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEFS(__PRINTF_LENMOD_H, unsigned short int, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_L, unsigned long int, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_LL, unsigned long long int, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_J, uintmax_t, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_Z, size_t, __PRINTF_CONV_TO_RADIX(type))
+		else __PRINTF_NUMCONVS_DEF(__PRINTF_LENMOD_T, ptrdiff_t, __PRINTF_CONV_TO_RADIX(type))
+		else { __PRINTF_NUMCONVS_BODY(unsigned int, __PRINTF_CONV_TO_RADIX(type)); }
+
+		digit_size += 2; // for 0x
+		char buffer[digit_size], rbuffer[digit_size];
+		memset(buffer, 0, digit_size);
+
+		size_t used_bytes = 0;
+		uint8_t radix = __PRINTF_CONV_TO_RADIX(type);
+		uintmax_t vvalue = value;
+		do {
+			char digit = vvalue % radix;
+			vvalue /= radix;
+			buffer[used_bytes++] = __valradix(digit, type == __PRINTF_CONV_UINT_TO_UHEX_U);
+		} while (vvalue != 0);
+
+		if (__PRINTF_ZEROPAD_YES(flags) && !__PRINTF_JUSTIFY_RIGHT(flags)){
+			precision = widthspec;
+			if (precision < 0)
+				precision = 0;
+		}
+
+		if (__PRINTF_ALTERF_YES(flags)){
+			if (type == __PRINTF_CONV_UINT_TO_UOCT){
+				if (precision == 0 && value == 0){
+					__PRINTF_WRITE("0", stream, 1);
+					return 0;
+				}
+
+				if ((size_t)precision <= used_bytes && buffer[used_bytes-1] != '0'){
+					precision = used_bytes+1;
+				}
+			} else if ((type == __PRINTF_CONV_UINT_TO_UHEX_L || type == __PRINTF_CONV_UINT_TO_UHEX_U) && value != 0){
+				buffer[used_bytes++] = (type == __PRINTF_CONV_UINT_TO_UHEX_U ? 'X' : 'x');
+				buffer[used_bytes++] = '0';
+			}
+		}
+
+		if (value == 0 && precision == 0){
+			return 0;
+		}
+
+		// reverse the buffer
+		for (size_t i=0; i<used_bytes; i++){
+			rbuffer[i] = buffer[used_bytes-i-1];
+		}
+
+		size_t writesize = (used_bytes < (size_t)precision ? (size_t)precision : used_bytes);
+		if (widthspec >= 0){
+			writesize = widthspec;
+		}
+
+		if (writesize <= used_bytes){
+			__PRINTF_WRITE(rbuffer, stream, writesize);
+		} else {
+			size_t diff = (size_t)precision - used_bytes;
+			if ((size_t)precision < used_bytes)
+				diff = 0;
+			size_t difference = writesize - used_bytes;
+			if (difference < diff) {
+				diff = difference;
+				difference = 0;
+			} else
+				difference -= diff;
+			if (__PRINTF_JUSTIFY_LEFT(flags)){
+				// print left justify
+				for (unsigned int i=0; i<difference; i++)
+					__PRINTF_WRITE(" ", stream, 1);
+			}
+			if (used_bytes < (size_t)precision){
+				// print filling
+				for (unsigned int i=0; i<diff; i++)
+					__PRINTF_WRITE("0", stream, 1);
+			}
+			__PRINTF_WRITE(rbuffer, stream, used_bytes); // print data
 			if (__PRINTF_JUSTIFY_RIGHT(flags)){
 				// print right justify
 				for (unsigned int i=0; i<difference; i++)
