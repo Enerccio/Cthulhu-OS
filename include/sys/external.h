@@ -67,26 +67,15 @@ extern int		  __kclib_fstat_u(void* descriptor, struct stat* stat, int* errno);
 #endif
 
 /**
- * Returns kernel heap start for kernel space, or returns start of the heap
- * section in user space.
- */
-extern void* 	  __kclib_heap_start();
-/**
  * Allocates the physical memory to that virtual address or syscall for more
  * memory from kernel.
  */
-extern void*	  __kclib_allocate(uintptr_t afrom, size_t aamount);
+extern void*	  __kclib_allocate(size_t aamount);
 /**
  * Deallocate the physical memory in kernel space or marks memory as unused
  * in user space
  */
 extern void 	  __kclib_deallocate(uintptr_t afrom, size_t aamount);
-/**
- * Should return 1 if address is reclaimed by kernel in kernel space or
- * not used in user space, so malloc library can modify it's highest used
- * address
- */
-extern uint8_t    __kclib_isreclaimed(uintptr_t afrom, size_t aamount);
 /**
  * Request standard stream file descriptor
  * Sent parameters are 1 - stdin, 2 - stderr, 3 - stdin

@@ -10,6 +10,7 @@
 typedef struct ainfo {
 	uint8_t  present;
 	uint8_t  starter;
+	uint32_t starter_size;
 	uint32_t  base_used;
 	void*	 next;
 	void*	 previous;
@@ -76,14 +77,11 @@ typedef struct cell {
 
 
 bool         __heap_initialized;
-uintptr_t    __heap_address;
-uintptr_t	 __highest_unused_address;
 alloc_map_t  __map;
 
 void __initialize_malloc(){
 	__heap_initialized = true;
-	__heap_address = (uintptr_t)__kclib_heap_start();
-	__highest_unused_address = __heap_address;
+	__map.amap = NULL;
 }
 
 void* __find_hole(uint32_t size, ainfo_t** valids,
@@ -163,12 +161,9 @@ void* __malloc(size_t osize){
 		uint32_t pgc = __ALLOC_PAGE_SIZE / sizeof(ainfo_t);
 		uint32_t cpagec = pgc/rqc;
 
-		uintptr_t address = __highest_unused_address;
-		void* test = __kclib_allocate(__highest_unused_address, __ALLOC_PAGE_SIZE * rqc);
-		// in kernel address  will be same as __highest_unused_address, but we can't rely on it
-		__highest_unused_address += __ALLOC_PAGE_SIZE * rqc;
+		void* address = __kclib_allocate(__ALLOC_PAGE_SIZE * rqc);
 
-		if (test == 0){
+		if (address == 0){
 			// no mem for boundaries
 			return NULL;
 		}
@@ -182,8 +177,9 @@ void* __malloc(size_t osize){
 			ainfo->next = (void*) ((i < (cpagec-1)) ?
 					  (void*) (address + ((i+1)*sizeof(ainfo_t)))
 					: 0);
-			ainfo->start_address = __highest_unused_address;
+			ainfo->start_address = 0;
 			if (i == 0){
+				ainfo->start_address = __ALLOC_PAGE_SIZE * rqc;
 				ainfo->previous = valid_start != NULL? valid_start : 0;
 			} else {
 				ainfo->previous = (void*) (address + ((i-1)*sizeof(ainfo_t)));
@@ -192,8 +188,6 @@ void* __malloc(size_t osize){
 			ainfo->residue_address = 0;
 			ainfo->residue_count = 0;
 			ainfo->base_used = __ALLOC_PAGE_SIZE;
-
-			__highest_unused_address += __ALLOC_PAGE_SIZE;
 
 			if (i == 0){
 				*invalid_start = ainfo;
@@ -220,8 +214,8 @@ void* __malloc(size_t osize){
 
 	if (size < __MAX_MIN_HEADER_ALLOC_SIZE){
 		if (valid_start->present == 0){
-			void* test = __kclib_allocate(valid_start->start_address, __ALLOC_PAGE_SIZE);
-			if (test == 0){
+			valid_start->start_address = (uintptr_t)__kclib_allocate(__ALLOC_PAGE_SIZE);
+			if (valid_start->start_address == 0){
 				// failed to allocate frame
 				return NULL;
 			}
@@ -241,8 +235,8 @@ void* __malloc(size_t osize){
 
 		while (byterq != 0){
 			if (!cadr->present){
-				void* test = __kclib_allocate(cadr->start_address, __ALLOC_PAGE_SIZE);
-				if (test == 0){
+				cadr->start_address = (uintptr_t) __kclib_allocate(__ALLOC_PAGE_SIZE);
+				if (cadr->start_address == 0){
 					// failed to allocate frame
 					return NULL;
 				}
@@ -324,10 +318,10 @@ void __reclaim_chunks(ainfo_t* allocator){
 		if (alleft->present == 0){
 			if (alleft->starter == 1){
 				// this is starting chunk, free that mem page out
-				__kclib_deallocate((uintptr_t)alleft, __ALLOC_PAGE_SIZE);
+				__kclib_deallocate((uintptr_t)alleft, alleft->starter_size);
 				if (alleft->previous != 0){
 					ainfo_t* ll = (ainfo_t*)alleft->previous;
-					ll->next = 0;
+					ll->next = alright;
 				} else {
 					// no left chunk, null the main struct
 					__map.amap = 0;
@@ -339,22 +333,6 @@ void __reclaim_chunks(ainfo_t* allocator){
 		}
 		alleft = (ainfo_t*)alleft->previous;
 	}
-
-	// finally, resize highest used address
-	// by querying implementor if memory is unused or not
-	uintptr_t new_unused = __highest_unused_address;
-	for (uintptr_t ti = __highest_unused_address-__ALLOC_PAGE_SIZE ;
-			ti >= __heap_address;
-			ti-=__ALLOC_PAGE_SIZE){
-		uint8_t reclaimed = __kclib_isreclaimed(ti, __ALLOC_PAGE_SIZE);
-		if (reclaimed == 1){
-			new_unused = ti;
-		} else {
-			__highest_unused_address = new_unused;
-			return;
-		}
-	}
-	__highest_unused_address = __heap_address;
 }
 
 void __reclaim_chunk(ainfo_t* allocator){
