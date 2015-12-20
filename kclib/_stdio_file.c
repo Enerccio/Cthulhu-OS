@@ -62,6 +62,8 @@ int fflush(FILE* stream){
 				return 0;
 			}
 		}
+	} else {
+		stream->lastwrite = true;
 	}
 	return 0;
 }

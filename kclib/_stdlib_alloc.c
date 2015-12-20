@@ -12,8 +12,8 @@ typedef struct ainfo {
 	uint8_t  starter;
 	uint32_t starter_size;
 	uint32_t  base_used;
-	void*	 next;
-	void*	 previous;
+	struct ainfo* next;
+	struct ainfo* previous;
 
 	uintptr_t start_address;
 	uintptr_t total_hole;
@@ -85,7 +85,9 @@ void __initialize_malloc(){
 }
 
 void* __find_hole(uint32_t size, ainfo_t** valids,
-		ainfo_t*** invalids){
+		ainfo_t*** invalids, bool* request_malloc){
+	*request_malloc = false;
+
 	if (__map.amap == NULL){
 		*valids = NULL;
 		*invalids = &__map.amap;
@@ -99,13 +101,13 @@ void* __find_hole(uint32_t size, ainfo_t** valids,
 		if (ptr == NULL){
 			*invalids = lastinvalid;
 			*valids = lhptr;
+			*request_malloc = true;
 			return NULL;
 		}
 
 		if (size < __MAX_MIN_HEADER_ALLOC_SIZE) {
 			if (ptr->present == 0){
 				// empty alloc page, use it for this small chunkhub
-				ptr->residue_address = ptr->start_address;
 				ptr->residue_count = __ALLOC_PAGE_SIZE / __MAX_MIN_HEADER_ALLOC_SIZE;
 				ptr->total_hole = 0; // fill up chunk
 				ptr->base_used = 0;
@@ -153,10 +155,12 @@ void* __malloc(size_t osize){
 	ainfo_t* valid_start;
 	ainfo_t** invalid_start;
 
-	void* addr = __find_hole(size, &valid_start, &invalid_start);
+	bool request_malloc;
+	void* addr = __find_hole(size, &valid_start, &invalid_start, &request_malloc);
 
 	if (invalid_start != NULL){
 		// we have no valid start, it means we need to allocate starting set of maps
+		request_malloc = true;
 		uint32_t rqc = (size / __ALLOC_PAGE_SIZE) + 1;
 		uint32_t pgc = __ALLOC_PAGE_SIZE / sizeof(ainfo_t);
 		uint32_t cpagec = pgc/rqc;
@@ -179,7 +183,7 @@ void* __malloc(size_t osize){
 					: 0);
 			ainfo->start_address = 0;
 			if (i == 0){
-				ainfo->start_address = __ALLOC_PAGE_SIZE * rqc;
+				ainfo->starter_size = __ALLOC_PAGE_SIZE * rqc;
 				ainfo->previous = valid_start != NULL? valid_start : 0;
 			} else {
 				ainfo->previous = (void*) (address + ((i-1)*sizeof(ainfo_t)));
@@ -201,13 +205,14 @@ void* __malloc(size_t osize){
 				if (valid_start->present == 0 ||
 						valid_start->total_hole > 0){
 					valid_start->total_hole = nsizeb + __ALLOC_PAGE_SIZE;
-				}
+				} else
+					break;
 				nsizeb += __ALLOC_PAGE_SIZE;
 			}
 		}
 	}
 
-	if (addr == NULL){
+	if (request_malloc){
 		// we allocated enough pages right now, call malloc again when we have the pages
 		return __malloc(osize);
 	}
@@ -219,13 +224,19 @@ void* __malloc(size_t osize){
 				// failed to allocate frame
 				return NULL;
 			}
+			valid_start->residue_address = valid_start->start_address;
 			valid_start->present = 1;
 		}
+		if (addr == NULL)
+			addr = (void*)valid_start->start_address;
 		uintptr_t v = (uintptr_t)addr;
 		sheader_t* header = (sheader_t*)addr;
 		header->used = 1;
 		header->ainfoptr = valid_start;
 		header->small_magic = __MINI_HEADER;
+
+		memset((void*)(v+sizeof(sheader_t)), 0xDC, __MAX_MIN_HEADER_ALLOC_SIZE);
+
 		return (void*)(v+sizeof(sheader_t));
 	} else {
 		// mark space
@@ -251,7 +262,8 @@ void* __malloc(size_t osize){
 				cadr->residue_address = cadr->start_address + byterq;
 				cadr->residue_count = ((cadr->start_address+__ALLOC_PAGE_SIZE) -
 						cadr->residue_address) / sizeof(cell_t);
-				memset((void*)cadr->start_address, 0, cadr->residue_count);
+				memset((void*)cadr->residue_address, 0, ((cadr->start_address+__ALLOC_PAGE_SIZE) -
+						cadr->residue_address));
 				byterq = 0;
 			}
 
@@ -272,6 +284,9 @@ void* __malloc(size_t osize){
 		afooter->header_address = aheader;
 		afooter->magic = __FOOTER_VERIFIER;
 		afooter->pc = pguc;
+
+		// null the address for security
+		memset(actual_addr, 0xCD, osize);
 
 		// update old tables
 		uintptr_t nsizeb = __ALLOC_PAGE_SIZE;
