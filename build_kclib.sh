@@ -1,10 +1,9 @@
 #!/bin/bash
 
-# compile libc for kernel
 PATH=$(realpath toolchain/usr/bin):"$PATH" 
 
-rm -rfv $(realpath src/newlib)
-mkdir $(realpath src/newlib)
+rm -rfv $(realpath src/kclib)
+mkdir $(realpath src/kclib)
 
 cd build-toolchain
 KERNELLIB=$(realpath ../src/kclib)
@@ -22,10 +21,3 @@ cp -RT include ${KERNELLIB}/usr/include
 popd
 cd ..
 
-# compile kernel
-pushd src/kernel
-./compile.sh 
-if [[ $? -ne 0 ]] ; then
-    exit 1 
-fi
-popd  

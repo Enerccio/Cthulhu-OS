@@ -1,7 +1,8 @@
 #!/bin/bash
 
-export PATH=/usr/local/bin:$PATH
-sudo -u enerccio ./make.sh
+export PATH=$(realpath toolchain/usr/bin):/usr/local/bin:$PATH
+sudo -u enerccio make clean 
+sudo -u enerccio make all 
 
 pushd disk
 ./update_image.sh
