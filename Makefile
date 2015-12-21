@@ -10,7 +10,7 @@ kernel-clean:
 	$(MAKE) clean -C src/kernel MODE=$(MODE)
 
 lib:
-	bash build_kclib.sh debug
+	bash build_kclib.sh $(MODE)
 	
 kernel:
 	$(MAKE) -C src/kernel MODE=$(MODE)
