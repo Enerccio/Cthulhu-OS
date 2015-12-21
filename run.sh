@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./make.sh
+sudo -u enerccio ./make.sh
 
 pushd disk
 ./update_image.sh

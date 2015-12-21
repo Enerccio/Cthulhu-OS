@@ -1,13 +1,5 @@
 #include "kstdlib.h"
 
-char* strcpy(char* target, const char* source) {
-	char* returnee = target;
-	char* buffer = (char*) source;
-	while ((*target++ = *buffer++))
-		;
-	return returnee;
-}
-
 inline uint32_t rand_number(int32_t limit) {
 	static uint32_t a = 3;
 	a = (((a * 214013L + 2531011L) >> 16) & 32767);

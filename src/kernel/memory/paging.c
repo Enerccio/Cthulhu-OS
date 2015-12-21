@@ -5,6 +5,7 @@
 #define PALIGN(type, addr) ((type)ALIGN(addr))
 
 uint64_t maxphyaddr;
+uint8_t* phys_map;
 uint8_t* frame_map;
 uint8_t* frame_map_usage;
 uint64_t maxram;
@@ -191,17 +192,21 @@ static uint8_t* create_frame_map(struct multiboot* mboot_addr) {
 	uint8_t* bitmap = malign(BITNSLOTS(maxframes), 0x1);
 	memset(bitmap, 0xFF, BITNSLOTS(maxframes)); // mark all ram as "used"
 	frame_map_usage = malign(BITNSLOTS(maxframes), 0x1); // initial value is ignored
+	phys_map = malign(BITNSLOTS(maxframes), 0x1);
+	memset(phys_map, 0xFF, BITNSLOTS(maxframes)); // mark all ram as "unavailable"
 
 	if ((mboot_addr->flags & 0b1) == 1) {
 
 		uint64_t bulk = (mboot_addr->mem_lower * 1024) / 0x1000;
 		for (i = 0; i < bulk; i++) {
 			BITCLEAR(bitmap, i);
+			BITCLEAR(phys_map, i);
 		}
 
 		bulk = (0x100000 + (mboot_addr->mem_upper * 1024)) / 0x1000;
 		for (i = 0x100000 / 0x1000; i < bulk; i++) {
 			BITCLEAR(bitmap, i);
+			BITCLEAR(phys_map, i);
 		}
 	}
 
@@ -222,6 +227,7 @@ static uint8_t* create_frame_map(struct multiboot* mboot_addr) {
 
 				for (i = start_bit; i < end_bit; i++) {
 					BITCLEAR(bitmap, i);
+					BITCLEAR(phys_map, i);
 				}
 			}
 		}

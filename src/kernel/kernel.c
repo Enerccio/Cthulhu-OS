@@ -20,6 +20,9 @@ void print_loader_revision() {
 }
 
 void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start){
+	volatile bool bbreak = true;
+	while (bbreak)
+		;
 	kd_clear();
 	print_loader_revision();
 	init_errors();
