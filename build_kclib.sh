@@ -13,13 +13,10 @@ mkdir ${KERNELLIB}/usr/include
 mkdir ${KERNELLIB}/usr/lib
 
 pushd sources/kclib/kclib
-git fetch --all
-git reset --hard origin/master
+#git fetch --all
+#git reset --hard origin/master
 make clean
-_MODE = $MODE
-unset MODE
-make all DEBREL=$1 PREFIX=${KERNELLIB}/usr CC=x86_64-piko-gcc AR=x86_64-piko-ar
-MODE = $_MODE
+make all MODE=kernel DEBREL="$1" PREFIX=${KERNELLIB}/usr CC=x86_64-piko-gcc AR=x86_64-piko-ar
 cp -RT include ${KERNELLIB}/usr/include
 popd
 cd ..
