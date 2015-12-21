@@ -1,24 +1,25 @@
-[BITS 32]
+section .text
+[BITS 64]
 
 [GLOBAL outb]
 [GLOBAL inb]
 [GLOBAL inw]
 
 outb:
-	mov ecx, edx
-	mov edx, eax
-	mov eax, ecx
+	mov rcx, rdx
+	mov rdx, rax
+	mov rax, rcx
 	out dx, al
 	ret
 
 inb:
-	mov edx, eax
-	mov eax, 0
+	mov rdx, rax
+	mov rax, 0
 	in al, dx
 	ret
 
 inw:
-	mov edx, eax
-	mov eax, 0
+	mov rdx, rax
+	mov rax, 0
 	in ax, dx
 	ret

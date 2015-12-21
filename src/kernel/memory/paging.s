@@ -1,5 +1,7 @@
-[GLOBAL detect_maxphyaddr]
+section .text
+[BITS 64]
 
+[GLOBAL detect_maxphyaddr]
 detect_maxphyaddr:
 	mov rax, 0x80000000
 	cpuid
@@ -24,4 +26,9 @@ get_active_page:
 [GLOBAL set_active_page]
 set_active_page:
 	mov cr3, rdi
+	ret
+
+[GLOBAL invalidate_address]
+invalidate_address:
+	invlpg [rdx]
 	ret

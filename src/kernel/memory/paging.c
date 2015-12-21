@@ -14,6 +14,7 @@ uint64_t maxframes;
 extern uint64_t detect_maxphyaddr();
 extern uint64_t get_active_page();
 extern void set_active_page(uint64_t address);
+extern void invalidate_address(uint64_t address);
 
 typedef struct v_address {
 	uint64_t offset :12;
@@ -312,6 +313,7 @@ void deallocate(uint64_t from, size_t amount) {
 		for (uint64_t addr = aligned; addr < end_addr; addr += 0x1000) {
 			memset((void*)addr, 0, 0x1000);
 			deallocate_frame(get_page(addr, false));
+			invalidate_address(addr);
 		}
 	}
 }

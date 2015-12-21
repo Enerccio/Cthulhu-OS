@@ -32,12 +32,14 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start){
 	initialize_standard_heap();
 	__initialize_kclib();
 
-	// printf("Paging memory and kernel heap initialized\n");
+	printf("Paging memory and kernel heap initialized\n");
 
 	void* x = malloc(0x100000);
+	printf("Malloc test %p\n", x);
 	free(x);
 
 	x = malloc(0x100050);
+	printf("Malloc test2 %p\n", x);
 	free(x);
 
 	while (true) ;

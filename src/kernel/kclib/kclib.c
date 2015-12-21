@@ -45,7 +45,3 @@ ptrdiff_t  __kclib_send_data(void* stream, uint8_t* array, size_t buffer_size){
 ptrdiff_t  __kclib_read_data(void* stream, uint8_t* buffer, size_t read_amount){
 	return 0;
 }
-
-ptrdiff_t  __kclib_unread_data(void* stream, uint8_t* buffer, size_t unread_amount){
-	return 0;
-}
