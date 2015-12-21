@@ -16,7 +16,10 @@ pushd sources/kclib/kclib
 git fetch --all
 git reset --hard origin/master
 make clean
-make all PREFIX=${KERNELLIB}/usr CC=x86_64-piko-gcc AR=x86_64-piko-ar
+_MODE = $MODE
+unset MODE
+make all DEBREL=$1 PREFIX=${KERNELLIB}/usr CC=x86_64-piko-gcc AR=x86_64-piko-ar
+MODE = $_MODE
 cp -RT include ${KERNELLIB}/usr/include
 popd
 cd ..
