@@ -27,6 +27,7 @@ clean: kclib-clean memory-clean utils-clean
 	rm ${TARGETPATH}piko-kernel.img
 
 %.o : %.c 
+	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../kclib/usr/include" -c $<
 	$(CC) $(CFLAGS) $(CPPFLAGS) -I"../kclib/usr/include" -c $< -o $@
 
 %_o.o : %.s 
