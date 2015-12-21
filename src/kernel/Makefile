@@ -24,6 +24,7 @@ all: piko-kernel.img
 
 clean: kclib-clean memory-clean utils-clean
 	rm -f $(OBJ)
+	rm -f $(wildcard *.d)
 	rm ${TARGETPATH}piko-kernel.img
 
 %.o : %.c 
