@@ -19,6 +19,12 @@ extern "C" {
 #include <sys/external.h>
 #include <stdarg.h>
 
+#ifdef __GNUC__
+#define __FORMAT_CHECK(farg, startfrom) __attribute__ ((format (printf, farg, startfrom)))
+#else
+#define __FORMAT_CHECK(farg, startfrom)
+#endif
+
 #define SEEK_CUR 0
 #define SEEK_END 1
 #define SEEK_SET 2
