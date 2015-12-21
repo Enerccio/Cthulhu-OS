@@ -111,44 +111,44 @@ FILE* fopen(const char* restrict filename,
 	int mmode = 0;
 	size_t modelen = strlen(mode);
 	if (modelen == 3){
-		if (strncmp(mode, "a+b") == 0 || strncmp(mode, "ab+") == 0){
+		if (strncmp(mode, "a+b", 3) == 0 || strncmp(mode, "ab+", 3) == 0){
 			mmode = __MODE_APPEND | __MODE_BINARY | __MODE_UPDATE;
 		}
 
-		if (strncmp(mode, "w+b") == 0 || strncmp(mode, "wb+") == 0){
+		if (strncmp(mode, "w+b", 3) == 0 || strncmp(mode, "wb+", 3) == 0){
 			mmode = __MODE_WRITE | __MODE_BINARY | __MODE_UPDATE;
 		}
 
-		if (strncmp(mode, "r+b") == 0 || strncmp(mode, "rb+") == 0){
+		if (strncmp(mode, "r+b", 3) == 0 || strncmp(mode, "rb+", 3) == 0){
 			mmode = __MODE_READ | __MODE_BINARY | __MODE_UPDATE;
 		}
 	} else if (modelen == 2){
-		if (strncmp(mode, "r+") == 0){
+		if (strncmp(mode, "r+", 2) == 0){
 			mmode = __MODE_READ | __MODE_UPDATE;
 		}
-		if (strncmp(mode, "w+") == 0){
+		if (strncmp(mode, "w+", 2) == 0){
 			mmode = __MODE_WRITE | __MODE_UPDATE;
 		}
-		if (strncmp(mode, "a+") == 0){
+		if (strncmp(mode, "a+", 2) == 0){
 			mmode = __MODE_APPEND | __MODE_UPDATE;
 		}
-		if (strncmp(mode, "rb") == 0){
+		if (strncmp(mode, "rb", 2) == 0){
 			mmode = __MODE_READ | __MODE_BINARY;
 		}
-		if (strncmp(mode, "wb") == 0){
+		if (strncmp(mode, "wb", 2) == 0){
 			mmode = __MODE_WRITE | __MODE_BINARY;
 		}
-		if (strncmp(mode, "ab") == 0){
+		if (strncmp(mode, "ab", 2) == 0){
 			mmode = __MODE_APPEND | __MODE_BINARY;
 		}
 	} else if (modelen == 1){
-		if (strncmp(mode, "r") == 0){
+		if (strncmp(mode, "r", 1) == 0){
 			mmode = __MODE_READ;
 		}
-		if (strncmp(mode, "w") == 0){
+		if (strncmp(mode, "w", 1) == 0){
 			mmode = __MODE_WRITE;
 		}
-		if (strncmp(mode, "a") == 0){
+		if (strncmp(mode, "a", 1) == 0){
 			mmode = __MODE_APPEND;
 		}
 	}
