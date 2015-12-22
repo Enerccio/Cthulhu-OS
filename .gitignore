@@ -1,5 +1,6 @@
 /bochsout.txt
 /disk.img
+/disk_template.img
 /bx_enh_dbg.ini
 /kernel.sym
 /libgluegen-rt.so
@@ -16,3 +17,4 @@
 /gkd.xml
 /jmpDB.mv.db
 /intel-manual/
+/qemu

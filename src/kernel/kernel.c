@@ -20,7 +20,7 @@ void print_loader_revision() {
 }
 
 void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start){
-	volatile bool bbreak = true;
+	volatile bool bbreak = false;
 	while (bbreak)
 		;
 	kd_clear();

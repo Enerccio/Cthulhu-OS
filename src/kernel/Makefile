@@ -52,5 +52,11 @@ utils:
 utils-clean:
 	$(MAKE) clean -C utils MODE=$(MODE)
 	
-piko-kernel.img: $(OBJ) kclib memory utils
+ports:
+	$(MAKE) -C $@ MODE=$(MODE)
+
+ports-clean:
+	$(MAKE) clean -C ports MODE=$(MODE)
+	
+piko-kernel.img: $(OBJ) kclib memory utils ports
 	$(LD) -Tlinker.ld -o ${TARGETPATH}$@ $(OBJ) $(wildcard kclib/*.o) $(wildcard utils/*.o) $(wildcard memory/*.o) $(LDFLAGS) -L../kclib/usr/lib
