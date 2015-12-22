@@ -1,5 +1,6 @@
 /bochsout.txt
 /disk.img
+!disk.img.patch
 /disk_template.img
 /bx_enh_dbg.ini
 /kernel.sym
