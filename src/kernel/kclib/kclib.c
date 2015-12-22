@@ -18,6 +18,7 @@
 #include "../utils/rsod.h"
 #include "../memory/paging.h"
 #include "../memory/heap.h"
+#include "../utils/textinput.h"
 
 __noreturn __kclib_assert_failure_k(uint32_t lineno, const char* file, const char* func){
 	error(ERROR_INTERNAL_LIBC, 0, lineno, 0);
@@ -54,6 +55,12 @@ void*	  __kclib_open_std_stream(uint8_t request_mode){
 }
 
 ptrdiff_t  __kclib_send_data(void* stream, uint8_t* array, size_t buffer_size){
+	if (stream == ((void*)1)){
+		for (size_t i=0; i<buffer_size; i++){
+			kd_put(array[i]);
+		}
+		return buffer_size;
+	}
 	return 0;
 }
 

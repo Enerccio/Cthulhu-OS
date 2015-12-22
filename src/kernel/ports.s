@@ -21,20 +21,19 @@ section .text
 [GLOBAL inw]
 
 outb:
-	mov rcx, rdx
-	mov rdx, rax
-	mov rax, rcx
+	mov rdx, rdi
+	mov rax, rsi
 	out dx, al
 	ret
 
 inb:
-	mov rdx, rax
-	mov rax, 0
+	mov rdx, rdi
+	xor rax, rax
 	in al, dx
 	ret
 
 inw:
-	mov rdx, rax
-	mov rax, 0
+	mov rdx, rdi
+	xor rax, rax
 	in ax, dx
 	ret
