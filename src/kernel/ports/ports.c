@@ -8,33 +8,17 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * ports.s
+ * ports.c
  *  Created on: Dec 22, 2015
  *      Author: Peter Vanusanik
- *  Contents: primitive port functions
+ *  Contents: port communication
  */
-[BITS 64]
-section .text
 
-[GLOBAL outb]
-[GLOBAL inb]
-[GLOBAL inw]
+uint8_t com_ports_count;
+void*   com_ports_address[4];
+uint8_t lpt_ports_count;
+void*   lpt_ports_address[3];
 
-outb:
-	mov rcx, rdx
-	mov rdx, rax
-	mov rax, rcx
-	out dx, al
-	ret
+void initialize_ports(){
 
-inb:
-	mov rdx, rax
-	mov rax, 0
-	in al, dx
-	ret
-
-inw:
-	mov rdx, rax
-	mov rax, 0
-	in ax, dx
-	ret
+}
