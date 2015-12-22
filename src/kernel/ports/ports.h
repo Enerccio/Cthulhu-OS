@@ -18,10 +18,31 @@
 
 #include "../commons.h"
 #include <stdint.h>
+#include <string.h>
 
-extern uint8_t com_ports_count;
-extern void*   com_ports_address[];
-extern uint8_t lpt_ports_count;
-extern void*   lpt_ports_address[];
+extern uint8_t  com_ports_count;
+extern uint32_t com_ports_address[];
+extern uint8_t  lpt_ports_count;
+extern uint32_t lpt_ports_address[];
+extern void*    ebda;
+
+#define COM  0
+#define COM1 (COM+0)
+#define COM2 (COM+1)
+#define COM3 (COM+2)
+#define COM4 (COM+3)
+
+#define IOP_DATA_REGISTER(addr)      (uint16_t)(addr+0)
+#define IOP_INTERRUPT_EN_REG(addr)   (uint16_t)(addr+1)
+#define IOP_DATA_BAUDR_LS_DIV(addr)  (uint16_t)(addr+0)
+#define IOP_DATA_BAUDR_MS_DIV(addr)  (uint16_t)(addr+1)
+#define IOP_INTERR_ID_FIFO_REG(addr) (uint16_t)(addr+2)
+#define IOP_LINE_CONT_REG(addr)      (uint16_t)(addr+3)
+#define IOP_DLAB_REGISTER(addr)      (uint16_t)(addr+3)
+#define IOP_MODEM_CONT_REG(addr)     (uint16_t)(addr+4)
+#define IOP_LINE_STATUS_REG(addr)    (uint16_t)(addr+5)
+#define IOP_MODEM_STATUS_REG(addr)   (uint16_t)(addr+6)
+#define IOP_SCRATCH_REGISTER(addr)   (uint16_t)(addr+7)
 
 void initialize_ports();
+void write_byte_com(uint8_t com, uint8_t data);

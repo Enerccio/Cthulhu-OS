@@ -18,14 +18,14 @@ CC := x86_64-piko-gcc
 LD := x86_64-piko-gcc
 AS := nasm
 
-.PHONY: all clean kclib memory utils kclib-clean memory-clean utils-clean
+.PHONY: all clean kclib memory utils kclib-clean memory-clean utils-clean ports ports-clean
 
 all: piko-kernel.img
 
-clean: kclib-clean memory-clean utils-clean
-	rm -f $(OBJ)
-	rm -f $(wildcard *.d)
-	rm ${TARGETPATH}piko-kernel.img
+clean: kclib-clean memory-clean utils-clean ports-clean
+	-rm -f $(OBJ)
+	-rm -f $(wildcard *.d)
+	-rm ${TARGETPATH}piko-kernel.img
 
 %.o : %.c 
 	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../kclib/usr/include" -c $<
@@ -59,4 +59,4 @@ ports-clean:
 	$(MAKE) clean -C ports MODE=$(MODE)
 	
 piko-kernel.img: $(OBJ) kclib memory utils ports
-	$(LD) -Tlinker.ld -o ${TARGETPATH}$@ $(OBJ) $(wildcard kclib/*.o) $(wildcard utils/*.o) $(wildcard memory/*.o) $(LDFLAGS) -L../kclib/usr/lib
+	$(LD) -Tlinker.ld -o ${TARGETPATH}$@ $(OBJ) $(wildcard kclib/*.o) $(wildcard utils/*.o) $(wildcard memory/*.o) $(wildcard ports/*.o) $(LDFLAGS) -L../kclib/usr/lib

@@ -21,8 +21,8 @@ AS := nasm
 all: $(OBJ)
 
 clean:
-	rm -f $(OBJ)
-	rm -f $(wildcard *.d)
+	-rm -f $(OBJ)
+	-rm -f $(wildcard *.d)
 
 %.o : %.c 
 	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../../kclib/usr/include" -c $< 

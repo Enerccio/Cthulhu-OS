@@ -15,7 +15,11 @@
  */
 #include "textinput.h"
 
-uint16_t* video_memory = (uint16_t*) 0xB8000;
+#ifdef KERNEL_DEBUG_MODE
+#include "../ports/ports.h"
+#endif
+
+extern uint16_t* video_memory;
 uint8_t cursor_y = 0;
 uint8_t cursor_x = 0;
 
@@ -72,6 +76,9 @@ void kd_put(char c) {
 
 
 void kd_cput(char c, uint8_t backColour, uint8_t foreColour) {
+#ifdef KERNEL_DEBUG_MODE
+	write_byte_com(COM1, c);
+#endif
 	uint8_t attributeByte = (backColour << 4) | (foreColour & 0x0F);
 
 	uint16_t attribute = attributeByte << 8;

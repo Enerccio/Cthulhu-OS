@@ -2,7 +2,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-	. = 0;
+	. = 0x500;
 	
 	.mboot BLOCK(4K) : ALIGN(4K)
 	{
