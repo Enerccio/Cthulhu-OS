@@ -33,6 +33,14 @@ detect_maxphyaddr:
 	and eax, 0b00000000000000000000000001111111 ; get only 7 first bits
 	ret
 
+[GLOBAL is_1GB_paging_supported]
+is_1GB_paging_supported:
+	mov rax, 0x80000001
+	cpuid
+	mov eax, edx
+	and eax, 1<<26
+	ret
+
 [GLOBAL get_active_page]
 get_active_page:
 	xor rax, rax

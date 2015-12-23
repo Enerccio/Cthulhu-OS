@@ -87,6 +87,28 @@ typedef union page_directory {
 	uint64_t*				array;
 } page_directory_t;
 
+typedef union page_directory1GB {
+	struct {
+		uint64_t present	: 1;  // whether the page is present
+		uint64_t rw			: 1;  // 0 = writes are not allowed, 1 = writers are allowed
+		uint64_t us			: 1;  // 0 = CPL3 access is not allowed
+		uint64_t pwt		: 1;  // page-level write-through
+		uint64_t pcd		: 1;  // page-level cache disable
+		uint64_t accessed	: 1;  // accessed
+		uint64_t dirty		: 1;  // dirty
+		uint64_t ps         : 1;  // must be 1
+		uint64_t global		: 1;  // whether page is global or not
+		uint64_t ignored	: 3;
+		uint64_t pat		: 1;  // Indirectly determines the memory type used to access
+		uint64_t ignored2   : 17;
+		uint64_t address	: 24;
+		uint64_t ignored3   : 6;
+		uint64_t protectkey : 3;  // protection key
+		uint64_t xd  		: 1;  // execute disable
+	} 						flaggable;
+	uint64_t 				number;
+} page_directory1GB_t;
+
 typedef union pdpt {
 	struct {
 		uint64_t present	: 1;  // whether the page is present

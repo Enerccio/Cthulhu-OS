@@ -30,6 +30,7 @@ extern uint64_t detect_maxphyaddr();
 extern uint64_t get_active_page();
 extern void set_active_page(uint64_t address);
 extern void invalidate_address(uint64_t address);
+extern uint64_t is_1GB_paging_supported();
 
 typedef struct v_address {
 	uint64_t offset :12;
@@ -263,6 +264,45 @@ static void free_frame(uint64_t frame_address) {
 	BITCLEAR(frame_map, idx);
 }
 
+void initialize_memory_mirror(){
+	if (is_1GB_paging_supported() != 0){
+		log_msg("Host supports 1GB pages, will use for ram mirror");
+		for (uint64_t start=0; start < maxram; start+=1<<30){
+			uint64_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
+			uint64_t* pdpt_addr = (uint64_t*) MMU_PML4(vaddress)[MMU_PML4_INDEX(
+						vaddress)];
+
+			if (!PRESENT(pdpt_addr)) {
+				pdpt_t pdpt;
+				pdpt.number = get_free_frame();
+				pdpt.flaggable.present = 1;
+				MMU_PML4(vaddress)[MMU_PML4_INDEX(vaddress)] = pdpt.number;
+				memset(MMU_PDPT(vaddress), 0, sizeof(uint64_t));
+			}
+
+			page_directory1GB_t dir;
+			dir.number = get_free_frame();
+			dir.flaggable.present = 1;
+			dir.flaggable.ps = 1;
+			dir.flaggable.rw = 1;
+			MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)] = dir.number;
+		}
+	} else {
+		log_warn("Host does not provide 1GB pages, will use 4KB pages for ram mirror");
+		for (uint64_t start=0; start < maxram; start+=0x1000){
+			uint64_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
+			uint64_t* paddress = get_page(vaddress, true);
+			page_t page;
+			page.address = get_free_frame();
+			page.flaggable.present = 1;
+			page.flaggable.rw = 1;
+			page.flaggable.us = 0;
+			*paddress = page.address;
+		}
+
+	}
+}
+
 void initialize_paging(struct multiboot* mboot_addr) {
 
 	last_searched_location = 0;
@@ -276,6 +316,8 @@ void initialize_paging(struct multiboot* mboot_addr) {
 	for (uint32_t i = 0; i < 0x400000 / 0x1000; i++) {
 		BITSET(frame_map, i);
 	}
+
+	initialize_memory_mirror();
 }
 
 static void allocate_frame(uint64_t* paddress, bool kernel, bool readonly) {

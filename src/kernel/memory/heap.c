@@ -64,6 +64,6 @@ void initialize_temporary_heap(uint64_t temp_heap_start){
 }
 
 void initialize_standard_heap(){
-	heap_end_address = heap_start_address = 0xfffffe8000000000;
+	heap_end_address = heap_start_address = ADDRESS_OFFSET(RESERVED_KBLOCK_KHEAP_MAPPINGS);
 	tmp_heap = 0;
 }
