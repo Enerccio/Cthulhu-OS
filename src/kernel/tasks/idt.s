@@ -97,9 +97,9 @@ isr_common_stub:
     pop rcx
     pop rbx
     pop rax
-    pop rdi
-    pop rsi
     pop rdx
+    pop rsi
+    pop rdi
     add rsp, 16
     iretq
 
