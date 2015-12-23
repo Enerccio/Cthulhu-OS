@@ -98,10 +98,10 @@ isr_common_stub:
     pop rcx
     pop rbx
     pop rax
-    add rsp, 16
     pop rdi
     pop rsi
     pop rdx
+    add rsp, 16
     iretq
 
 [GLOBAL idt_flush]
