@@ -142,6 +142,7 @@ typedef struct registers{
     // uint64_t gs, fs, es, ds;
     uint64_t r15, r14, r13, r12, r11, r10, r9, r8, rbp, rcx, rbx, rax;
     uint64_t rdx, rsi, rdi;
+    uint64_t ecode, type;
     uint64_t rip, cs, rflags, uesp, ss;
 } registers_t ;
 

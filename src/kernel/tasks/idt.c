@@ -150,18 +150,18 @@ void pic_sendeoi(int irq) {
     }
 }
 
-void isr_handler(uint64_t ecode, uint8_t type, registers_t* r) {
-    if (type > 31 && type < 48){
-        if (type >= 40 && type != 47)
+void isr_handler(registers_t* r) {
+    if (r->type > 31 && r->type < 48){
+        if (r->type >= 40 && r->type != 47)
             pic_sendeoi(PIC_EOI_SLAVE);
-        if (type != 39)
+        if (r->type != 39)
             pic_sendeoi(PIC_EOI_MASTER);
     }
 
-    if (interrupt_handlers[type] == 0) {
-        error(ERROR_NO_IV_FOR_INTERRUPT, type, ecode, &r);
+    if (interrupt_handlers[r->type] == 0) {
+        error(ERROR_NO_IV_FOR_INTERRUPT, r->type, r->ecode, &r);
     } else {
-        interrupt_handlers[type](ecode, r);
+        interrupt_handlers[r->type](r->ecode, r);
     }
 }
 
