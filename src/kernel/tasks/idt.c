@@ -106,22 +106,22 @@ void initialize_interrupts(){
 	outb(0x21, 0x0);
 	outb(0xA1, 0x0);
 
-	idt_set_gate(32, (uint64_t) irq0);
-	idt_set_gate(33, (uint64_t) irq1);
-	idt_set_gate(34, (uint64_t) irq2);
-	idt_set_gate(35, (uint64_t) irq3);
-	idt_set_gate(36, (uint64_t) irq4);
-	idt_set_gate(37, (uint64_t) irq5);
-	idt_set_gate(38, (uint64_t) irq6);
-	idt_set_gate(39, (uint64_t) irq7);
-	idt_set_gate(40, (uint64_t) irq8);
-	idt_set_gate(41, (uint64_t) irq9);
-	idt_set_gate(42, (uint64_t) irq10);
-	idt_set_gate(43, (uint64_t) irq11);
-	idt_set_gate(44, (uint64_t) irq12);
-	idt_set_gate(45, (uint64_t) irq13);
-	idt_set_gate(46, (uint64_t) irq14);
-	idt_set_gate(47, (uint64_t) irq15);
+	idt_set_gate(32, (uint64_t) isr32);
+	idt_set_gate(33, (uint64_t) isr33);
+	idt_set_gate(34, (uint64_t) isr34);
+	idt_set_gate(35, (uint64_t) isr35);
+	idt_set_gate(36, (uint64_t) isr36);
+	idt_set_gate(37, (uint64_t) isr37);
+	idt_set_gate(38, (uint64_t) isr38);
+	idt_set_gate(39, (uint64_t) isr39);
+	idt_set_gate(40, (uint64_t) isr40);
+	idt_set_gate(41, (uint64_t) isr41);
+	idt_set_gate(42, (uint64_t) isr42);
+	idt_set_gate(43, (uint64_t) isr43);
+	idt_set_gate(44, (uint64_t) isr44);
+	idt_set_gate(45, (uint64_t) isr45);
+	idt_set_gate(46, (uint64_t) isr46);
+	idt_set_gate(47, (uint64_t) isr47);
 
 	idt_flush(&idt_ptr);
 }
@@ -151,22 +151,17 @@ void pic_sendeoi(int irq) {
 }
 
 void isr_handler(uint64_t ecode, uint8_t type, registers_t* r) {
+	if (type > 31 && type < 48){
+		if (type >= 40 && type != 47)
+			pic_sendeoi(PIC_EOI_SLAVE);
+		if (type != 39)
+			pic_sendeoi(PIC_EOI_MASTER);
+	}
+
 	if (interrupt_handlers[type] == 0) {
 		error(ERROR_NO_IV_FOR_INTERRUPT, type, ecode, &r);
 	} else {
 		interrupt_handlers[type](ecode, r);
-	}
-}
-
-void irq_handler(uint64_t ecode, uint8_t type, registers_t* r) {
-	if (type >= 40 && type != 47)
-		pic_sendeoi(PIC_EOI_SLAVE);
-	if (type != 39)
-		pic_sendeoi(PIC_EOI_MASTER);
-	if (interrupt_handlers[type])
-		interrupt_handlers[type](ecode, r);
-	else {
-		error(ERROR_NO_IV_FOR_INTERRUPT, type, ecode, &r);
 	}
 }
 

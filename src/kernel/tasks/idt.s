@@ -23,18 +23,6 @@
     jmp isr_common_stub
 %endmacro
 
-%macro IRQ 2
-  [GLOBAL irq%1]
-  irq%1:
-    push rax ; garbage push, to simulate errcode
-  	push rdi
-  	push rsi
-  	push rdx
-  	mov rdi, 0
-  	mov rsi, %1
-    jmp irq_common_stub
-%endmacro
-
 ISR_NOERRCODE 0
 ISR_NOERRCODE 1
 ISR_NOERRCODE 2
@@ -67,41 +55,44 @@ ISR_NOERRCODE 28
 ISR_NOERRCODE 29
 ISR_NOERRCODE 30
 ISR_NOERRCODE 31
+ISR_NOERRCODE 32
+ISR_NOERRCODE 33
+ISR_NOERRCODE 34
+ISR_NOERRCODE 35
+ISR_NOERRCODE 36
+ISR_NOERRCODE 37
+ISR_NOERRCODE 38
+ISR_NOERRCODE 39
+ISR_NOERRCODE 40
+ISR_NOERRCODE 41
+ISR_NOERRCODE 42
+ISR_NOERRCODE 43
+ISR_NOERRCODE 44
+ISR_NOERRCODE 45
+ISR_NOERRCODE 46
+ISR_NOERRCODE 47
 ISR_NOERRCODE 128
 
-IRQ   0,    32
-IRQ   1,    33
-IRQ   2,    34
-IRQ   3,    35
-IRQ   4,    36
-IRQ   5,    37
-IRQ   6,    38
-IRQ   7,    39
-IRQ   8,    40
-IRQ   9,    41
-IRQ   10,   42
-IRQ   11,   43
-IRQ   12,   44
-IRQ   13,   45
-IRQ   14,   46
-IRQ   15,   47
+[EXTERN isr_handler]
 
-%macro PUSH_GEN_REGS 0
-    push rax
-	push rbx
-	push rcx
-	push rbp
-	push r8
-	push r9
-	push r10
-	push r11
-	push r12
-	push r13
-	push r14
-	push r15
-%endmacro
-
-%macro POP_GEN_REGS 0
+isr_common_stub:
+	PUSH_GEN_REGS
+	push rax
+    push rbx
+    push rcx
+    push rbp
+    push r8
+    push r9
+    push r10
+    push r11
+    push r12
+    push r13
+    push r14
+    push r15
+    mov rdx, rsp                ; move "pointer" from rsp to rdx (third parameter)
+	mov rax, isr_handler
+    call rax
+    POP_GEN_REGS
     pop r15
     pop r14
     pop r13
@@ -114,36 +105,14 @@ IRQ   15,   47
     pop rcx
     pop rbx
     pop rax
-%endmacro
-
-[EXTERN isr_handler]
-[EXTERN irq_handler]
-
-isr_common_stub:
-	PUSH_GEN_REGS
-    mov rdx, rsp ; move "pointer" from rsp to rdx (third parameter)
-	mov rax, isr_handler
-    call rax
-    POP_GEN_REGS
-	jmp end_common_stub
-
-irq_common_stub:
-	PUSH_GEN_REGS
-	mov rdx, rsp ; move "pointer" from rsp to rdx (third parameter)
-	mov rax, irq_handler
-    call rax
-	POP_GEN_REGS
-    jmp end_common_stub
-
-end_common_stub:
 	pop rdi
-  	pop rsi
-  	pop rdx
-  	add rsp, 8 ; remove garbage/error
-	iretq
+    pop rsi
+    pop rdx
+    add rsp, 8                  ; remove garbage/error
+    iretq
 
 [GLOBAL idt_flush]
 idt_flush:
-   mov rax, rdi      ; Get the pointer to the IDT, passed as a parameter.
-   lidt [rax]        ; Load the IDT pointer.
+   mov rax, rdi                 ; Get the pointer to the IDT, passed as a parameter.
+   lidt [rax]                   ; Load the IDT pointer.
    ret
