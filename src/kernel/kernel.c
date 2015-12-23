@@ -31,6 +31,7 @@
 #include "memory/paging.h"
 #include "tasks/idt.h"
 #include "tasks/interrupts.h"
+#include "tasks/clock.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -73,8 +74,8 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start){
     register_standard_interrupt_handlers();
     log_msg("Preliminary interrupt handlers set up");
 
-    int* x = 0xDEADBABE;
-    *x = 5;
+    initialize_clock();
+    vlog_msg("Kernel clock initialized, current time in unix time %lld", get_unix_time());
 
     while (true) ;
 }

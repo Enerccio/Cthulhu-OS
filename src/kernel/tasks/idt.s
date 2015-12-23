@@ -83,11 +83,11 @@ isr_common_stub:
     push r13
     push r14
     push r15
-    mov rdi, rsp                ; move "pointer" from rsp to rdx (third parameter)
+    mov rdi, rsp                ; move "pointer" from rsp to rdi (first parameter)
     mov rbx, rsp
     and rsp, 0xFFFFFFFFFFFFFFF0 ; align stack
     call isr_handler
-    mov esp, rbx
+    mov rsp, rbx
     pop r15
     pop r14
     pop r13
