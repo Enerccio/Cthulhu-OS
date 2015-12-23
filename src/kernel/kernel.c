@@ -19,6 +19,7 @@
 #include "memory/heap.h"
 #include "memory/paging.h"
 #include "tasks/idt.h"
+#include "tasks/interrupts.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -57,6 +58,9 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start){
 
 	initialize_interrupts();
 	log_msg("Interrupt table initialized");
+
+	register_standard_interrupt_handlers();
+	log_msg("Preliminary interrupt handlers set up");
 
 	while (true) ;
 }

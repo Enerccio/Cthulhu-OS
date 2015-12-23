@@ -56,3 +56,9 @@ set_active_page:
 invalidate_address:
 	invlpg [rdx]
 	ret
+
+[GLOBAL get_faulting_address]
+get_faulting_address:
+	xor rax, rax
+	mov rax, cr2
+	ret
