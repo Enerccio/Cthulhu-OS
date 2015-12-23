@@ -99,17 +99,9 @@ IRQ   15,   47
 	push r13
 	push r14
 	push r15
-	;push ds
-    ;push es
-    ;push fs
-    ;push gs
 %endmacro
 
 %macro POP_GEN_REGS 0
-    ;pop gs
-    ;pop fs
-    ;pop es
-    ;pop ds
     pop r15
     pop r14
     pop r13
