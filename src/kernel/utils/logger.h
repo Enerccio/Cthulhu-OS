@@ -17,7 +17,12 @@
 
 #include "textinput.h"
 
+#include <stdarg.h>
+
 void log_msg(const char* message);
 void log_warn(const char* message);
 void log_err(const char* message);
 
+void vlog_msg(const char* message, ...);
+void vlog_warn(const char* message, ...);
+void vlog_err(const char* message, ...);
