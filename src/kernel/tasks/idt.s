@@ -3,23 +3,23 @@
 %macro ISR_NOERRCODE 1  ; define a macro, taking one parameter
   [GLOBAL isr%1]        ; %1 accesses the first parameter.
   isr%1:
-  	push rax ; garbage push, to simulate errcode
+    push rax ; garbage push, to simulate errcode
     push rdi
-  	push rsi
-  	push rdx
-  	mov rdi, 0
-  	mov rsi, %1
+    push rsi
+    push rdx
+    mov rdi, 0
+    mov rsi, %1
     jmp isr_common_stub
 %endmacro
 
 %macro ISR_ERRCODE 1
   [GLOBAL isr%1]
   isr%1:
-  	push rdi
-  	mov rdi, [rsp+8] ; move stack value of error to rdi
-  	push rsi
-  	push rdx
-  	mov rsi, %1
+    push rdi
+    mov rdi, [rsp+8] ; move stack value of error to rdi
+    push rsi
+    push rdx
+    mov rsi, %1
     jmp isr_common_stub
 %endmacro
 
@@ -76,8 +76,8 @@ ISR_NOERRCODE 128
 [EXTERN isr_handler]
 
 isr_common_stub:
-	PUSH_GEN_REGS
-	push rax
+    PUSH_GEN_REGS
+    push rax
     push rbx
     push rcx
     push rbp
@@ -90,7 +90,7 @@ isr_common_stub:
     push r14
     push r15
     mov rdx, rsp                ; move "pointer" from rsp to rdx (third parameter)
-	mov rax, isr_handler
+    mov rax, isr_handler
     call rax
     POP_GEN_REGS
     pop r15
@@ -105,7 +105,7 @@ isr_common_stub:
     pop rcx
     pop rbx
     pop rax
-	pop rdi
+    pop rdi
     pop rsi
     pop rdx
     add rsp, 8                  ; remove garbage/error

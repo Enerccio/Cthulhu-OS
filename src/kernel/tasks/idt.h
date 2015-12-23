@@ -30,27 +30,27 @@
 #include "../commons.h"
 
 struct idt_gate {
-	uint16_t offset015;
-	uint16_t selector;
-	struct {
-		uint16_t ist  : 2; // interrupt stack table
-		uint16_t ist1 : 1;
-		uint16_t ist2 : 1;
-		uint16_t r0   : 4;
-		uint16_t type : 4;
-		uint16_t r1	  : 1;
-		uint16_t dpl  : 2; // descriptor priviledge level
-		uint16_t p	  : 1; // segment present flag
-	} __attribute__((packed)) flags;
-	uint16_t offset1631;
-	uint32_t offset3263;
-	uint32_t reserved;
+    uint16_t offset015;
+    uint16_t selector;
+    struct {
+        uint16_t ist  : 2; // interrupt stack table
+        uint16_t ist1 : 1;
+        uint16_t ist2 : 1;
+        uint16_t r0   : 4;
+        uint16_t type : 4;
+        uint16_t r1   : 1;
+        uint16_t dpl  : 2; // descriptor priviledge level
+        uint16_t p    : 1; // segment present flag
+    } __attribute__((packed)) flags;
+    uint16_t offset1631;
+    uint32_t offset3263;
+    uint32_t reserved;
 } __attribute__((packed));
 typedef struct idt_gate idt_gate_t;
 
 struct idt_ptr {
-	uint16_t limit;
-	uint64_t base;
+    uint16_t limit;
+    uint64_t base;
 }__attribute__((packed));
 typedef struct idt_ptr idt_ptr_t;
 
@@ -139,10 +139,10 @@ extern void isr128();
 #define PIC_EOI_ALL (PIC_EOI_SLAVE +1)
 
 typedef struct registers{
-	// uint64_t gs, fs, es, ds;
-	uint64_t r15, r14, r13, r12, r11, r10, r9, r8, rbp, rcx, rbx, rax;
-	uint64_t rdx, rsi, rdi;
-	uint64_t rip, cs, rflags, uesp, ss;
+    // uint64_t gs, fs, es, ds;
+    uint64_t r15, r14, r13, r12, r11, r10, r9, r8, rbp, rcx, rbx, rax;
+    uint64_t rdx, rsi, rdi;
+    uint64_t rip, cs, rflags, uesp, ss;
 } registers_t ;
 
 typedef void (*isr_t)(uint64_t error_code, registers_t*);

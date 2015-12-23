@@ -37,44 +37,44 @@
 #include <sys/kernel.h>
 
 void print_loader_revision() {
-	kd_cwrite("PIKOKERNEL ", 0, 4);
-	kd_cwrite(KERNEL_MAIN_VERSION, 0, 4);
-	kd_cwrite(".", 0, 4);
-	kd_cwrite(KERNEL_MINOR_VESION, 0, 4);
-	kd_cwrite(", revision ", 0, 4);
-	kd_cwrite(KERNEL_BUILD_VERSION, 0, 4);
-	kd_cwrite(" - ", 0, 4);
-	kd_cwrite(KERNEL_CODENAME, 0, 4);
-	kd_newl();
+    kd_cwrite("PIKOKERNEL ", 0, 4);
+    kd_cwrite(KERNEL_MAIN_VERSION, 0, 4);
+    kd_cwrite(".", 0, 4);
+    kd_cwrite(KERNEL_MINOR_VESION, 0, 4);
+    kd_cwrite(", revision ", 0, 4);
+    kd_cwrite(KERNEL_BUILD_VERSION, 0, 4);
+    kd_cwrite(" - ", 0, 4);
+    kd_cwrite(KERNEL_CODENAME, 0, 4);
+    kd_newl();
 }
 
 void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start){
-	volatile bool bbreak = false;
-	while (bbreak)
-		;
+    volatile bool bbreak = false;
+    while (bbreak)
+        ;
 
-	initialize_ports();
+    initialize_ports();
 
-	kd_clear();
-	print_loader_revision();
-	init_errors();
+    kd_clear();
+    print_loader_revision();
+    init_errors();
 
-	initialize_temporary_heap(heap_start);
-	initialize_paging(mboot_addr);
-	initialize_standard_heap();
+    initialize_temporary_heap(heap_start);
+    initialize_paging(mboot_addr);
+    initialize_standard_heap();
 
-	log_msg("Paging memory and kernel heap initialized");
-	__initialize_kclib();
-	log_msg("KCLib initialized");
+    log_msg("Paging memory and kernel heap initialized");
+    __initialize_kclib();
+    log_msg("KCLib initialized");
 
-	initialize_interrupts();
-	log_msg("Interrupt table initialized");
+    initialize_interrupts();
+    log_msg("Interrupt table initialized");
 
-	register_standard_interrupt_handlers();
-	log_msg("Preliminary interrupt handlers set up");
+    register_standard_interrupt_handlers();
+    log_msg("Preliminary interrupt handlers set up");
 
-	int* x = 0xDEADBABE;
-	*x = 5;
+    int* x = 0xDEADBABE;
+    *x = 5;
 
-	while (true) ;
+    while (true) ;
 }

@@ -40,12 +40,12 @@
 #define EXC_TS  10
 #define EXC_NP  11
 #define EXC_SS  12
-#define EXC_GP	13
-#define EXC_PF	14
-#define EXC_MF	16
-#define EXC_AC	17
-#define EXC_MC	18
-#define EXC_XM	19
-#define EXC_VE	20
+#define EXC_GP  13
+#define EXC_PF  14
+#define EXC_MF  16
+#define EXC_AC  17
+#define EXC_MC  18
+#define EXC_XM  19
+#define EXC_VE  20
 
 void register_standard_interrupt_handlers();

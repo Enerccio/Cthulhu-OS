@@ -29,4 +29,4 @@
 [GLOBAL kp_halt]
 kp_halt:
 .loop:
-	jmp .loop
+    jmp .loop
