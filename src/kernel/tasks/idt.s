@@ -84,8 +84,7 @@ isr_common_stub:
     push r14
     push r15
     mov rdx, rsp                ; move "pointer" from rsp to rdx (third parameter)
-    mov rax, isr_handler
-    call rax
+    call isr_handler
     pop r15
     pop r14
     pop r13
