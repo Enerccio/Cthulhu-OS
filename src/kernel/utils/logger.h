@@ -29,6 +29,7 @@
 #include "textinput.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 
 void log_msg(const char* message);
 void log_warn(const char* message);
