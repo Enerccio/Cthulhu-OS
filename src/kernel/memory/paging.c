@@ -41,6 +41,13 @@ typedef struct v_address {
 	uint64_t rest :16;
 } v_address_t;
 
+typedef struct v_address1GB {
+	uint64_t offset :30;
+	uint64_t directory_ptr :9;
+	uint64_t pml :9;
+	uint64_t rest :16;
+} v_address1GB_t;
+
 #define MMU_RECURSIVE_SLOT      (RESERVED_KBLOCK_REVERSE_MAPPINGS)
 
 // Convert an address into array index of a structure
@@ -83,6 +90,14 @@ uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
 		return 0;
 	}
 
+	if (vaddress > ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS) &&
+				vaddress < ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS+1)){
+		v_address1GB_t va = *((v_address1GB_t*) &vaddress);
+		page_directory1GB_t pd1gb;
+		pd1gb.number = (uint64_t) address;
+		return pd1gb.flaggable.address + va.offset;
+	}
+
 	address = (uint64_t*) MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)];
 
 	if (!PRESENT(address)) {
@@ -94,6 +109,9 @@ uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
 	return ALIGN(physadd) + virtual_address.offset;
 }
 
+uint64_t physical_to_virtual(uint64_t vaddress){
+	return vaddress + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
+}
 
 uint32_t last_searched_location;
 
@@ -128,6 +146,7 @@ static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
 		if (!allocate_new)
 			return 0;
 		pdpt_t pdpt;
+		memset(&pdpt, 0, sizeof(pdpt_t));
 		pdpt.number = get_free_frame();
 		pdpt.flaggable.present = 1;
 		MMU_PML4(vaddress)[MMU_PML4_INDEX(vaddress)] = pdpt.number;
@@ -141,6 +160,7 @@ static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
 		if (!allocate_new)
 			return 0;
 		page_directory_t dir;
+		memset(&dir, 0, sizeof(page_directory_t));
 		dir.number = get_free_frame();
 		dir.flaggable.present = 1;
 		MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)] = dir.number;
@@ -153,6 +173,7 @@ static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
 		if (!allocate_new)
 			return 0;
 		page_table_t pt;
+		memset(&pt, 0, sizeof(page_table_t));
 		pt.number = get_free_frame();
 		pt.flaggable.present = 1;
 		MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)] = pt.number;
@@ -281,7 +302,8 @@ void initialize_memory_mirror(){
 			}
 
 			page_directory1GB_t dir;
-			dir.number = get_free_frame();
+			memset(&dir, 0, sizeof(page_directory1GB_t));
+			dir.number = start;
 			dir.flaggable.present = 1;
 			dir.flaggable.ps = 1;
 			dir.flaggable.rw = 1;
@@ -293,7 +315,8 @@ void initialize_memory_mirror(){
 			uint64_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
 			uint64_t* paddress = get_page(vaddress, true);
 			page_t page;
-			page.address = get_free_frame();
+			memset(&page, 0, sizeof(page_t));
+			page.address = start;
 			page.flaggable.present = 1;
 			page.flaggable.rw = 1;
 			page.flaggable.us = 0;
@@ -323,6 +346,7 @@ void initialize_paging(struct multiboot* mboot_addr) {
 static void allocate_frame(uint64_t* paddress, bool kernel, bool readonly) {
 	if (!PRESENT(*paddress)) {
 		page_t page;
+		memset(&page, 0, sizeof(page_t));
 		page.address = get_free_frame();
 		page.flaggable.present = 1;
 		page.flaggable.rw = readonly ? 0 : 1;
