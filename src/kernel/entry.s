@@ -58,7 +58,6 @@ GDT64:                           ; Global Descriptor Table (64-bit).
 
 [GLOBAL _start]
 _start:
-	cli
 	jmp piko_loader
 piko_loader:
 	push ebx
