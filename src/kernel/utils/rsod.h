@@ -20,6 +20,7 @@
 #define UNDEFINED_ERROR 						0
 #define ERROR_NO_MEMORY_DETECTED				1
 #define ERROR_INTERNAL_LIBC						2
+#define ERROR_NO_IV_FOR_INTERRUPT				3
 
 void init_errors();
 

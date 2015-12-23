@@ -91,7 +91,7 @@ uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
 	}
 
 	if (vaddress > ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS) &&
-				vaddress < ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS+1)){
+				vaddress < ADDRESS_OFFSET((RESERVED_KBLOCK_RAM_MAPPINGS+1))){
 		v_address1GB_t va = *((v_address1GB_t*) &vaddress);
 		page_directory1GB_t pd1gb;
 		pd1gb.number = (uint64_t) address;

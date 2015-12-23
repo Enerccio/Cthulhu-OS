@@ -18,6 +18,7 @@
 #include "utils/rsod.h"
 #include "memory/heap.h"
 #include "memory/paging.h"
+#include "tasks/idt.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -36,7 +37,7 @@ void print_loader_revision() {
 }
 
 void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start){
-	volatile bool bbreak = true;
+	volatile bool bbreak = false;
 	while (bbreak)
 		;
 
@@ -53,6 +54,9 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start){
 	log_msg("Paging memory and kernel heap initialized");
 	__initialize_kclib();
 	log_msg("KCLib initialized");
+
+	initialize_interrupts();
+	log_msg("Interrupt table initialized");
 
 	while (true) ;
 }

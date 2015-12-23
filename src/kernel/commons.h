@@ -69,8 +69,8 @@ struct multiboot
 
 typedef struct multiboot_header multiboot_header_t;
 
-#define ENABLE_INTERRUPTS() do { __asm __volatile__ ("sti") } while (0)
-#define DISABLE_INTERRUPTS() do { __asm __volatile__ ("sti") } while (0)
+#define ENABLE_INTERRUPTS() do { __asm __volatile__ ("sti"); } while (0)
+#define DISABLE_INTERRUPTS() do { __asm __volatile__ ("cli"); } while (0)
 
 typedef int8_t cmpresult_t;
 

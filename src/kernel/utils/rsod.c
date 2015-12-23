@@ -14,12 +14,18 @@
  *  Contents: nonrecoverable error presentation screen
  */
 #include "rsod.h"
+#include "../utils/kstdlib.h"
 
 const char* top_message = "We are sorry but kernel has suffered an error";
 const char* top_message_2 = "from which it was unable to recover->";
 const char* bottom_message = "Please check recent kernel updates or";
 const char* bottom_message_2 = "hardware changes which can be the fault here.";
 char* error_codes[8000];
+
+extern void kp_halt();
+
+#define BACKGROUND_COLOR 0
+#define FOREGROUND_COLOR fgc(&fg)
 
 void init_errors() {
 	log_msg("Initializing error page");
@@ -31,44 +37,55 @@ void init_errors() {
 	error_codes[UNDEFINED_ERROR] = "UNDEFINED_ERROR";
 	error_codes[ERROR_NO_MEMORY_DETECTED] = "ERROR_NO_MEMORY_DETECTED";
 	error_codes[ERROR_INTERNAL_LIBC] = "ERROR_INTERNAL_LIBC";
+	error_codes[ERROR_NO_IV_FOR_INTERRUPT] = "ERROR_NO_IV_FOR_INTERRUPT";
 
 }
 
-void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress) {
-	__asm  __volatile__ ("cli");
+uint8_t fgc(uint8_t* fgc){
+	uint8_t fg = *fgc;
+	while (*fgc == fg){
+		*fgc = ((*fgc + rand_number(16)) % 16);
+		if (*fgc == 0)
+			*fgc = 1;
+	}
+	return fg;
+}
 
-	kd_cclear(4);
+void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress) {
+	DISABLE_INTERRUPTS();
+	uint8_t fg = rand_number(15)+1;
+
+	kd_cclear(BACKGROUND_COLOR);
 
 	kd_setxy(10, 2);
-	kd_cwrite(top_message, 4, 0);
+	kd_cwrite(top_message, BACKGROUND_COLOR, FOREGROUND_COLOR);
 	kd_setxy(10, 3);
-	kd_cwrite(top_message_2, 4, 0);
+	kd_cwrite(top_message_2, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
 	kd_setxy(16, 5);
-	kd_cwrite("Error code: ", 4, 0);
-	kd_cwrite_hex64(ecode, 4, 0);
+	kd_cwrite("Error code:      ", BACKGROUND_COLOR, FOREGROUND_COLOR);
+	kd_cwrite_hex64(ecode, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
 	kd_setxy(16, 6);
-	kd_cwrite(error_codes[ecode], 4, 0);
+	kd_cwrite(error_codes[ecode], BACKGROUND_COLOR, FOREGROUND_COLOR);
 
 	kd_setxy(16, 7);
-	kd_cwrite("Specific code: ", 4, 0);
-	kd_cwrite_hex64(speccode, 4, 0);
+	kd_cwrite("Specific code:   ", BACKGROUND_COLOR, FOREGROUND_COLOR);
+	kd_cwrite_hex64(speccode, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
 	kd_setxy(16, 8);
-	kd_cwrite("Additional code: ", 4, 0);
-	kd_cwrite_hex64(speccode2, 4, 0);
+	kd_cwrite("Additional code: ", BACKGROUND_COLOR, FOREGROUND_COLOR);
+	kd_cwrite_hex64(speccode2, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
 	kd_setxy(16, 10);
-	kd_cwrite("Address: ", 4, 0);
-	kd_cwrite_hex64((uint64_t) eaddress, 4, 0);
+	kd_cwrite("Address:         ", BACKGROUND_COLOR, FOREGROUND_COLOR);
+	kd_cwrite_hex64((uint64_t) eaddress, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
 	kd_setxy(10, 19);
-	kd_cwrite(bottom_message, 4, 0);
+	kd_cwrite(bottom_message, BACKGROUND_COLOR, FOREGROUND_COLOR);
 	kd_setxy(10, 20);
-	kd_cwrite(bottom_message_2, 4, 0);
+	kd_cwrite(bottom_message_2, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
-	while (true)
-		;
+	kp_halt();
 }
 
