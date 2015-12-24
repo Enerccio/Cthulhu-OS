@@ -26,13 +26,13 @@
  */
 #include "random.h"
 
-rg_t rg_create_random_generator(uint64_t seed){
+rg_t rg_create_random_generator(uint64_t seed) {
 	rg_t rg;
 	rg.state[0] = (seed & 0xFFFFFFFF00000000) + ((seed << 32) ^ seed);
 	rg.state[1] = (seed & 0x00000000FFFFFFFF) + ((seed >> 32) ^ seed);
 }
 
-uint64_t rg_next_int(rg_t rg){
+uint64_t rg_next_int(rg_t rg) {
 	uint64_t x = rg.state[0];
 	uint64_t const y = rg.state[1];
 	rg.state[0] = y;
@@ -41,6 +41,6 @@ uint64_t rg_next_int(rg_t rg){
 	return rg.state[1] + y;
 }
 
-uint64_t rg_next_int_l(rg_t rg, uint64_t limit){
+uint64_t rg_next_int_l(rg_t rg, uint64_t limit) {
 	return rg_next_int(rg) % limit;
 }

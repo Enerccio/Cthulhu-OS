@@ -51,7 +51,7 @@ unsigned char get_RTC_register(int reg) {
 	return inb(cmos_data);
 }
 
-intmax_t days_from_civil(int32_t y, uint8_t m, uint8_t d){
+intmax_t days_from_civil(int32_t y, uint8_t m, uint8_t d) {
 	y -= m <= 2;
 	int32_t era = (y >= 0 ? y : y-399) / 400;
 	unsigned int yoe = (y - era * 400);
@@ -63,7 +63,7 @@ intmax_t days_from_civil(int32_t y, uint8_t m, uint8_t d){
 uintmax_t clock_s;
 uintmax_t clock_ms;
 
-void timer_tick(uint64_t error_code, registers_t* r){
+void timer_tick(uint64_t error_code, registers_t* r) {
 	clock_ms += 10;
 	if (clock_ms >= 1000){
 		++clock_s;
@@ -71,11 +71,11 @@ void timer_tick(uint64_t error_code, registers_t* r){
 	}
 }
 
-uint64_t get_unix_time(){
+uint64_t get_unix_time() {
 	return (uint64_t)clock_s;
 }
 
-void initialize_ticker(){
+void initialize_ticker() {
 	clock_s = (((uintmax_t)days_from_civil(year, month, day)) * (3600*24)) +
 			(hour*3600) + (minute*60) + second;
 	clock_ms = 0;
@@ -93,7 +93,7 @@ void initialize_ticker(){
 	ENABLE_INTERRUPTS();
 }
 
-void initialize_clock(){
+void initialize_clock() {
 	unsigned char century;
 	unsigned char last_second;
 	unsigned char last_minute;

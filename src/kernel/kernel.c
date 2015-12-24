@@ -49,7 +49,7 @@ void print_loader_revision() {
     kd_newl();
 }
 
-void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start){
+void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
     volatile bool bbreak = false;
     while (bbreak)
         ;

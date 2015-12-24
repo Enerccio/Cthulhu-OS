@@ -71,7 +71,7 @@ void init_errors() {
     error_codes[ERROR_KERNEL_VIRTUALIZATION_EXCEPTION] = "ERROR_KERNEL_VIRTUALIZATION_EXCEPTION";
 }
 
-uint8_t fgc(uint8_t* fgc){
+uint8_t fgc(uint8_t* fgc) {
     uint8_t fg = *fgc;
     while (*fgc == fg){
         *fgc = ((*fgc + rand_number(16)) % 16);

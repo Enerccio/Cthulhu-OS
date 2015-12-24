@@ -34,7 +34,7 @@ isr_t interrupt_handlers[256];
 
 extern void idt_flush(idt_ptr_t* ptr);
 
-void idt_set_gate(uint8_t gn, uint64_t funcall){
+void idt_set_gate(uint8_t gn, uint64_t funcall) {
     idt_gate_t* gate = &idt_entries[gn];
     gate->offset015 = funcall & 0xFFFF;
     gate->offset1631 = (funcall>>16) & 0xFFFF;
@@ -45,14 +45,14 @@ void idt_set_gate(uint8_t gn, uint64_t funcall){
     gate->flags.dpl = 0;
 }
 
-void initialize_interrupts(){
+void initialize_interrupts() {
 
-    memset(idt_entries, 0, 256*sizeof(idt_gate_t));
-    memset(interrupt_handlers, 0, 256*sizeof(isr_t));
+    memset(idt_entries, 0, sizeof(idt_entries));
+    memset(interrupt_handlers, 0, sizeof(interrupt_handlers));
 
     idt_ptr_t idt_ptr;
 
-    idt_ptr.limit = (sizeof(idt_gate_t) * 256) - 1;
+    idt_ptr.limit = (sizeof(idt_entries) * 256) - 1;
     idt_ptr.base = (uint64_t) &idt_entries;
 
     // GENERAL CPU INTERRUPTS

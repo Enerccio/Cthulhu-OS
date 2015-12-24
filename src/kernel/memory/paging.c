@@ -120,7 +120,7 @@ uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
     return ALIGN(physadd) + virtual_address.offset;
 }
 
-uint64_t physical_to_virtual(uint64_t vaddress){
+uint64_t physical_to_virtual(uint64_t vaddress) {
     return vaddress + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
 }
 
@@ -296,7 +296,7 @@ static void free_frame(uint64_t frame_address) {
     BITCLEAR(frame_map, idx);
 }
 
-void initialize_memory_mirror(){
+void initialize_memory_mirror() {
     if (is_1GB_paging_supported() != 0){
         log_msg("Host supports 1GB pages, will use for ram mirror");
         for (uint64_t start=0; start < maxram; start+=1<<30){
@@ -410,7 +410,7 @@ void deallocate(uint64_t from, size_t amount) {
     }
 }
 
-bool allocated(uint64_t addr){
+bool allocated(uint64_t addr) {
     uint64_t* page = get_page(addr, false);
     if (page == NULL)
         return false;

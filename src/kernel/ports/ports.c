@@ -39,7 +39,7 @@ void*     ebda;
 #define BDA_IO_LPT ((uint32_t*)0x0408)
 #define BDA_EBDA ((uint32_t*)0x040E)
 
-void init_serial_port(uint32_t pa){
+void init_serial_port(uint32_t pa) {
     if (pa == 0)
         return;
 
@@ -52,7 +52,7 @@ void init_serial_port(uint32_t pa){
     outb(IOP_MODEM_CONT_REG(pa), 0x0B);     // IRQs enabled, RTS/DSR set
 }
 
-void initialize_ports(){
+void initialize_ports() {
     ebda = (void*) (((uintptr_t)*BDA_EBDA)>>4);
     video_memory = (uint16_t*)(0xB8000);
 
@@ -70,11 +70,11 @@ void initialize_ports(){
     }
 }
 
-bool com_empty_line(uint16_t port){
+bool com_empty_line(uint16_t port) {
     return inb(port+5) & 0x20;
 }
 
-void write_byte_com(uint8_t com, uint8_t data){
+void write_byte_com(uint8_t com, uint8_t data) {
     uint16_t com_port = (uint16_t)com_ports_address[com];
     if (com_port == 0)
         return;

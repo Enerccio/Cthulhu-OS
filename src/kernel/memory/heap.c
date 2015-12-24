@@ -30,7 +30,7 @@ int64_t tmp_heap;
 uint64_t heap_start_address;
 uint64_t heap_end_address;
 
-uint64_t handle_kernel_memory(int required_amount){
+uint64_t handle_kernel_memory(int required_amount) {
     if (required_amount > 0){
         uint64_t old_heap_end = heap_end_address;
         heap_end_address += required_amount;
@@ -50,7 +50,7 @@ uint64_t handle_kernel_memory(int required_amount){
     }
 }
 
-aligned_ptr_t malign(size_t amount, uint16_t align){
+aligned_ptr_t malign(size_t amount, uint16_t align) {
     if (tmp_heap != 0){
         if (tmp_heap % align != 0){
             tmp_heap = tmp_heap + (align - (tmp_heap % align));
@@ -70,11 +70,11 @@ aligned_ptr_t malign(size_t amount, uint16_t align){
     return (void*)aligned;
 }
 
-void initialize_temporary_heap(uint64_t temp_heap_start){
+void initialize_temporary_heap(uint64_t temp_heap_start) {
     tmp_heap = temp_heap_start;
 }
 
-void initialize_standard_heap(){
+void initialize_standard_heap() {
     heap_end_address = heap_start_address = ADDRESS_OFFSET(RESERVED_KBLOCK_KHEAP_MAPPINGS);
     tmp_heap = 0;
 }
