@@ -52,7 +52,7 @@ void initialize_interrupts() {
 
     idt_ptr_t idt_ptr;
 
-    idt_ptr.limit = (sizeof(idt_entries) * 256) - 1;
+    idt_ptr.limit = (sizeof(idt_entries)) - 1;
     idt_ptr.base = (uint64_t) &idt_entries;
 
     // GENERAL CPU INTERRUPTS
