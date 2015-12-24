@@ -18,11 +18,13 @@ CC := x86_64-piko-gcc
 LD := x86_64-piko-gcc
 AS := nasm
 
-.PHONY: all clean kclib memory utils kclib-clean memory-clean utils-clean ports ports-clean tasks tasks-clean
+.PHONY: all clean kclib memory utils kclib-clean memory-clean utils-clean ports ports-clean tasks tasks-clean \
+		structures structures-clean \
+		utils-collections utils-collections-clean
 
 all: piko-kernel.img
 
-clean: kclib-clean memory-clean utils-clean ports-clean tasks-clean
+clean: kclib-clean memory-clean utils-clean ports-clean tasks-clean structures-clean utils-collections-clean
 	-rm -f $(OBJ)
 	-rm -f $(wildcard *.d)
 	-rm ${TARGETPATH}piko-kernel.img
@@ -64,5 +66,21 @@ tasks:
 tasks-clean:
 	$(MAKE) clean -C tasks MODE=$(MODE)
 	
-piko-kernel.img: $(OBJ) kclib memory utils ports tasks
-	$(LD) -Tlinker.ld -o ${TARGETPATH}$@ $(OBJ) $(wildcard kclib/*.o) $(wildcard utils/*.o) $(wildcard memory/*.o) $(wildcard ports/*.o) $(wildcard tasks/*.o) $(LDFLAGS) -L../kclib/usr/lib
+structures:
+	$(MAKE) -C $@ MODE=$(MODE)
+
+structures-clean:
+	$(MAKE) clean -C structures MODE=$(MODE)
+	
+utils-collections:
+	$(MAKE) -C utils/collections MODE=$(MODE)
+
+utils-collections-clean:
+	$(MAKE) clean -C utils/collections MODE=$(MODE)
+	
+piko-kernel.img: $(OBJ) kclib memory utils ports tasks structures utils-collections
+	$(LD) -Tlinker.ld -o ${TARGETPATH}$@ $(OBJ) \
+		$(wildcard kclib/*.o) $(wildcard utils/*.o) $(wildcard memory/*.o) \
+		$(wildcard ports/*.o) $(wildcard tasks/*.o) $(wildcard structures/*.o) \
+		$(wildcard utils/collections/*.o) \
+		$(LDFLAGS) -L../kclib/usr/lib

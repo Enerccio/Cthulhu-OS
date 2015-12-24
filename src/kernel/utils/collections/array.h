@@ -19,56 +19,50 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * task.c
- *  Created on: Dec 23, 2015
+ * array.h
+ *  Created on: Dec 24, 2015
  *      Author: Peter Vanusanik
- *  Contents: task management
+ *  Contents: array implementation
  */
 
-#include "task.h"
+#pragma once
 
-array_t* cpus;
+#include "../../commons.h"
+#include <stdlib.h>
+#include <string.h>
 
-cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
-	cpu_t* cpu = malloc(sizeof(cpu_t));
-	if (cpu == NULL)
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
-	cpu->acip = apic->processor_id;
-	cpu->started = false;
-	cpu->processes = create_array();
-	if (cpu->processes == NULL)
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
-	return cpu;
-}
+#define ARRAY_STARTING_SIZE 32
 
-cpu_t* make_cpu_default() {
-	cpu_t* cpu = malloc(sizeof(cpu_t));
-	if (cpu == NULL)
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
-	cpu->acip = 0;
-	cpu->started = false;
-	cpu->processes = create_array();
-	if (cpu->processes == NULL)
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
-	return cpu;
-}
+typedef bool (* array_search_predicate_t) (void* element, void* passed_data);
 
-void initialize_cpus() {
-	cpus = create_array();
-	unsigned int cnt = 0;
-	MADT_LOCAL_APIC* apicptr = NULL;
+typedef struct {
+	void**   data;
+	uint32_t size;
+	uint32_t data_size;
+	uint32_t starting_size;
+} array_t;
 
-	while ((apicptr=find_madt(ACPI_MADT_TYPE_LOCAL_APIC, cnt))!= NULL) {
-		array_push_data(cpus, make_cpu(apicptr));
-		++cnt;
-	}
+array_t* create_array();
 
-	if (cnt == 0){
-		// no acpi, use single cpu only
-		array_push_data(cpus, make_cpu_default());
-	}
-}
+array_t* create_array_spec(uint32_t starting_element_size);
 
-void initialize_kernel_task() {
+uint32_t array_push_data(array_t* array, void* data);
 
-}
+int32_t array_find_data(array_t* array, void* data);
+
+void array_insert_at(array_t* array, uint32_t pos, void* data);
+
+void* array_get_at(array_t* array, uint32_t position);
+
+void array_set_at(array_t* array, uint32_t position, void* data);
+
+void array_remove_at(array_t* array, uint32_t position);
+
+uint32_t array_get_size(array_t* array);
+
+void destroy_array(array_t* array);
+
+void* array_find_by_pred(array_t* array, array_search_predicate_t predicate, void* data);
+
+// defined as inline
+#define array_clean(array) array->size = 0

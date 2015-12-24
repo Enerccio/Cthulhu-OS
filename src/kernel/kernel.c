@@ -27,11 +27,14 @@
 #include "ports/ports.h"
 #include "commons.h"
 #include "utils/rsod.h"
+#include "utils/collections/array.h"
 #include "memory/heap.h"
 #include "memory/paging.h"
 #include "tasks/idt.h"
 #include "tasks/interrupts.h"
 #include "tasks/clock.h"
+#include "tasks/task.h"
+#include "structures/acpi.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -73,6 +76,12 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
 
     register_standard_interrupt_handlers();
     log_msg("Preliminary interrupt handlers set up");
+
+    init_table_acpi();
+    log_msg("ACPI initialized");
+
+    initialize_cpus();
+    vlog_msg("CPU queries. Number of logical cpus %u", array_get_size(cpus));
 
     initialize_clock();
     vlog_msg("Kernel clock initialized, current time in unix time %llu", get_unix_time());

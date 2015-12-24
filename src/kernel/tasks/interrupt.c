@@ -84,7 +84,7 @@ void gp_exception(uint64_t ecode, registers_t* registers) {
 
 void pf_exception(uint64_t ecode, registers_t* registers) {
     void* fa = get_faulting_address();
-    error(ERROR_KERNEL_PAGE_FAULT_IN_NONPAGED_AREA, registers->rip, ecode, fa);
+    error(ERROR_KERNEL_PAGE_FAULT_IN_NONPAGED_AREA, (uint64_t)fa, ecode, (void*)registers->rip);
 }
 
 void mf_exception(uint64_t ecode, registers_t* registers) {

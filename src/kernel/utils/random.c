@@ -30,6 +30,7 @@ rg_t rg_create_random_generator(uint64_t seed) {
 	rg_t rg;
 	rg.state[0] = (seed & 0xFFFFFFFF00000000) + ((seed << 32) ^ seed);
 	rg.state[1] = (seed & 0x00000000FFFFFFFF) + ((seed >> 32) ^ seed);
+	return rg;
 }
 
 uint64_t rg_next_int(rg_t rg) {

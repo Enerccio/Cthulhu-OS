@@ -30,3 +30,11 @@
 kp_halt:
 .loop:
     jmp .loop
+
+[GLOBAL check_cpuid_apic]
+check_cpuid_apic:
+    mov rax, 1
+    cpuid
+    mov rax, rdx
+    and rax, 1<<9
+    ret

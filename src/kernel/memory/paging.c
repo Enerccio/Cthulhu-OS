@@ -218,13 +218,10 @@ static uint64_t detect_maxram(struct multiboot* mboot_addr) {
 
             uint64_t base_addr = data.address;
             uint64_t length = data.size;
-            uint32_t type = data.type;
 
-            if (type == 0x1) {
-                uint64_t totalsize = base_addr + length;
-                if (totalsize > highest)
-                    highest = totalsize;
-            }
+            uint64_t totalsize = base_addr + length;
+			if (totalsize > highest)
+				highest = totalsize;
         }
     }
 
