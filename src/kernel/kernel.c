@@ -80,11 +80,11 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
     init_table_acpi();
     log_msg("ACPI initialized");
 
-    initialize_cpus();
-    vlog_msg("CPU queries. Number of logical cpus %u", array_get_size(cpus));
-
     initialize_clock();
     vlog_msg("Kernel clock initialized, current time in unix time %llu", get_unix_time());
+
+    initialize_cpus();
+    vlog_msg("CPU queries. Number of logical cpus %u", array_get_size(cpus));
 
     while (true) ;
 }

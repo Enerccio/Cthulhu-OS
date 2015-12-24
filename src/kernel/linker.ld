@@ -8,6 +8,15 @@ SECTIONS
 	{
 		*(.mboot)
 	}
+	
+	. = 0x7E00;
+	
+	.mp_entry BLOCK(4K) : ALIGN(4K)
+    {
+        *(.mp_entry)
+    }
+    
+    _mp_entry_end = .;
 
 	. = 1M;
 
@@ -17,6 +26,7 @@ SECTIONS
 	}
 	
 	_init_end = .;
+    
 	. =  0xFFFFFFFF80000000 + _init_end;
 
 	.text : AT(ADDR(.text) - 0xFFFFFFFF80000000)

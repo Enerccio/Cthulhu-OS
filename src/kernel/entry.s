@@ -172,3 +172,8 @@ loop:
 Trampoline:
     mov rax, Realm64
     jmp rax
+
+[BITS 32]
+section .mb_entry
+cpu_boot_entry:
+    hlt

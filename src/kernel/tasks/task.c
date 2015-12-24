@@ -29,11 +29,22 @@
 
 array_t* cpus;
 
+void initialize_mp(unsigned int localcpu){
+	uint32_t proclen = array_get_size(cpus);
+	for (uint32_t i=0; i<proclen; i++){
+		cpu_t* cpu = array_get_at(cpus, i);
+		if (cpu->processor_id == localcpu)
+			continue;
+		vlog_msg("Attempting to initialize logical cpu %llu, apic %hhx.", cpu->processor_id, cpu->apic_id);
+	}
+}
+
 cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
 	cpu_t* cpu = malloc(sizeof(cpu_t));
 	if (cpu == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
-	cpu->acip = apic->processor_id;
+	cpu->processor_id = apic->processor_id;
+	cpu->apic_id = apic->id;
 	cpu->started = false;
 	cpu->processes = create_array();
 	if (cpu->processes == NULL)
@@ -45,7 +56,7 @@ cpu_t* make_cpu_default() {
 	cpu_t* cpu = malloc(sizeof(cpu_t));
 	if (cpu == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
-	cpu->acip = 0;
+	cpu->processor_id = 0;
 	cpu->started = false;
 	cpu->processes = create_array();
 	if (cpu->processes == NULL)
@@ -53,20 +64,45 @@ cpu_t* make_cpu_default() {
 	return cpu;
 }
 
+uint32_t cpuid_to_cputord[256];
+
 void initialize_cpus() {
+
+	memset(cpuid_to_cputord, 0, sizeof(cpuid_to_cputord));
+
 	cpus = create_array();
 	unsigned int cnt = 0;
-	MADT_LOCAL_APIC* apicptr = NULL;
+	unsigned int localcpu = 0;
+	MADT_HEADER* madt = find_madt();
 
-	while ((apicptr=find_madt(ACPI_MADT_TYPE_LOCAL_APIC, cnt))!= NULL) {
-		array_push_data(cpus, make_cpu(apicptr));
-		++cnt;
-	}
-
-	if (cnt == 0){
+	if (madt == NULL){
 		// no acpi, use single cpu only
+		cpuid_to_cputord[0] = 0;
 		array_push_data(cpus, make_cpu_default());
+	} else {
+		MADT_LOCAL_APIC* localapic = physical_to_virtual((uint64_t)madt->address);
+		localcpu = localapic->id;
+
+		size_t bytes = madt->header.Length;
+		bytes -= sizeof(MADT_HEADER);
+		uint64_t addr = ((uint64_t)madt)+sizeof(MADT_HEADER);
+		while (bytes > 0){
+			ACPI_SUBTABLE_HEADER* h = (ACPI_SUBTABLE_HEADER*)addr;
+			bytes -= h->length;
+			addr += h->length;
+			if (h->type == ACPI_MADT_TYPE_LOCAL_APIC){
+				MADT_LOCAL_APIC* lapic = (MADT_LOCAL_APIC*)h;
+				if (lapic->lapic_flags == 1){
+					array_push_data(cpus, make_cpu(lapic));
+					cpuid_to_cputord[lapic->processor_id] = array_get_size(cpus)-1;
+					++cnt;
+				}
+			}
+		}
 	}
+
+	if (array_get_size(cpus) > 1)
+		initialize_mp(localcpu);
 }
 
 void initialize_kernel_task() {

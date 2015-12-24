@@ -30,7 +30,7 @@ resb 0x5000
 stack_top64:
 
 section .text
-global Realm64
+[GLOBAL Realm64]
 Realm64:
     mov rsp, stack_top64
     mov rdi, rbx

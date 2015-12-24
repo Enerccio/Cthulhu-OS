@@ -80,7 +80,8 @@ struct thread {
 };
 
 typedef struct cpu {
-	uint64_t acip;
+	uint64_t processor_id;
+	uint8_t  apic_id;
 	bool     started;
 	array_t* processes;
 } cpu_t;

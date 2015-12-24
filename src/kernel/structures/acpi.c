@@ -97,7 +97,8 @@ void* check_madt_type(ACPISDTHeader* h, enum acpi_madt_type type) {
 	return NULL;
 }
 
-void* find_madt(enum acpi_madt_type type, unsigned int ccount) {
+
+void* find_madt() {
 	if (acpi_version == 1){
 		if (rsdt == NULL)
 			return NULL;
@@ -105,13 +106,7 @@ void* find_madt(enum acpi_madt_type type, unsigned int ccount) {
 		for (int i=0; i<entries; i++){
 			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&rsdt->PointerToOtherSDT)[i]);
 			if (!strncmp(h->Signature, "APIC", 4)){
-				void* addr;
-				if ((addr = check_madt_type(h, type))!=NULL){
-					if (ccount == 0)
-						return (void*)addr;
-					else
-						--ccount;
-				}
+				return h;
 			}
 		}
 	} else {
@@ -121,13 +116,7 @@ void* find_madt(enum acpi_madt_type type, unsigned int ccount) {
 		for (int i=0; i<entries; i++){
 			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&rsdt->PointerToOtherSDT)[i]);
 			if (!strncmp(h->Signature, "APIC", 4)){
-				void* addr;
-				if ((addr = check_madt_type(h, type))!=NULL){
-					if (ccount == 0)
-						return (void*)addr;
-					else
-						--ccount;
-				}
+				return h;
 			}
 		}
 	}

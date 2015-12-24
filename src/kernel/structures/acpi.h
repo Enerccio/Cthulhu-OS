@@ -186,6 +186,141 @@ typedef struct MADT_LOCAL_APIC {
 	uint32_t lapic_flags;
 } MADT_LOCAL_APIC;
 
+typedef struct MADT_IO_APIC {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint8_t id;
+	uint8_t reserved;
+	uint32_t address;
+	uint32_t global_irq_base;
+} MADT_IO_APIC;
+
+typedef struct MADT_INTER_OVERRIDE_APIC {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint8_t bus;
+	uint8_t source_irq;
+	uint32_t global_irq;
+	uint16_t inti_flags;
+} MADT_INTER_OVERRIDE_APIC;
+
+typedef struct MADT_NMI_SOURCE {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint16_t inti_flags;
+	uint32_t global_irq;
+} MADT_NMI_SOURCE;
+
+typedef struct MADT_LOCAL_NMI {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint8_t processor_id;
+	uint16_t inti_flags;
+	uint8_t lint;
+} MADT_LOCAL_NMI;
+
+typedef struct MADT_LOCAL_APIC_OVERRIDE {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint16_t reserved;
+	uint64_t address;
+} MADT_LOCAL_APIC_OVERRIDE;
+
+typedef struct MADT_IO_SAPIC {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint8_t id;
+	uint8_t reserved;
+	uint32_t global_irq_base;
+	uint64_t address;
+} MADT_IO_SAPIC;
+
+typedef struct MADT_LOCAL_SAPIC {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint8_t processor_id;
+	uint8_t id;
+	uint8_t eid;
+	uint8_t reserved[3];
+	uint32_t lapic_flags;
+	uint32_t uid;
+	char uid_string[1];
+} MADT_LOCAL_SAPIC;
+
+typedef struct MADT_PLAT_INTERRUPT_SOURCE {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint16_t inti_flags;
+	uint8_t type;
+	uint8_t id;
+	uint8_t eid;
+	uint8_t io_sapic_vector;
+	uint32_t global_irq;
+	uint32_t flags;
+} MADT_PLAT_INTERRUPT_SOURCE;
+
+typedef struct MADT_LOCAL_2XAPIC {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint16_t reserved;
+	uint32_t local_apic_id;
+	uint32_t lapic_flags;
+	uint32_t uid;
+} MADT_LOCAL_2XAPIC;
+
+typedef struct MADT_LOCAL_2XAPIC_NMI {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint16_t inti_flags;
+	uint32_t uid;
+	uint8_t lint;
+	uint8_t reserved[3];
+} MADT_LOCAL_2XAPIC_NMI;
+
+typedef struct MADT_GENERIC_INTERRUPT {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint16_t reserved;
+	uint32_t cpu_interface_number;
+	uint32_t uid;
+	uint32_t flags;
+	uint32_t parking_version;
+	uint32_t performance_interrupt;
+	uint64_t parked_address;
+	uint64_t base_address;
+	uint64_t gicv_base_address;
+	uint64_t gich_base_address;
+	uint32_t vgic_interrupt;
+	uint64_t gicr_base_address;
+	uint64_t arm_mpidr;
+	uint8_t efficiency_class;
+	uint8_t reserved2[3];
+} MADT_GENERIC_INTERRUPT;
+
+typedef struct MADT_GENERIC_DISTRIBUTOR {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint16_t reserved;
+	uint32_t gic_id;
+	uint64_t base_address;
+	uint32_t global_irq_base;
+	uint8_t version;
+	uint8_t reserved2[3];
+} MADT_GENERIC_DISTRIBUTOR;
+
+typedef struct MADT_GENERIC_MSI_FRAME {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint16_t reserved;
+	uint32_t msi_frame_id;
+	uint64_t base_address;
+	uint32_t flags;
+	uint16_t spi_count;
+	uint16_t spi_base;
+} MADT_GENERIC_MSI_FRAME;
+
+typedef struct MADT_GENERIC_REDISTRIBUTOR {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint16_t reserved;
+	uint64_t base_address;
+	uint32_t length;
+} MADT_GENERIC_REDISTRIBUTOR;
+
+typedef struct MADT_GENERIC_TRANSLATOR {
+	struct ACPI_SUBTABLE_HEADER header;
+	uint16_t reserved;
+	uint32_t translation_id;
+	uint64_t base_address;
+	uint32_t reserved2;
+} MADT_GENERIC_TRANSLATOR;
+
 extern struct RSDPDescriptor* rsdp_descriptor;
 extern uint8_t acpi_version;
 extern RSDT* rsdt;
@@ -193,4 +328,4 @@ extern XSDT* xsdt;
 extern FADT* fadt;
 
 void init_table_acpi();
-void* find_madt(enum acpi_madt_type type, unsigned int ccount);
+void* find_madt();
