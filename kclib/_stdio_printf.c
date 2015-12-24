@@ -539,8 +539,8 @@ int vfprintf(FILE* restrict stream,
 
 			__PRINTF_LENMOD_HH_TEST(fmt, lenmod)
 			else __PRINTF_LENMOD_H_TEST(fmt, lenmod)
-			else __PRINTF_LENMOD_L_TEST(fmt, lenmod)
 			else __PRINTF_LENMOD_LL_TEST(fmt, lenmod)
+			else __PRINTF_LENMOD_L_TEST(fmt, lenmod)
 			else __PRINTF_LENMOD_J_TEST(fmt, lenmod)
 			else __PRINTF_LENMOD_Z_TEST(fmt, lenmod)
 			else __PRINTF_LENMOD_T_TEST(fmt, lenmod)
