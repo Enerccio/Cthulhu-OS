@@ -75,7 +75,7 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
     log_msg("Preliminary interrupt handlers set up");
 
     initialize_clock();
-    vlog_msg("Kernel clock initialized, current time in unix time %lld", get_unix_time());
+    vlog_msg("Kernel clock initialized, current time in unix time %llu", get_unix_time());
 
     while (true) ;
 }

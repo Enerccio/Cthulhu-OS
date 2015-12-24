@@ -157,6 +157,12 @@ after_pages_set:
     mov cr0, eax                 ; Set control register 0 to the A-register.
 
     lgdt [GDT64.Pointer]         ; Load the 64-bit global descriptor table.
+    mov ax, 0x10
+    mov es, ax
+    mov ss, ax
+    mov ds, ax
+    mov gs, ax
+    mov fs, ax
     extern Realm64
     jmp GDT64.Code:Trampoline    ; Set the code segment and enter 64-bit long mode.
 [BITS 32]
