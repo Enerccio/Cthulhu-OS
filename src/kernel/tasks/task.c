@@ -70,7 +70,7 @@ void initialize_mp(unsigned int localcpu){
 
 	for (uint32_t i=0; i<proclen; i++){
 		cpu_t* cpu = array_get_at(cpus, i);
-		if (cpu->processor_id == localcpu){
+		if (cpu->apic_id == localcpu){
 			cpu->started = true;
 			continue;
 		}
@@ -91,7 +91,7 @@ void initialize_mp(unsigned int localcpu){
 
 	for (uint32_t i=0; i<proclen; i++){
 		cpu_t* cpu = array_get_at(cpus, i);
-		if (cpu->processor_id == localcpu){
+		if (cpu->apic_id == localcpu){
 			cpu->started = true;
 			continue;
 		}
@@ -124,7 +124,7 @@ void initialize_mp(unsigned int localcpu){
 	if (!initialized){
 		for (uint32_t i=0; i<proclen; i++){
 			cpu_t* cpu = array_get_at(cpus, i);
-			if (cpu->processor_id == localcpu){
+			if (cpu->apic_id == localcpu){
 				continue;
 			}
 			// Second SIPI
@@ -170,8 +170,6 @@ cpu_t* make_cpu_default() {
 void initialize_cpus() {
 
 	memcpy((void*)physical_to_virtual(0x1000), (void*)physical_to_virtual((uint64_t)&Gdt32), 0x2000);
-	//for (unsigned int i=0x1000; i<0x3000; i++)
-	//	write_byte_com(COM1, *((char*)(uint64_t)i));
 	memset(cpuid_to_cputord, 0, sizeof(cpuid_to_cputord));
 
 	cpus = create_array_spec(256);
@@ -187,8 +185,8 @@ void initialize_cpus() {
 	} else {
 		MADT_LOCAL_APIC* localapic = (MADT_LOCAL_APIC*)physical_to_virtual((uint64_t)madt->address);
 		apicaddr = madt->address;
-		vlog_msg("Local apic address %#x.", apicaddr);
 		localcpu = localapic->id;
+		vlog_msg("Local apic address %#x, local cpu apic %x.", apicaddr, localcpu);
 
 		size_t bytes = madt->header.Length;
 		bytes -= sizeof(MADT_HEADER);
