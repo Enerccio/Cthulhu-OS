@@ -125,7 +125,7 @@ void initialize_mp(unsigned int localcpu){
 	if (!initialized){
 		for (uint32_t i=0; i<proclen; i++){
 			cpu_t* cpu = array_get_at(cpus, i);
-			if (cpu->apic_id == localcpu){
+			if (cpu->apic_id == localcpu || cpu->started){
 				continue;
 			}
 			// Second SIPI

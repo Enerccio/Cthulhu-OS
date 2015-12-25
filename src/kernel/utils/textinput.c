@@ -88,9 +88,9 @@ void kd_put(char c) {
 
 void kd_cput(char c, uint8_t backColour, uint8_t foreColour) {
 #ifdef KERNEL_DEBUG_MODE
-    //if (c == '\n')
-    //    write_byte_com(COM1, '\r');
-    //write_byte_com(COM1, c);
+    if (c == '\n')
+        write_byte_com(COM1, '\r');
+    write_byte_com(COM1, c);
 #endif
     uint8_t attributeByte = (backColour << 4) | (foreColour & 0x0F);
 

@@ -53,15 +53,18 @@ APRealm64:
     mov rdi, rax ; rdi now holds processor id
     extern cpuid_to_cputord
     mov rbx, cpuid_to_cputord
-    mov rdx, 32
+    mov rdx, 4
     mul rdx
-    mov rcx, [rbx + rax] ; rcx contains proc_id->table_id
+    xor rcx, rcx
+    mov ecx, dword [rbx + rax] ; rcx contains proc_id->table_id
     extern cpus
-    mov rbx, cpus
+    mov rbx, [cpus] ; rbx contains pointer to array->data
     mov rax, 8
     mul rcx
-    add rax, [rbx] ; rax contains pointer to stack
-    mov rsp, [rax]
+    add rax, [rbx] ; rax contains pointer to cpu
+    mov rsi, [rax] ; rsi contains pointer to stack
+    mov rsp, [rsi]
+    sub rsp, 16
     xor rbp, rbp
     extern ap_main
     call ap_main
