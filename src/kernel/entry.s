@@ -227,7 +227,7 @@ cpu_boot_entry:
     DEBUG_COM 'b'
     mov esp, ecx
     mov ebp, esp
-    ;lgdt [Gdt32.Pointer - cpu_boot_entry + PHYSADDR]  ; load GDT register with start address of Global Descriptor Table
+    lgdt [word Gdt32.Pointer - Gdt32 + 0x1000]  ; load GDT register with start address of Global Descriptor Table
     mov eax, cr0
     or al, 1              ; set PE (Protection Enable) bit in CR0 (Control Register 0)
     mov cr0, eax
@@ -235,7 +235,7 @@ cpu_boot_entry:
     ; Perform far jump to selector 08h (offset into GDT, pointing at a 32bit PM code segment descriptor)
     ; to load CS with proper PM32 descriptor)
     DEBUG_COM 'c'
-    jmp dword 08h:ap_protected_mode - cpu_boot_entry + PHYSADDR
+    jmp 08h:ap_protected_mode - cpu_boot_entry + PHYSADDR
     hlt
 
 [BITS 32]
@@ -248,7 +248,8 @@ ap_protected_mode:
     mov gs, ax
     mov fs, ax
     DEBUG_COM 'e'
-    jmp ap_protected_mode_ra
+    mov eax, ap_protected_mode_ra
+    jmp eax
 
 ap_protected_mode_ra:
     DEBUG_COM 'f'
