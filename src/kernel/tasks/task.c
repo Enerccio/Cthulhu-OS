@@ -81,7 +81,7 @@ void initialize_mp(unsigned int localcpu){
 			;
 		uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
-		sendvalue = 5 << 7;
+		sendvalue = 5 << 8;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
 	}
 
@@ -104,7 +104,7 @@ void initialize_mp(unsigned int localcpu){
 		// SIPI
 		uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
-		sendvalue = (6 << 7) | 2;
+		sendvalue = (6 << 8) | 2;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
 		vlog_msg("Attempted to initialize logical cpu %llu, apic %hhx", cpu->processor_id, cpu->apic_id);
 	}
@@ -133,7 +133,7 @@ void initialize_mp(unsigned int localcpu){
 				;
 			uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
 			*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
-			sendvalue = (6 << 7) | 2;
+			sendvalue = (6 << 8) | 2;
 			*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
 		}
 	}

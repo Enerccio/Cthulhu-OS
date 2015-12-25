@@ -209,17 +209,22 @@ Gdt32:                           ; Global Descriptor Table (32-bit).
     dw $ - Gdt32 - 1             ; Limit.
     dq Gdt32                     ; Base.
 
+%macro DEBUG_COM 1
+    mov dx, 3F8h
+    mov ax, %1
+    out dx, al
+%endmacro
+
 [BITS 16]
 [GLOBAL cpu_boot_entry]
 section .mp_entry
 cpu_boot_entry:
     cli
-    mov dx, 3F8h
-    mov ax, 48
-    out dx, al
+    DEBUG_COM 'a'
     jmp 0x0:.realMode - cpu_boot_entry + PHYSADDR
 
 .realMode
+    DEBUG_COM 'b'
     mov esp, ecx
     mov ebp, esp
     ;lgdt [Gdt32.Pointer - cpu_boot_entry + PHYSADDR]  ; load GDT register with start address of Global Descriptor Table
@@ -229,20 +234,24 @@ cpu_boot_entry:
 
     ; Perform far jump to selector 08h (offset into GDT, pointing at a 32bit PM code segment descriptor)
     ; to load CS with proper PM32 descriptor)
+    DEBUG_COM 'c'
     jmp dword 08h:ap_protected_mode - cpu_boot_entry + PHYSADDR
     hlt
 
 [BITS 32]
 ap_protected_mode:
+    DEBUG_COM 'd'
     mov ax, 0x10
     mov es, ax
     mov ss, ax
     mov ds, ax
     mov gs, ax
     mov fs, ax
+    DEBUG_COM 'e'
     jmp ap_protected_mode_ra
 
 ap_protected_mode_ra:
+    DEBUG_COM 'f'
     mov edi, _gpInitial_PML4
     mov cr3, edi                 ; Set control register 3 to the destination index.
     mov eax, cr4                 ; Set the A-register to control register 4.
