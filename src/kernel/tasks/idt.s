@@ -107,6 +107,9 @@ isr_common_stub:
     iretq
 
 [GLOBAL idt_flush]
+; flushes idt table change
+;
+; extern void idt_flush(void* idt_ptr)
 idt_flush:
    mov rax, rdi                 ; Get the pointer to the IDT, passed as a parameter.
    lidt [rax]                   ; Load the IDT pointer.

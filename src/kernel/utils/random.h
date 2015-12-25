@@ -33,6 +33,17 @@ typedef struct random_generator {
 	uint64_t state[2];
 } rg_t;
 
+/**
+ * Creates random generator with provided seed.
+ */
 rg_t rg_create_random_generator(uint64_t seed);
+
+/**
+ * Returns next uint from random generator.
+ */
 uint64_t rg_next_uint(rg_t rg);
+
+/**
+ * Returns next uint from 0 to limit.
+ */
 uint64_t rg_next_uint_l(rg_t rg, uint64_t limit);

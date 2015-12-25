@@ -27,18 +27,26 @@
 
 #include "ports.h"
 
+/** number maximum of available com ports, some might be unusable */
 uint8_t   com_ports_count;
+/** available com ports are listed here */
 uint32_t  com_ports_address[4];
+/** number maximum of available lpt ports, some might be unusable */
 uint8_t   lpt_ports_count;
+/** available lpt ports are listed here */
 uint32_t  lpt_ports_address[3];
-uint16_t* video_memory; // (uint16_t*) 0xB8000;
+/** VGA memory address */
+uint16_t* video_memory;
+/** EBDA memory address */
 void*     ebda;
 
-#define VIDEO_MEM_OFFSET (0xB8000-0xA0000)
 #define BDA_IO_COM ((uint32_t*)0x0400)
 #define BDA_IO_LPT ((uint32_t*)0x0408)
 #define BDA_EBDA ((uint32_t*)0x040E)
 
+/**
+ * Initializes serial port identified by pa.
+ */
 void init_serial_port(uint32_t pa) {
     if (pa == 0)
         return;
@@ -52,6 +60,11 @@ void init_serial_port(uint32_t pa) {
     outb(IOP_MODEM_CONT_REG(pa), 0x0B);     // IRQs enabled, RTS/DSR set
 }
 
+/**
+ * Initializes serial and lpt ports to be used by kernel.
+ *
+ * TODO: Add lpt initialization
+ */
 void initialize_ports() {
     ebda = (void*) (((uintptr_t)*BDA_EBDA)>>4);
     video_memory = (uint16_t*)(0xB8000);
@@ -70,10 +83,19 @@ void initialize_ports() {
     }
 }
 
+/**
+ * Returns whether com line is empty or not for supplied port.
+ */
 bool com_empty_line(uint16_t port) {
     return inb(port+5) & 0x20;
 }
 
+/**
+ * Writes data to com port.
+ *
+ * Determines address for com port, then waits until it is empty
+ * and when it is, it sends out data.
+ */
 void write_byte_com(uint8_t com, uint8_t data) {
     uint16_t com_port = (uint16_t)com_ports_address[com];
     if (com_port == 0)

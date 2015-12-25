@@ -89,6 +89,20 @@ typedef struct cpu {
 
 extern array_t* cpus;
 
+/**
+ * Initializes cpu information. Initializes SMP if available.
+ */
 void initialize_cpus();
+
+/**
+ * Initializes kernel task as a task.
+ */
 void initialize_kernel_task();
+
+/**
+ * Sends interprocessor interrupt to a processor.
+ *
+ * Processor is identified by apic_id, vector is data sent,
+ * control flags and init_ipi decides flags to be sent with.
+ */
 void send_ipi_to(uint8_t apic_id, uint8_t vector, uint32_t control_flags, bool init_ipi);

@@ -28,15 +28,33 @@
 #include "task.h"
 #include "idt.h"
 #include "clock.h"
+#include "../ports/ports.h"
 
-array_t* cpus;
 extern volatile uintmax_t clock_ms;
 extern volatile uintmax_t clock_s;
-uint32_t cpuid_to_cputord[256];
-uint32_t apicaddr;
 extern void idt_flush(void* addr);
 extern idt_ptr_t idt_ptr;
+extern void* Gdt32;
 
+#define AP_INIT_LOAD_ADDRESS (2)
+#define INIT_IPI_FLAGS (5<<8)
+#define SIPI_FLAGS (6<<8)
+
+/** Array of cpu_t structures for all cpus */
+array_t* cpus;
+/** Maps processor_id into ord in cpus array */
+uint32_t cpuid_to_cputord[256];
+/** Contains LAPIC address from ACPI */
+uint32_t apicaddr;
+
+/**
+ * Main entry point for AP processors.
+ *
+ * AP enters here from assembly code in long mode.
+ * Then, that processor marks itself as started and
+ * loads shared idt table, enabling the interrupts
+ * afterwards.
+ */
 void ap_main(uint64_t proc_id){
 	cpu_t* cpu = (cpu_t*)array_get_at(cpus, cpuid_to_cputord[proc_id]);
 	cpu->started = true;
@@ -47,14 +65,27 @@ void ap_main(uint64_t proc_id){
 	while (true) ;
 }
 
+/**
+ * Waits until IPI is free for writing.
+ */
 void wait_until_ipi_is_free(){
 	while((*(uint32_t*)physical_to_virtual((apicaddr + 0x30))) & (1<<12))
 		;
 }
 
+/** Writes to address portion of IPI */
 #define WRITE_TO_IPI_ADDRESS(address) *((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10)) = ((uint32_t)address) << 24
+/** Writes to data portion of IPI */
 #define WRITE_TO_IPI_PAYLOAD(payload) *((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10)) = payload
 
+/**
+ * Sends interprocessor interrupt to a processor.
+ *
+ * Processor is identified by apic_id, vector is data sent,
+ * control flags and init_ipi decides flags to be sent with.
+ *
+ * Waits until LAPIC is free, then writes address and data.
+ */
 void send_ipi_to(uint8_t apic_id, uint8_t vector, uint32_t control_flags, bool init_ipi) {
 	wait_until_ipi_is_free();
 	uint32_t payload = vector;
@@ -65,11 +96,16 @@ void send_ipi_to(uint8_t apic_id, uint8_t vector, uint32_t control_flags, bool i
 	WRITE_TO_IPI_PAYLOAD(payload);
 }
 
-extern void* Gdt32;
-#define AP_INIT_LOAD_ADDRESS (2)
-#define INIT_IPI_FLAGS (5<<8)
-#define SIPI_FLAGS (6<<8)
-
+/**
+ * Initializes multiprocessing.
+ *
+ * localcpu contains acpi of bsp.
+ *
+ * Initializes APs by sending INIT IPI to all APs,
+ * then waiting 20ms, sending SIPI IPI to all APs,
+ * then waits more, and if any APs are still not initialized,
+ * sends SIPI IPI again and returns.
+ */
 void initialize_mp(unsigned int localcpu){
 	uint32_t proclen = array_get_size(cpus);
 	for (uint32_t i=0; i<proclen; i++){
@@ -116,6 +152,9 @@ void initialize_mp(unsigned int localcpu){
 	}
 }
 
+/**
+ * Creates cpu_t structure from APIC MADT information.
+ */
 cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
 	cpu_t* cpu = malloc(sizeof(cpu_t));
 	if (cpu == NULL)
@@ -130,6 +169,9 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
 	return cpu;
 }
 
+/**
+ * Creates cpu_t for default cpu, if MADT is unavailable.
+ */
 cpu_t* make_cpu_default() {
 	cpu_t* cpu = malloc(sizeof(cpu_t));
 	if (cpu == NULL)
@@ -143,10 +185,13 @@ cpu_t* make_cpu_default() {
 	return cpu;
 }
 
-#include "../ports/ports.h"
-
+/**
+ * Initializes cpu information. Initializes SMP if available.
+ *
+ * Creates cpus array and fills it in. If SMP is available, initializes
+ * all AP processors.
+ */
 void initialize_cpus() {
-
 	memcpy((void*)physical_to_virtual(0x1000), (void*)physical_to_virtual((uint64_t)&Gdt32), 0x2000);
 	memset(cpuid_to_cputord, 0, sizeof(cpuid_to_cputord));
 
@@ -188,6 +233,11 @@ void initialize_cpus() {
 		initialize_mp(localcpu);
 }
 
+/**
+ * Initializes kernel task as a task.
+ *
+ * TODO: fill this in.
+ */
 void initialize_kernel_task() {
 
 }

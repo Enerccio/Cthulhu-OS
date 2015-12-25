@@ -27,14 +27,22 @@
 
 #include "acpi.h"
 
+/** RSDP descriptor or NULL if none is available */
 struct RSDPDescriptor* rsdp_descriptor;
+/** RSDT table or NULL if none is available */
 RSDT*   rsdt;
+/** XSDT table or NULL if none is available */
 XSDT*   xsdt;
+/** FADT table or NULL if none is available */
 FADT*   fadt;
+/** ACPI version is stored here */
 uint8_t acpi_version;
 
 extern void* ebda;
 
+/**
+ * Adds all bytes of target address together to one number.
+ */
 uintmax_t add_bytes(uint8_t* addr, size_t len) {
 	uintmax_t v = 0;
 	for (size_t p = 0; p < len ; p++)
@@ -42,24 +50,38 @@ uintmax_t add_bytes(uint8_t* addr, size_t len) {
 	return v;
 }
 
-bool acpisdt_checksum(ACPISDTHeader* tableHeader) {
+/**
+ * Performs acpisdt checksum for header.
+ */
+bool acpisdt_checksum(ACPISDTHeader* th) {
 	unsigned char sum = 0;
 
-	for (unsigned int i = 0; i < tableHeader->Length; i++){
-        sum += ((char *) tableHeader)[i];
+	for (unsigned int i = 0; i < th->Length; i++){
+        sum += ((char *) th)[i];
     }
 
     return sum == 0;
 }
 
+/**
+ * Checks whether rsdt is valid
+ */
 bool valid_rsdt(RSDT* rsdt) {
 	return acpisdt_checksum((ACPISDTHeader*)rsdt);
 }
 
+/**
+ * Checks whether xsdt is valid
+ */
 bool valid_xsdt(XSDT* xsdt) {
 	return acpisdt_checksum((ACPISDTHeader*)xsdt);
 }
 
+/**
+ * Finds FACP table or returns NULL.
+ *
+ * Argument must be RSDT table.
+ */
 void* findFACP(void* RootSDT) {
     RSDT* rsdt = (RSDT*) RootSDT;
     int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
@@ -74,6 +96,11 @@ void* findFACP(void* RootSDT) {
     return NULL;
 }
 
+/**
+ * Finds FACP table or returns NULL.
+ *
+ * Argument must be XSDT table.
+ */
 void* findFACP_XSDT(void* RootSDT) {
     XSDT* xsdt = (XSDT*) RootSDT;
     int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
@@ -88,16 +115,11 @@ void* findFACP_XSDT(void* RootSDT) {
     return NULL;
 }
 
-void* check_madt_type(ACPISDTHeader* h, enum acpi_madt_type type) {
-	MADT_HEADER* madt = (MADT_HEADER*)h;
-	ACPI_SUBTABLE_HEADER* ptr = (ACPI_SUBTABLE_HEADER*)physical_to_virtual((uint64_t)madt->address);
-	if (ptr->type == type){
-		return ptr;
-	}
-	return NULL;
-}
-
-
+/**
+ * Returns MADT table or NULL if it does not exist.
+ *
+ * Searches either RSDT or XSDT for MADT table and returns it.
+ */
 void* find_madt() {
 	if (acpi_version == 1){
 		if (rsdt == NULL)
@@ -123,11 +145,17 @@ void* find_madt() {
 	return NULL;
 }
 
+/**
+ * Checks whether lowest byte of value is 0.
+ */
 bool check_lowestbyte(uintmax_t value) {
 	char* ch = (char*) &value;
 	return ch[0] == 0;
 }
 
+/**
+ * Checks whether RSDP is valid.
+ */
 bool valid_rsdp(struct RSDPDescriptor* rsdp) {
 	acpi_version = rsdp->Revision+1;
 	if (acpi_version == 1){
@@ -137,6 +165,14 @@ bool valid_rsdp(struct RSDPDescriptor* rsdp) {
 	}
 }
 
+/**
+ * Returns pointer to RSDP or NULL if none can be found.
+ *
+ * Searches whole ebda or address from 0x000E0000 to 0x000FFFFF for
+ * string "RSD PTR " at align borders (0xF align), if found,
+ * creates RSDP from that memory location and checks for validity.
+ * If valid, it returns it, otherwise continues the search loop.
+ */
 struct RSDPDescriptor* find_rsdp() {
 	struct RSDPDescriptor* desc;
 	uint64_t test_addr = (uint64_t)ebda;
@@ -161,10 +197,22 @@ struct RSDPDescriptor* find_rsdp() {
 	return NULL;
 }
 
+/**
+ * Checks whether fadt is valid or not.
+ */
 bool valid_fadt(FADT* fadt) {
 	return acpisdt_checksum((ACPISDTHeader*)fadt);
 }
 
+/**
+ * Initializes ACPI tables.
+ *
+ * Finds RSDP descriptor, then determines ACPI version and
+ * based on that finds either RSDT or XSDT. If those are valid,
+ * it searches them for FADT table and saves it.
+ *
+ * If any of those steps fail, sets remaining structures to NULL.
+ */
 void init_table_acpi() {
 	rsdp_descriptor = NULL;
 	rsdt = NULL;

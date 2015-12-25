@@ -29,12 +29,21 @@
 #include "../utils/rsod.h"
 #include <string.h>
 
+/** IDT gates stored in this table */
 idt_gate_t idt_entries[256];
+/** ISR function vectors stored in this table */
 isr_t interrupt_handlers[256];
+/** IDT PTR stored here */
 idt_ptr_t idt_ptr;
 
 extern void idt_flush(idt_ptr_t* ptr);
 
+/**
+ * Sets the IDT gate to function vector.
+ *
+ * gn supplies numbered interrupt, while funcall is
+ * function to be called when that interrupt happens.
+ */
 void idt_set_gate(uint8_t gn, uint64_t funcall) {
     idt_gate_t* gate = &idt_entries[gn];
     gate->offset015 = funcall & 0xFFFF;
@@ -46,6 +55,15 @@ void idt_set_gate(uint8_t gn, uint64_t funcall) {
     gate->flags.dpl = 0;
 }
 
+/**
+ * Initializes base interrupt vectors.
+ *
+ * Creates IDT pointer and then fills it up with generated
+ * asm functions. These functions, by default, call ISR vector,
+ * or kernel panics if ISR vector is unavailable.
+ *
+ * Also remaps IRQ to use interrupts.
+ */
 void initialize_interrupts() {
 
     memset(idt_entries, 0, sizeof(idt_entries));
@@ -125,6 +143,9 @@ void initialize_interrupts() {
     idt_flush(&idt_ptr);
 }
 
+/**
+ * Clears interrupt state after interrupt was handled.
+ */
 void pic_sendeoi(int irq) {
     switch (irq) {
     case PIC_EOI_MASTER: {
@@ -149,21 +170,32 @@ void pic_sendeoi(int irq) {
     }
 }
 
+/**
+ * ISR common handler.
+ *
+ * Called by interrupt vector. Registers are editable state of
+ * CPU before interrupt.
+ */
 void isr_handler(registers_t* r) {
-    if (r->type > 31 && r->type < 48){
-        if (r->type >= 40 && r->type != 47)
-            pic_sendeoi(PIC_EOI_SLAVE);
-        if (r->type != 39)
-            pic_sendeoi(PIC_EOI_MASTER);
-    }
-
     if (interrupt_handlers[r->type] == 0) {
         error(ERROR_NO_IV_FOR_INTERRUPT, r->type, r->ecode, &r);
     } else {
         interrupt_handlers[r->type](r->ecode, r);
     }
+
+    if (r->type > 31 && r->type < 48){
+		if (r->type >= 40 && r->type != 47)
+			pic_sendeoi(PIC_EOI_SLAVE);
+		if (r->type != 39)
+			pic_sendeoi(PIC_EOI_MASTER);
+	}
 }
 
+/**
+ * Registers ISR vector for interrupt.
+ *
+ * Will overwrite interrupt handler set up before.
+ */
 void register_interrupt_handler(uint8_t interrupt_id, isr_t handler_func){
     interrupt_handlers[interrupt_id] = handler_func;
 }

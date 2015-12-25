@@ -31,6 +31,15 @@
 #include "idt.h"
 #include "../commons.h"
 
+/**
+ * Initializes clock subsystem.
+ */
 void initialize_clock();
+/**
+ * Returns unix time since 1970.
+ */
 uint64_t get_unix_time();
+/**
+ * Busy waits for milis time in milis.
+ */
 void busy_wait_milis(size_t milis);

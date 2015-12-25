@@ -41,16 +41,25 @@ enum {
 	cmos_data    = 0x71
 };
 
+/**
+ * Returns if update is in progress.
+ */
 int get_update_in_progress_flag() {
 	outb(cmos_address, 0x0A);
 	return (inb(cmos_data) & 0x80);
 }
 
+/**
+ * Returns value from RTC register.
+ */
 unsigned char get_RTC_register(int reg) {
 	outb(cmos_address, reg);
 	return inb(cmos_data);
 }
 
+/**
+ * Determines number of days from specified date.
+ */
 intmax_t days_from_civil(int32_t y, uint8_t m, uint8_t d) {
 	y -= m <= 2;
 	int32_t era = (y >= 0 ? y : y-399) / 400;
@@ -60,9 +69,14 @@ intmax_t days_from_civil(int32_t y, uint8_t m, uint8_t d) {
 	return era * 146097 + ((int)doe) - 719468;
 }
 
+/** Stores clock seconds in unix time */
 volatile uintmax_t clock_s;
+/** Stores ms of current ticker */
 volatile uintmax_t clock_ms;
 
+/**
+ * Ticker callback for ISR.
+ */
 void timer_tick(uint64_t error_code, registers_t* r) {
 	clock_ms += 1;
 	if (clock_ms >= 1000){
@@ -71,6 +85,11 @@ void timer_tick(uint64_t error_code, registers_t* r) {
 	}
 }
 
+/**
+ * Busy waits for X milliseconds.
+ *
+ * TODO: Fix it, might not be correct
+ */
 void busy_wait_milis(size_t milis){
 	uintmax_t oclocks = clock_s;
 	uintmax_t oclockms = clock_ms;
@@ -92,10 +111,18 @@ void busy_wait_milis(size_t milis){
 	}
 }
 
+/**
+ * Returns current unix time.
+ */
 uint64_t get_unix_time() {
 	return (uint64_t)clock_s;
 }
 
+/**
+ * Initializes ticker.
+ *
+ * Sets up IRQ0 and then enables interrupts.
+ */
 void initialize_ticker() {
 	clock_s = (((uintmax_t)days_from_civil(year, month, day)) * (3600*24)) +
 			(hour*3600) + (minute*60) + second;
@@ -114,6 +141,12 @@ void initialize_ticker() {
 	ENABLE_INTERRUPTS();
 }
 
+/**
+ * Initializes clock module
+ *
+ * Calls CMOS for time data, converts it from date to unix time,
+ * then initializes ticker.
+ */
 void initialize_clock() {
 	unsigned char century;
 	unsigned char last_second;

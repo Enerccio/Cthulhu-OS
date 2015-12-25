@@ -26,30 +26,24 @@
  */
 #include "heap.h"
 
+/**
+ * temporary heap address is stored here, used initially to create memory structures
+ * so standard allocation can happen
+ */
 int64_t tmp_heap;
+/**
+ * Start of the heap address
+ */
 uint64_t heap_start_address;
+/**
+ * End of the heap address
+ */
 uint64_t heap_end_address;
 
-uint64_t handle_kernel_memory(int required_amount) {
-    if (required_amount > 0){
-        uint64_t old_heap_end = heap_end_address;
-        heap_end_address += required_amount;
-        allocate(old_heap_end, required_amount, true, false);
-        return old_heap_end;
-    } else {
-        required_amount = 0-required_amount;
-        uint64_t old_heap_end = heap_end_address;
-        uint64_t new_heap_end = heap_end_address - required_amount;
-        if (new_heap_end < heap_start_address){
-            required_amount = heap_end_address - heap_start_address;
-            new_heap_end = heap_start_address;
-        }
-        heap_end_address = new_heap_end;
-        deallocate(heap_end_address, required_amount);
-        return old_heap_end;
-    }
-}
-
+/**
+ * Allocates the memory amount increased by align count, then aligns it and
+ * returns it.
+ */
 aligned_ptr_t malign(size_t amount, uint16_t align) {
     if (tmp_heap != 0){
         if (tmp_heap % align != 0){

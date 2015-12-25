@@ -32,8 +32,20 @@
 
 #include <stdlib.h>
 
+/**
+ * Initializes temporary heap with provided address
+ */
 void initialize_temporary_heap(uint64_t temp_heap_start);
+/**
+ * Initializes standard heap
+ */
 void initialize_standard_heap();
+/**
+ * Returns allocated address which is aligned to align parameter
+ */
 void* malign(size_t amount, uint16_t align);
 
+/**
+ * Start of the heap address
+ */
 extern uint64_t heap_start_address;

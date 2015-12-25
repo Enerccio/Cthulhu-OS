@@ -27,12 +27,23 @@
 
 #include "../commons.h"
 
-char*strcpy(char*target, const char*source);
-
+/**
+ * Returns simple random number
+ */
 uint32_t rand_number(int32_t limit);
 
+/**
+ * Converts hex number to string, using static buffers.
+ * Is not thread safe.
+ */
 const char* hextochar(uint32_t num) UNSAFE_THREAD_CALL SINGLETON_RETURN;
 
+/**
+ * Converts void* into hash.
+ */
 uint32_t int_hash_function(void* integer);
 
+/**
+ * Integer comparisons, of void* arguments representing integer.
+ */
 bool int_cmpr_function(void* a, void* b);

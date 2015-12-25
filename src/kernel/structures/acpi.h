@@ -327,5 +327,13 @@ extern RSDT* rsdt;
 extern XSDT* xsdt;
 extern FADT* fadt;
 
+/**
+ * Initializes acpi tables.
+ */
 void init_table_acpi();
+
+/**
+ * Returns MADT table or NULL if acpi is not supported or has no
+ * MADT table.
+ */
 void* find_madt();

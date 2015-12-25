@@ -27,14 +27,24 @@
 #include "paging.h"
 #include "heap.h"
 
+/** aligns the address to 0x1000 */
 #define ALIGN(addr) (((uint64_t)addr) & 0xFFFFFFFFFFFFF000)
+/** aligns the address to 0x1000 and then casts it to type */
 #define PALIGN(type, addr) ((type)ALIGN(addr))
 
+/** Maximum physical bits in page structures */
 uint64_t maxphyaddr;
+/** Contains bitmap for physical address, ie 1 represents usable ram, 0 represents unusable address */
 uint8_t* phys_map;
+/** Frame map, bitmap containing all frames (even for unusable addresses), 1 means page is used,
+ * 0 means page is unused. */
 uint8_t* frame_map;
+/**
+ * Bitmap containing frame usage. 0 means kernel is using page, 1 means user space is using page */
 uint8_t* frame_map_usage;
+/** Maximum ram address, might be unusable */
 uint64_t maxram;
+/** Maximum number of frames, some might be unusable */
 uint64_t maxframes;
 
 extern uint64_t detect_maxphyaddr();
@@ -43,6 +53,9 @@ extern void set_active_page(uint64_t address);
 extern void invalidate_address(uint64_t address);
 extern uint64_t is_1GB_paging_supported();
 
+/**
+ * Virtual address structure for standard paging.
+ */
 typedef struct v_address {
     uint64_t offset :12;
     uint64_t table :9;
@@ -52,6 +65,9 @@ typedef struct v_address {
     uint64_t rest :16;
 } v_address_t;
 
+/**
+ * Virtual address structure for 1GB page.
+ */
 typedef struct v_address1GB {
     uint64_t offset :30;
     uint64_t directory_ptr :9;
@@ -82,7 +98,19 @@ typedef struct v_address1GB {
 #define MMU_PD(addr)            ((uint64_t*)( KADDR_MMU_PD   + (((addr)>>18) & 0x003FFFF000) ))
 #define MMU_PT(addr)            ((uint64_t*)( KADDR_MMU_PT   + (((addr)>>9)  & 0x7FFFFFF000) ))
 
+/** Checks if page structure at addr is present or not */
 #define PRESENT(addr) (((uint64_t)addr) & 1)
+
+/**
+ * Computes virtual to physical mapping.
+ *
+ * Checks for page hierarchy and determines what physical address will be.
+ * If page structures are missing on the way to decode, physical address cannot
+ * be found and this valid will contain 0, otherwise valid will contain 1
+ *
+ * 1GB page sector (ram identity map) behaves slightly different, because it
+ * needs different v_address_t type.
+ */
 uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
     *valid = 1;
     v_address_t virtual_address = *((v_address_t*) &vaddress);
@@ -102,7 +130,8 @@ uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
     }
 
     if (vaddress > ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS) &&
-                vaddress < ADDRESS_OFFSET((RESERVED_KBLOCK_RAM_MAPPINGS+1))){
+                vaddress < ADDRESS_OFFSET((RESERVED_KBLOCK_RAM_MAPPINGS+1))	&&
+				is_1GB_paging_supported()){
         v_address1GB_t va = *((v_address1GB_t*) &vaddress);
         page_directory1GB_t pd1gb;
         pd1gb.number = (uint64_t) address;
@@ -120,12 +149,22 @@ uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
     return ALIGN(physadd) + virtual_address.offset;
 }
 
+/**
+ * Returns address + physical identity map offset
+ */
 uint64_t physical_to_virtual(uint64_t vaddress) {
     return vaddress + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
 }
 
+/** contains last found free frame, so algorithm can continue from that point when searching for next */
 uint32_t last_searched_location;
 
+/**
+ * Always returns free frame, or loops forever!
+ *
+ * Searches the frame_map bitmap for free frame, then allocates it.
+ * TODO: add paging to swap
+ */
 static uint64_t get_free_frame() {
     uint32_t i, j;
 
@@ -144,11 +183,18 @@ static uint64_t get_free_frame() {
         }
 
         last_searched_location = 0;
-        // TODO free frames
     }
 
 }
 
+/**
+ * Returns page allocated for that virtual address.
+ *
+ * If allocate_new is specified to true, it will allocate substructures,
+ * if not present.Otherwise returns NULL if page structures are not present
+ * on the way to the virtual address. Returned pointer points to page in page
+ * table.
+ */
 static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
     uint64_t* pdpt_addr = (uint64_t*) MMU_PML4(vaddress)[MMU_PML4_INDEX(
             vaddress)];
@@ -194,6 +240,9 @@ static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
     return &MMU_PT(vaddress)[MMU_PT_INDEX(vaddress)];
 }
 
+/**
+ * Multiboot memory structure
+ */
 typedef struct
     __attribute__((packed)) {
         uint64_t address;
@@ -201,6 +250,13 @@ typedef struct
         uint32_t type;
     } mboot_mem_t;
 
+/**
+ * Detects maximum ram, as provided by multiboot.
+ *
+ * Searches multiboot structure for memory entries, and then
+ * returns total addressable space (might contain special
+ * addresses).
+ */
 static uint64_t detect_maxram(struct multiboot* mboot_addr) {
     uint64_t highest = 0;
     if ((mboot_addr->flags & 0b1) == 1) {
@@ -233,6 +289,12 @@ static uint64_t detect_maxram(struct multiboot* mboot_addr) {
     return highest;
 }
 
+/**
+ * Creates frame map from multiboot structure.
+ *
+ * Fills bitmaps for frame_map_usage, phys_map and returns bitmap for frame_map
+ * from available ram entries.
+ */
 static uint8_t* create_frame_map(struct multiboot* mboot_addr) {
     uint64_t i;
     uint8_t* bitmap = malign(BITNSLOTS(maxframes), 0x1);
@@ -287,12 +349,23 @@ static uint8_t* create_frame_map(struct multiboot* mboot_addr) {
     return bitmap;
 }
 
-
+/**
+ * Deallocates frame from frame_map.
+ *
+ * Marks that frame as 0 in frame_map.
+ */
 static void free_frame(uint64_t frame_address) {
     uint32_t idx = ALIGN(frame_address) / 0x1000;
     BITCLEAR(frame_map, idx);
 }
 
+/**
+ * Initializes memory mirror.
+ *
+ * Memory mirror allocates all available ram to specific range address.
+ * If 1GB paging is supported, 1GB paging is used, otherwise only 4KB
+ * paging is used, which means much more physical ram is used.
+ */
 void initialize_memory_mirror() {
     if (is_1GB_paging_supported() != 0){
         log_msg("Host supports 1GB pages, will use for ram mirror");
@@ -334,6 +407,18 @@ void initialize_memory_mirror() {
     }
 }
 
+/**
+ * Initializes correct paging.
+ *
+ * Performs it by these steps:
+ *
+ *  1. detects max ram via detect_maxram
+ *  2. denotes max frames from that
+ *  3. creates frame_map via create_frame_map
+ *  4. detects max physical address bits
+ *  5. marks first 4MBytes of physical address as used
+ *  6. initializes memory mirror
+ */
 void initialize_paging(struct multiboot* mboot_addr) {
 
     last_searched_location = 0;
@@ -351,6 +436,14 @@ void initialize_paging(struct multiboot* mboot_addr) {
     initialize_memory_mirror();
 }
 
+/**
+ * Allocates frame to a page.
+ *
+ * Page is pointed by paddress, and attributes are derived with
+ * status of kernel and readonly bools.
+ *
+ * If page is present, it does nothing.
+ */
 static void allocate_frame(uint64_t* paddress, bool kernel, bool readonly) {
     if (!PRESENT(*paddress)) {
         page_t page;
@@ -370,6 +463,11 @@ static void allocate_frame(uint64_t* paddress, bool kernel, bool readonly) {
     }
 }
 
+/**
+ * Deallocates frame from page, clearing the page.
+ *
+ * If paddress is NULL or is already free, does nothing.
+ */
 static void deallocate_frame(uint64_t* paddress) {
     if (paddress == 0)
         return; // no upper memory structures, we are done
@@ -382,12 +480,24 @@ static void deallocate_frame(uint64_t* paddress) {
     free_frame(address);
 }
 
+/**
+ * Allocates memory from address from, with amount amount and with
+ * provided flags.
+ *
+ * Repeatedly calls allocate_frame for every frame.
+ */
 void allocate(uint64_t from, size_t amount, bool kernel, bool readonly) {
     for (uint64_t addr = from; addr < from + amount; addr += 0x1000) {
         allocate_frame(get_page(addr, true), kernel, readonly);
     }
 }
 
+/**
+ * Deallocates memory from address from with amount amount.
+ *
+ * Aligns the addresses to page boundaries and then
+ * deallocates them all.
+ */
 void deallocate(uint64_t from, size_t amount) {
     uint64_t aligned = from;
     if ((from % 0x1000) != 0) {
@@ -407,6 +517,11 @@ void deallocate(uint64_t from, size_t amount) {
     }
 }
 
+/**
+ * Checks whether virtual address is allocated or not
+ *
+ * Uses get_page to determine the address status.
+ */
 bool allocated(uint64_t addr) {
     uint64_t* page = get_page(addr, false);
     if (page == NULL)

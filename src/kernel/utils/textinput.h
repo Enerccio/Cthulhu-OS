@@ -34,15 +34,64 @@ extern void outb(uint16_t port, uint8_t value);
 extern uint8_t inb(uint16_t port);
 extern uint16_t inw(uint16_t port);
 
+/**
+ * Clears screen with black color.
+ */
 void kd_clear();
+
+/**
+ * Clears screen with selected color.
+ */
 void kd_cclear(uint8_t bg_color);
+
+/**
+ * Outputs one byte of data to screen with gray color and black background.
+ */
 void kd_put(char c);
+
+/**
+ * Outputs one colored character.
+ *
+ * If KERNEL_DEBUG_MODE is set, outputs same byte into com1.
+ */
 void kd_cput(char c, uint8_t bg_color, uint8_t fg_color);
+
+/**
+ * Writes string on screen with gray color on black background.
+ */
 void kd_write(const char* c);
+
+/**
+ * Writes string on screen with specified colors.
+ */
 void kd_cwrite(const char* c, uint8_t bg_color, uint8_t fg_color);
+
+/**
+ * Sets position of cursor.
+ */
 void kd_setxy(uint8_t x, uint8_t y);
+
+/**
+ * Writes 32bit hex number with gray color and black background.
+ */
 void kd_write_hex(uint32_t number);
+
+/**
+ * Writes 64bit hex number with gray color and black background.
+ */
 void kd_write_hex64(uint64_t number);
+
+/**
+ * Writes 32 bit hex number.
+ */
 void kd_cwrite_hex(uint32_t number, uint8_t bg_color, uint8_t fg_color);
+
+/**
+ * Writes 64 bit hex number.
+ */
 void kd_cwrite_hex64(uint64_t number, uint8_t bgcolor, uint8_t fgcolor);
+
+/**
+ * Emits new line.
+ */
 void kd_newl();

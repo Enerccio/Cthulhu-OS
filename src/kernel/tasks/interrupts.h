@@ -48,4 +48,7 @@
 #define EXC_XM  19
 #define EXC_VE  20
 
+/**
+ * Registers standard interrupt handlers.
+ */
 void register_standard_interrupt_handlers();

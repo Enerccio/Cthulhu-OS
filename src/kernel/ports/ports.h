@@ -55,5 +55,14 @@ extern void*    ebda;
 #define IOP_MODEM_STATUS_REG(addr)   (uint16_t)(addr+6)
 #define IOP_SCRATCH_REGISTER(addr)   (uint16_t)(addr+7)
 
+/**
+ * Initializes com and lpt ports.
+ */
 void initialize_ports();
+
+/**
+ * Writes byte to com port.
+ *
+ * com must be one of COM1-COM4.
+ */
 void write_byte_com(uint8_t com, uint8_t data);

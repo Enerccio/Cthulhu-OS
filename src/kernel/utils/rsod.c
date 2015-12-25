@@ -38,6 +38,11 @@ extern void kp_halt();
 #define BACKGROUND_COLOR 0
 #define FOREGROUND_COLOR fgc(&fg)
 
+/**
+ * Initializes error subsystem.
+ *
+ * Fills error message array.
+ */
 void init_errors() {
     log_msg("Initializing error page");
 
@@ -72,6 +77,9 @@ void init_errors() {
     error_codes[ERROR_MINIMAL_MEMORY_FAILURE] = "ERROR_MINIMAL_MEMORY_FAILURE";
 }
 
+/**
+ * Returns random foreground color.
+ */
 uint8_t fgc(uint8_t* fgc) {
     uint8_t fg = *fgc;
     while (*fgc == fg){
@@ -82,6 +90,9 @@ uint8_t fgc(uint8_t* fgc) {
     return fg;
 }
 
+/**
+ * Shows rainbow screen of the death. Halts all processors.
+ */
 void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress) {
     DISABLE_INTERRUPTS();
     uint8_t fg = rand_number(15)+1;

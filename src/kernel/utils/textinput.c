@@ -53,8 +53,10 @@ typedef enum vga_color {
     COLOR_WHITE = 15,
 } vga_color_t;
 
+/**
+ * Scrolls the screen by one line.
+ */
 static inline void scroll() {
-
     uint8_t attributeByte = (0 /*black*/<< 4) | (15 /*white*/& 0x0F);
     uint16_t blank = 0x20 | (attributeByte << 8);
 
@@ -71,7 +73,9 @@ static inline void scroll() {
     }
 }
 
-
+/**
+ * Moves cursor to position stored by cursor_y and cursor_x.
+ */
 static inline void move_cursor() {
     uint16_t cursorLocation = cursor_y * 80 + cursor_x;
     outb(0x3D4, 14);
@@ -80,12 +84,18 @@ static inline void move_cursor() {
     outb(0x3D5, (uint8_t) cursorLocation);
 }
 
-
+/**
+ * Outputs one byte of data to screen with gray color and black background.
+ */
 void kd_put(char c) {
     kd_cput(c, 0, 7);
 }
 
-
+/**
+ * Outputs one colored character.
+ *
+ * If KERNEL_DEBUG_MODE is set, outputs same byte into com1.
+ */
 void kd_cput(char c, uint8_t backColour, uint8_t foreColour) {
 #ifdef KERNEL_DEBUG_MODE
     if (c == '\n')
@@ -122,12 +132,16 @@ void kd_cput(char c, uint8_t backColour, uint8_t foreColour) {
     move_cursor();
 }
 
-
+/**
+ * Clears screen with black color.
+ */
 void kd_clear() {
     kd_cclear(0);
 }
 
-
+/**
+ * Clears screen with selected color.
+ */
 void kd_cclear(uint8_t backColour) {
     uint8_t attributeByte = (backColour << 4) | (15 & 0x0F);
     uint16_t blank = 0x20 | (attributeByte << 8);
@@ -142,12 +156,16 @@ void kd_cclear(uint8_t backColour) {
     move_cursor();
 }
 
-
+/**
+ * Writes string on screen with gray color on black background.
+ */
 void kd_write(const char* c) {
     kd_cwrite(c, 0, 7);
 }
 
-
+/**
+ * Writes string on screen with specified colors.
+ */
 void kd_cwrite(const char* string, uint8_t backColour, uint8_t foreColour) {
     char c;
     char* it = (char*) string;
@@ -156,25 +174,39 @@ void kd_cwrite(const char* string, uint8_t backColour, uint8_t foreColour) {
     }
 }
 
-
+/**
+ * Emits new line.
+ */
 void kd_newl() {
     kd_put('\n');
 }
 
+/**
+ * Sets position of cursor.
+ */
 void kd_setxy(uint8_t x, uint8_t y) {
     cursor_x = x;
     cursor_y = y;
     move_cursor();
 }
 
+/**
+ * Writes 32bit hex number with gray color and black background.
+ */
 void kd_write_hex(uint32_t number) {
     kd_cwrite_hex(number, 0, 7);
 }
 
+/**
+ * Writes 64bit hex number with gray color and black background.
+ */
 void kd_write_hex64(uint64_t number) {
     kd_cwrite_hex(number, 0, 7);
 }
 
+/**
+ * Writes single hex digit.
+ */
 static inline void __write_hex_c8(uint8_t num, uint8_t bgcolor, uint8_t fgcolor) {
     switch (num) {
     case 10:
@@ -200,13 +232,17 @@ static inline void __write_hex_c8(uint8_t num, uint8_t bgcolor, uint8_t fgcolor)
     }
 }
 
-
+/**
+ * Writes byte as hex number.
+ */
 static inline void __write_hex_c(uint8_t num, uint8_t bgcolor, uint8_t fgcolor) {
     __write_hex_c8(num / 16, bgcolor, fgcolor);
     __write_hex_c8(num % 16, bgcolor, fgcolor);
 }
 
-
+/**
+ * Writes 32 bit hex number.
+ */
 void kd_cwrite_hex(uint32_t number, uint8_t bgcolor, uint8_t fgcolor) {
     kd_cwrite("0x", bgcolor, fgcolor);
 
@@ -216,6 +252,9 @@ void kd_cwrite_hex(uint32_t number, uint8_t bgcolor, uint8_t fgcolor) {
     __write_hex_c(number % 256, bgcolor, fgcolor);
 }
 
+/**
+ * Writes 64 bit hex number.
+ */
 void kd_cwrite_hex64(uint64_t number, uint8_t bgcolor, uint8_t fgcolor) {
     kd_cwrite("0x", bgcolor, fgcolor);
 

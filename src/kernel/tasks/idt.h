@@ -138,13 +138,16 @@ extern void isr128();
 #define PIC_EOI_ALL (PIC_EOI_SLAVE +1)
 
 typedef struct registers{
-    // uint64_t gs, fs, es, ds;
     uint64_t r15, r14, r13, r12, r11, r10, r9, r8, rbp, rcx, rbx, rax;
     uint64_t rdx, rsi, rdi;
     uint64_t type, ecode;
     uint64_t rip, cs, rflags, uesp, ss;
 } registers_t ;
 
+/** Register callback function */
 typedef void (*isr_t)(uint64_t error_code, registers_t*);
 
+/**
+ * Registers ISR function for interrupt.
+ */
 void register_interrupt_handler(uint8_t interrupt_id, isr_t handler_func);

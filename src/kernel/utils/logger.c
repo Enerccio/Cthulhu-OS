@@ -27,11 +27,12 @@
 #include "logger.h"
 
 typedef enum {
-
     MESSAGE, WARNING, ERROR,
-
 } log_level_t;
 
+/**
+ * Logs simple message with log level.
+ */
 void log(log_level_t log_level, const char* message) {
 
     // write message that we are in the kernel
@@ -53,18 +54,31 @@ void log(log_level_t log_level, const char* message) {
     kd_put('\n');
 }
 
+/**
+ * Logs simple message with MESSAGE level.
+ */
 void log_msg(const char* message) {
     log(MESSAGE, message);
 }
 
+/**
+ * Logs simple message with WARNING level.
+ */
 void log_warn(const char* message) {
     log(WARNING, message);
 }
 
+/**
+ * Logs simple message with ERROR level.
+ */
 void log_err(const char* message) {
     log(ERROR, message);
 }
 
+/**
+ * Advanced logging, using prinf (can only be called
+ * after printf is available).
+ */
 void vlog(log_level_t log_level, const char* message, va_list l) {
 
     // write message that we are in the kernel
@@ -86,6 +100,9 @@ void vlog(log_level_t log_level, const char* message, va_list l) {
     printf("\n");
 }
 
+/**
+ * Logs advance message with MESSAGE level.
+ */
 void vlog_msg(const char* message, ...) {
     va_list a_list;
     va_start(a_list, message);
@@ -93,6 +110,9 @@ void vlog_msg(const char* message, ...) {
     va_end(a_list);
 }
 
+/**
+ * Logs advance message with WARN level.
+ */
 void vlog_warn(const char* message, ...) {
     va_list a_list;
     va_start(a_list, message);
@@ -100,6 +120,9 @@ void vlog_warn(const char* message, ...) {
     va_end(a_list);
 }
 
+/**
+ * Logs advance message with ERROR level.
+ */
 void vlog_err(const char* message, ...) {
     va_list a_list;
     va_start(a_list, message);

@@ -107,6 +107,11 @@ void ve_exception(uint64_t ecode, registers_t* registers) {
     error(ERROR_KERNEL_VIRTUALIZATION_EXCEPTION, registers->rip, registers->cs, registers);
 }
 
+/**
+ * Registers standard interrupt handlers.
+ *
+ * Maps all handlers for all standard interrupts.
+ */
 void register_standard_interrupt_handlers() {
     register_interrupt_handler(EXC_DE, de_exception);
     register_interrupt_handler(EXC_DB, db_exception);

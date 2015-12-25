@@ -28,21 +28,29 @@
 section .text
 
 [GLOBAL outb]
-[GLOBAL inb]
-[GLOBAL inw]
-
+; Outputs byte to port
+;
+; extern void outb(uint16_t port, uint8_t byte)
 outb:
     mov rdx, rdi
     mov rax, rsi
     out dx, al
     ret
 
+[GLOBAL inb]
+; Reads byte from port
+;
+; extern uint8_t inb(uint16_t port)
 inb:
     mov rdx, rdi
     xor rax, rax
     in al, dx
     ret
 
+[GLOBAL inw]
+; Reads word from port
+;
+; extern uint16_t inb(uint16_t port)
 inw:
     mov rdx, rdi
     xor rax, rax

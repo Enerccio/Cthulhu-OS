@@ -40,6 +40,9 @@
 #include <stdio.h>
 #include <sys/kernel.h>
 
+/**
+ * Prints kernel version.
+ */
 void print_loader_revision() {
     kd_cwrite("PIKOKERNEL ", 0, 4);
     kd_cwrite(KERNEL_MAIN_VERSION, 0, 4);

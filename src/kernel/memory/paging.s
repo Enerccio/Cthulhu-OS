@@ -28,6 +28,10 @@ section .text
 [BITS 64]
 
 [GLOBAL detect_maxphyaddr]
+; Detects maxphyaddr attribute of paging strucutres
+; or returns 36 if it can't be determined
+;
+; extern uint64_t detect_maxphyaddr()
 detect_maxphyaddr:
     mov rax, 0x80000000
     cpuid
@@ -44,6 +48,9 @@ detect_maxphyaddr:
     ret
 
 [GLOBAL is_1GB_paging_supported]
+; Returns non-zero if 1GB paging is supported on this platform
+;
+; uint64_t is_1GB_paging_supported()
 is_1GB_paging_supported:
     mov rax, 0x80000001
     cpuid
@@ -52,22 +59,34 @@ is_1GB_paging_supported:
     ret
 
 [GLOBAL get_active_page]
+; Returns active page from cr3
+;
+; void* get_active_page()
 get_active_page:
     xor rax, rax
     mov rax, cr3
     ret
 
 [GLOBAL set_active_page]
+; Sets active page to cr3
+;
+; extern void set_active_page(void* page)
 set_active_page:
     mov cr3, rdi
     ret
 
 [GLOBAL invalidate_address]
+; Invalidates address in TLB
+;
+; extern void invalidate_address(void* address)
 invalidate_address:
-    invlpg [rdx]
+    invlpg [rdi]
     ret
 
 [GLOBAL get_faulting_address]
+; Returns faulting address from cr2
+;
+; extern void* get_faulting_address()
 get_faulting_address:
     xor rax, rax
     mov rax, cr2

@@ -53,6 +53,12 @@
 #define ERROR_KERNEL_VIRTUALIZATION_EXCEPTION    22
 #define ERROR_MINIMAL_MEMORY_FAILURE			 23
 
+/**
+ * Initializes error subsystem.
+ */
 void init_errors();
 
+/**
+ * Shows rainbow screen of the death. Halts all processors.
+ */
 void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress);

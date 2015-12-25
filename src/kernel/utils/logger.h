@@ -31,10 +31,33 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+/**
+ * Logs simple message with MESSAGE level.
+ */
 void log_msg(const char* message);
+
+/**
+ * Logs simple message with WARNING level.
+ */
 void log_warn(const char* message);
+
+/**
+ * Logs simple message with ERROR level.
+ */
 void log_err(const char* message);
 
+
+/**
+ * Logs advance message with MESSAGE level.
+ */
 void vlog_msg(const char* message, ...);
+
+/**
+ * Logs advance message with WARN level.
+ */
 void vlog_warn(const char* message, ...);
+
+/**
+ * Logs advance message with ERROR level.
+ */
 void vlog_err(const char* message, ...);

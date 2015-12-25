@@ -26,12 +26,18 @@
  */
 #include "kstdlib.h"
 
+/**
+ * Returns simple random number
+ */
 inline uint32_t rand_number(int32_t limit) {
     static uint32_t a = 3;
     a = (((a * 214013L + 2531011L) >> 16) & 32767);
     return ((a % limit));
 }
 
+/**
+ * Returns letter from byte. Byte must be <16.
+ */
 static char bytetohex(uint8_t byte) {
     switch (byte) {
     case 10:
@@ -51,9 +57,12 @@ static char bytetohex(uint8_t byte) {
     }
 }
 
-char conv[11];
-
+/**
+ * Converts hex number to string, using static buffers.
+ * Is not thread safe.
+ */
 const char* hextochar(uint32_t num) {
+	static char conv[11];
 
     conv[0] = '0';
     conv[1] = 'x';
@@ -70,6 +79,9 @@ const char* hextochar(uint32_t num) {
     return conv;
 }
 
+/**
+ * Converts void* into hash.
+ */
 uint32_t int_hash_function(void* integer) {
     uint32_t a = (uint32_t) ((uint64_t)integer);
     a = (a + 0x7ed55d16) + (a << 12);
@@ -81,6 +93,9 @@ uint32_t int_hash_function(void* integer) {
     return a;
 }
 
+/**
+ * Integer comparisons, of void* arguments representing integer.
+ */
 bool int_cmpr_function(void* a, void* b) {
     return a == b ? true : false;
 }

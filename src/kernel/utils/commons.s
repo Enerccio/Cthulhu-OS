@@ -27,11 +27,19 @@
 [BITS 64]
 
 [GLOBAL kp_halt]
+; Halts all cpus
+;
+; TODO: actually halt all cpus
+;
+; extern void kp_halt()
 kp_halt:
 .loop:
     jmp .loop
 
 [GLOBAL check_cpuid_apic]
+; Checks CPUID for APIC
+;
+; extern void* check_cpuid_apic()
 check_cpuid_apic:
     mov rax, 1
     cpuid

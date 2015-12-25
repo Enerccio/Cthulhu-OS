@@ -168,11 +168,32 @@ typedef union cr3_page_entry
    uint64_t                 pml;
 } cr3_page_entry_t;
 
+/**
+ * Initializes paging subsystem with correct paging, requiring multiboot
+ * for memory info.
+ */
 void initialize_paging(struct multiboot* mb);
 
+/**
+ * Translates virtual address to physical. valid pointer will
+ * contain true if address is translated to valid one.
+ */
 uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid);
+/**
+ * Translates physical address to virtual using memory identity map.
+ */
 uint64_t physical_to_virtual(uint64_t vaddress);
 
+/**
+ * Allocates memory from specified address and amount, using
+ * kernel and readonly as source flags.
+ */
 void allocate(uint64_t from, size_t amount, bool kernel, bool readonly);
+/**
+ * Deallocates memory from specified address and amount.
+ */
 void deallocate(uint64_t from, size_t amount);
+/**
+ * Returns whether specific virtual address is allocated or not.
+ */
 bool allocated(uint64_t addr);
