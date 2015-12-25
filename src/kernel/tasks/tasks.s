@@ -7,7 +7,7 @@ lock    xchg    [rdi], rax
         cmp     rax, 0
         je      .spinlock_escape
         pause
-        jmp     spinlock_lock
+        jmp     proc_spinlock_lock
 .spinlock_escape:
         ret
 
