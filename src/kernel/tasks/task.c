@@ -44,7 +44,7 @@ void ap_main(uint64_t proc_id){
 }
 
 void send_ipi_to(uint8_t apic_id, uint8_t vector) {
-	while(*(bool*)physical_to_virtual((apicaddr + 0x30) & (1<<12)))
+	while(*(uint32_t*)physical_to_virtual((apicaddr + 0x30) & (1<<12)))
     	;
 
     uint32_t sendvalue = ((uint32_t)apic_id) << 24;
@@ -61,6 +61,8 @@ void send_ipi_to(uint8_t apic_id, uint8_t vector) {
     *((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
 }
 
+extern void* Gdt32;
+
 void initialize_mp(unsigned int localcpu){
 	uint32_t proclen = array_get_size(cpus);
 	uintmax_t clock_data;
@@ -75,20 +77,28 @@ void initialize_mp(unsigned int localcpu){
 		vlog_msg("Attempting to initialize logical cpu %llu, apic %hhx.", cpu->processor_id, cpu->apic_id);
 
 		// INIT IPI
+		DISABLE_INTERRUPTS();
 		uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
 		sendvalue = 5 << 7;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
+		ENABLE_INTERRUPTS();
+		log_msg("Wait");
 
 		clock_data = clock_ms+10;
 		clock_sdata = clock_s;
 		while (clock_data <= clock_ms && clock_sdata != clock_s) ;
 
+		log_msg("SIPI");
+
 		// SIPI
+		DISABLE_INTERRUPTS();
 		sendvalue = ((uint32_t)cpu->apic_id) << 24;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
-		sendvalue = (6 << 7) | 8;
+		sendvalue = (6 << 7) | 2;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
+		ENABLE_INTERRUPTS();
+		vlog_msg("Attempted to initialize logical cpu %llu, apic %hhx", cpu->processor_id, cpu->apic_id);
 	}
 
 	clock_data = clock_ms+200;
@@ -111,10 +121,12 @@ void initialize_mp(unsigned int localcpu){
 				continue;
 			}
 			// Second SIPI
+			DISABLE_INTERRUPTS();
 			uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
 			*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
-			sendvalue = (6 << 7) | 8;
+			sendvalue = (6 << 7) | 2;
 			*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
+			ENABLE_INTERRUPTS();
 		}
 	}
 }
@@ -146,8 +158,13 @@ cpu_t* make_cpu_default() {
 	return cpu;
 }
 
+#include "../ports/ports.h"
+
 void initialize_cpus() {
 
+	memcpy((void*)physical_to_virtual(0x1000), (void*)physical_to_virtual((uint64_t)&Gdt32), 0x2000);
+	//for (unsigned int i=0x1000; i<0x3000; i++)
+	//	write_byte_com(COM1, *((char*)(uint64_t)i));
 	memset(cpuid_to_cputord, 0, sizeof(cpuid_to_cputord));
 
 	cpus = create_array_spec(256);

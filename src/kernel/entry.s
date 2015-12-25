@@ -176,7 +176,10 @@ Trampoline:
     mov rax, Realm64
     jmp rax
 
+%define PHYSADDR 0x2000
+
 [BITS 32]
+[GLOBAL Gdt32]
 section .ap_data
 align 16
 ap_data:
@@ -207,38 +210,40 @@ Gdt32:                           ; Global Descriptor Table (32-bit).
     dq Gdt32                     ; Base.
 
 [BITS 16]
+[GLOBAL cpu_boot_entry]
 section .mp_entry
 cpu_boot_entry:
+    cli
     mov dx, 3F8h
-    mov ax, 'x'
+    mov ax, 48
     out dx, al
+    jmp 0x0:.realMode - cpu_boot_entry + PHYSADDR
 
+.realMode
     mov esp, ecx
     mov ebp, esp
-    cli
-    lgdt [Gdt32.Pointer]  ; load GDT register with start address of Global Descriptor Table
+    ;lgdt [Gdt32.Pointer - cpu_boot_entry + PHYSADDR]  ; load GDT register with start address of Global Descriptor Table
     mov eax, cr0
     or al, 1              ; set PE (Protection Enable) bit in CR0 (Control Register 0)
     mov cr0, eax
 
     ; Perform far jump to selector 08h (offset into GDT, pointing at a 32bit PM code segment descriptor)
     ; to load CS with proper PM32 descriptor)
-
-    jmp 08h:ap_protected_mode
+    jmp dword 08h:ap_protected_mode - cpu_boot_entry + PHYSADDR
     hlt
-.loop:
-    jmp .loop
 
 [BITS 32]
 ap_protected_mode:
-    mov ax, Gdt32.Data
+    mov ax, 0x10
     mov es, ax
     mov ss, ax
     mov ds, ax
     mov gs, ax
     mov fs, ax
-    hlt
-mov edi, _gpInitial_PML4
+    jmp ap_protected_mode_ra
+
+ap_protected_mode_ra:
+    mov edi, _gpInitial_PML4
     mov cr3, edi                 ; Set control register 3 to the destination index.
     mov eax, cr4                 ; Set the A-register to control register 4.
     or eax, 1 << 5               ; Set the PAE-bit, which is the 6th bit (bit 5).

@@ -8,13 +8,13 @@ SECTIONS
 	{
 		*(.mboot)
 	}
-	
-	. = 0x7E00;
-	
-	.ap_data : ALIGN(4K)
-	{
-	   *(.ap_data)
-	}
+
+	. = 1M;
+
+    .ap_data : ALIGN(4K)
+    {
+       *(.ap_data)
+    }
     
     .mp_entry BLOCK(4K) : ALIGN(4K)
     {
@@ -24,14 +24,12 @@ SECTIONS
     _mp_entry_end = .;
     _mp_end = .;
 
-	. = 1M;
-
 	.init BLOCK(4K) : ALIGN(4K)
 	{
 		*(.init)
 	}
 	
-	_init_end = .;
+    _init_end = .;
     
 	. =  0xFFFFFFFF80000000 + _init_end;
 
