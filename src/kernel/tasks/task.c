@@ -83,17 +83,24 @@ void initialize_mp(unsigned int localcpu){
 		sendvalue = 5 << 7;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
 		ENABLE_INTERRUPTS();
-		log_msg("Wait");
+	}
 
-		clock_data = clock_ms+10;
-		clock_sdata = clock_s;
-		while (clock_data <= clock_ms && clock_sdata != clock_s) ;
+	clock_data = clock_ms+10;
+	clock_sdata = clock_s;
+	while (clock_data <= clock_ms && clock_sdata != clock_s) ;
 
-		log_msg("SIPI");
+	for (uint32_t i=0; i<proclen; i++){
+		cpu_t* cpu = array_get_at(cpus, i);
+		if (cpu->processor_id == localcpu){
+			cpu->started = true;
+			continue;
+		}
+
+		vlog_msg("SIPI cpu %llu, apic %hhx.", cpu->processor_id, cpu->apic_id);
 
 		// SIPI
 		DISABLE_INTERRUPTS();
-		sendvalue = ((uint32_t)cpu->apic_id) << 24;
+		uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
 		sendvalue = (6 << 7) | 2;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
