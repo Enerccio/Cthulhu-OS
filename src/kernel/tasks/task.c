@@ -48,7 +48,7 @@ void send_ipi_to(uint8_t apic_id, uint8_t vector) {
     	;
 
     uint32_t sendvalue = ((uint32_t)apic_id) << 24;
-    memcpy((void*)physical_to_virtual(apicaddr + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
+    *((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
 
     uint32_t control = vector;
 
@@ -58,7 +58,7 @@ void send_ipi_to(uint8_t apic_id, uint8_t vector) {
     /* otherwise, everything's good: IPI mode, fixed delivery vector,
         only to the specified APIC, edge-triggered. */
     sendvalue = control;
-    memcpy((void*)physical_to_virtual(apicaddr + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
+    *((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
 }
 
 void initialize_mp(unsigned int localcpu){
@@ -76,9 +76,9 @@ void initialize_mp(unsigned int localcpu){
 
 		// INIT IPI
 		uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
-		memcpy((void*)physical_to_virtual(apicaddr + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
+		*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
 		sendvalue = 5 << 7;
-		memcpy((void*)physical_to_virtual(apicaddr + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
+		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
 
 		clock_data = clock_ms+10;
 		clock_sdata = clock_s;
@@ -86,9 +86,9 @@ void initialize_mp(unsigned int localcpu){
 
 		// SIPI
 		sendvalue = ((uint32_t)cpu->apic_id) << 24;
-		memcpy((void*)physical_to_virtual(apicaddr + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
+		*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
 		sendvalue = (6 << 7) | 8;
-		memcpy((void*)physical_to_virtual(apicaddr + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
+		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
 	}
 
 	clock_data = clock_ms+200;
@@ -112,9 +112,9 @@ void initialize_mp(unsigned int localcpu){
 			}
 			// Second SIPI
 			uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
-			memcpy((void*)physical_to_virtual(apicaddr + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
+			*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
 			sendvalue = (6 << 7) | 8;
-			memcpy((void*)physical_to_virtual(apicaddr + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
+			*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
 		}
 	}
 }
