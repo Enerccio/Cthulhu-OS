@@ -42,3 +42,10 @@ Realm64:
 .hang64:
     hlt
     jmp .hang64
+
+[GLOBAL APRealm64]
+APRealm64:
+    cli
+.hangap:
+    hlt
+    jmp .hangap

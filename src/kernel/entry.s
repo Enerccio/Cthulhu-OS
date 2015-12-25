@@ -33,6 +33,9 @@ FLAGS       equ  MBALIGN | MEMINFO      ; this is the Multiboot 'flag' field
 MAGIC       equ  0x1BADB002             ; 'magic number' lets bootloader find the header
 CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum of above, to prove we are multiboot
 
+extern Realm64
+extern APRealm64
+
 section .mboot
 align 16
 magic_header:
@@ -69,6 +72,7 @@ GDT64:                           ; Global Descriptor Table (64-bit).
 
 [GLOBAL _start]
 _start:
+    mov dword [0x7E00], 0
     jmp piko_loader
 piko_loader:
     push ebx
@@ -163,7 +167,6 @@ after_pages_set:
     mov ds, ax
     mov gs, ax
     mov fs, ax
-    extern Realm64
     jmp GDT64.Code:Trampoline    ; Set the code segment and enter 64-bit long mode.
 [BITS 32]
 loop:
@@ -174,6 +177,124 @@ Trampoline:
     jmp rax
 
 [BITS 32]
-section .mb_entry
+section .ap_stack, write
+align 16
+ap_stack:
+resb 0x48000
+ap_stack_top:
+
+[GLOBAL _cpu_count_addr]
+
+section .ap_data, write
+align 16
+ap_data:
+_counter:
+        dw 0
+        dw 0
+_cpu_count_addr:
+        dw 0
+        dw 0
+align 4096
+Gdt32:                           ; Global Descriptor Table (32-bit).
+    .Null: equ $ - Gdt32         ; The null descriptor.
+    dw 0                         ; Limit (low).
+    dw 0                         ; Base (low).
+    db 0                         ; Base (middle)
+    db 0                         ; Access.
+    db 0                         ; Granularity.
+    db 0                         ; Base (high).
+    .Code: equ $ - Gdt32         ; The code descriptor.
+    dw 0xFFFF                    ; Limit (low).
+    dw 0                         ; Base (low).
+    db 0                         ; Base (middle)
+    db 10011011b                 ; Access (exec/read).
+    db 11110000b                 ; Granularity.
+    db 0                         ; Base (high).
+    .Data: equ $ - Gdt32         ; The data descriptor.
+    dw 0                         ; Limit (low).
+    dw 0                         ; Base (low).
+    db 0                         ; Base (middle)
+    db 10010011b                 ; Access (read/write).
+    db 11110000b                 ; Granularity.
+    db 0                         ; Base (high).
+    .Pointer:                    ; The GDT-pointer.
+    dw $ - Gdt32 - 1             ; Limit.
+    dq Gdt32                     ; Base.
+
+section .mp_entry
+get_unique_stack_id:
+        mov     ecx, _counter
+        mov     eax, [ecx]
+        mov     ebx, eax
+        inc     eax
+lock    cmpxchg [ecx], ebx
+        jnz     get_unique_stack_id
+        mov     eax, _cpu_count_addr
+        mov     ecx, [eax] ; ecx contains number of cpus to be initialized
+        mov     eax, ebx
+        mov     eax, 0x48000
+        div     ecx ; eax contains each stack size
+        mul     ebx ; eax now contains total offset
+        mov     ecx, eax
+        mov     eax, ap_stack_top
+        sub     eax, ecx  ; actual offset for cpu
+        mov     ecx, eax
+        jmp     cpu_boot_continue
+
 cpu_boot_entry:
+    jmp get_unique_stack_id
+cpu_boot_continue:
+    mov esp, ecx
+    mov ebp, esp
+    cli
+    lgdt [Gdt32.Pointer]  ; load GDT register with start address of Global Descriptor Table
+    mov eax, cr0
+    or al, 1              ; set PE (Protection Enable) bit in CR0 (Control Register 0)
+    mov cr0, eax
+
+    ; Perform far jump to selector 08h (offset into GDT, pointing at a 32bit PM code segment descriptor)
+    ; to load CS with proper PM32 descriptor)
+
+    jmp 08h:ap_protected_mode
     hlt
+.loop:
+    jmp .loop
+
+ap_protected_mode:
+    mov ax, Gdt32.Data
+    mov es, ax
+    mov ss, ax
+    mov ds, ax
+    mov gs, ax
+    mov fs, ax
+    hlt
+mov edi, _gpInitial_PML4
+    mov cr3, edi                 ; Set control register 3 to the destination index.
+    mov eax, cr4                 ; Set the A-register to control register 4.
+    or eax, 1 << 5               ; Set the PAE-bit, which is the 6th bit (bit 5).
+    mov cr4, eax                 ; Set control register 4 to the A-register.
+
+    mov ecx, 0xC0000080          ; Set the C-register to 0xC0000080, which is the EFER MSR.
+    rdmsr                        ; Read from the model-specific register.
+    or eax, 1 << 8               ; Set the LM-bit which is the 9th bit (bit 8).
+    wrmsr                        ; Write to the model-specific register.
+
+    mov eax, cr0                 ; Set the A-register to control register 0.
+    or eax, 1 << 31 | 1 << 0     ; Set the PG-bit, which is the 31nd bit, and the PM-bit, which is the 0th bit.
+    mov cr0, eax                 ; Set control register 0 to the A-register.
+
+    lgdt [GDT64.Pointer]         ; Load the 64-bit global descriptor table.
+    mov ax, 0x10
+    mov es, ax
+    mov ss, ax
+    mov ds, ax
+    mov gs, ax
+    mov fs, ax
+    jmp GDT64.Code:AP_Trampoline    ; Set the code segment and enter 64-bit long mode.
+[BITS 32]
+.loop:
+    jmp .loop
+[BITS 64]
+AP_Trampoline:
+    mov rax, APRealm64
+    jmp rax

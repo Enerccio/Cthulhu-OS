@@ -60,8 +60,8 @@ intmax_t days_from_civil(int32_t y, uint8_t m, uint8_t d) {
 	return era * 146097 + ((int)doe) - 719468;
 }
 
-uintmax_t clock_s;
-uintmax_t clock_ms;
+volatile uintmax_t clock_s;
+volatile uintmax_t clock_ms;
 
 void timer_tick(uint64_t error_code, registers_t* r) {
 	clock_ms += 10;

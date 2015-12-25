@@ -11,12 +11,24 @@ SECTIONS
 	
 	. = 0x7E00;
 	
-	.mp_entry BLOCK(4K) : ALIGN(4K)
+	.ap_data : 
+	{
+	   *(.ap_data)
+	}
+    
+    .mp_entry BLOCK(4K) : ALIGN(4K)
     {
         *(.mp_entry)
     }
     
     _mp_entry_end = .;
+    
+    .ap_stack BLOCK(192K) : ALIGN(4K) 
+    {
+       *(.ap_stack) 
+    }
+    
+    _mp_end = .;
 
 	. = 1M;
 
