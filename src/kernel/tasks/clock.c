@@ -64,10 +64,31 @@ volatile uintmax_t clock_s;
 volatile uintmax_t clock_ms;
 
 void timer_tick(uint64_t error_code, registers_t* r) {
-	clock_ms += 10;
+	clock_ms += 1;
 	if (clock_ms >= 1000){
 		++clock_s;
 		clock_ms -= 1000;
+	}
+}
+
+void busy_wait_milis(size_t milis){
+	uintmax_t oclocks = clock_s;
+	uintmax_t oclockms = clock_ms;
+	while (milis > 0){
+		uintmax_t clocks = clock_s;
+		uintmax_t clockms = clock_ms;
+
+		uintmax_t diff_s = clocks-oclocks;
+		intmax_t diff_ms = clockms-oclockms;
+
+		size_t totaldiff = (diff_s*1000)+diff_ms;
+		if (totaldiff > milis)
+			return;
+		else
+			milis -= totaldiff;
+
+		oclocks=clocks;
+		oclockms=clockms;
 	}
 }
 
@@ -82,7 +103,7 @@ void initialize_ticker() {
 
 	register_interrupt_handler(IRQ0, &timer_tick);
 
-	uint32_t divisor = 1193180 / 100;
+	uint32_t divisor = 1193180 / 1193;
 	outb(0x43, 0x36);
 	uint8_t l = (uint8_t)(divisor & 0xFF);
 	uint8_t h = (uint8_t)((divisor>>8) & 0xFF);

@@ -91,3 +91,4 @@ extern array_t* cpus;
 
 void initialize_cpus();
 void initialize_kernel_task();
+void send_ipi_to(uint8_t apic_id, uint8_t vector, uint32_t control_flags, bool init_ipi);

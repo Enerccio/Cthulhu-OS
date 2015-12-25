@@ -1,6 +1,17 @@
 [BITS 64]
 
-[GLOBAL init_bsp_sequence]
+[GLOBAL proc_spinlock_lock]
+proc_spinlock_lock:
+        mov     rax, 1
+lock    xchg    [rdi], rax
+        cmp     rax, 0
+        je      .spinlock_escape
+        pause
+        jmp     spinlock_lock
+.spinlock_escape:
+        ret
 
-init_bsp_sequence:
-    ret
+[GLOBAL proc_spinlock_unlock]
+proc_spinlock_unlock:
+        mov qword [rdi], 0
+        ret

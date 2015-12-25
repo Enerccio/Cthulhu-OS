@@ -31,6 +31,7 @@
 
 idt_gate_t idt_entries[256];
 isr_t interrupt_handlers[256];
+idt_ptr_t idt_ptr;
 
 extern void idt_flush(idt_ptr_t* ptr);
 
@@ -49,8 +50,6 @@ void initialize_interrupts() {
 
     memset(idt_entries, 0, sizeof(idt_entries));
     memset(interrupt_handlers, 0, sizeof(interrupt_handlers));
-
-    idt_ptr_t idt_ptr;
 
     idt_ptr.limit = (sizeof(idt_entries)) - 1;
     idt_ptr.base = (uint64_t) &idt_entries;

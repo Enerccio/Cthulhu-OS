@@ -33,3 +33,4 @@
 
 void initialize_clock();
 uint64_t get_unix_time();
+void busy_wait_milis(size_t milis);

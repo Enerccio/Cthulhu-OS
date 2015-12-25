@@ -26,68 +26,63 @@
  */
 
 #include "task.h"
+#include "idt.h"
+#include "clock.h"
 
 array_t* cpus;
 extern volatile uintmax_t clock_ms;
 extern volatile uintmax_t clock_s;
 uint32_t cpuid_to_cputord[256];
 uint32_t apicaddr;
+extern void idt_flush(void* addr);
+extern idt_ptr_t idt_ptr;
 
 void ap_main(uint64_t proc_id){
 	cpu_t* cpu = (cpu_t*)array_get_at(cpus, cpuid_to_cputord[proc_id]);
 	cpu->started = true;
 
-	bool ddebug = true;
-	while (ddebug) ;
+	idt_flush(&idt_ptr);
+	ENABLE_INTERRUPTS();
 
 	while (true) ;
 }
 
-void send_ipi_to(uint8_t apic_id, uint8_t vector) {
+void wait_until_ipi_is_free(){
 	while((*(uint32_t*)physical_to_virtual((apicaddr + 0x30))) & (1<<12))
 		;
+}
 
-    uint32_t sendvalue = ((uint32_t)apic_id) << 24;
-    *((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
+#define WRITE_TO_IPI_ADDRESS(address) *((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10)) = ((uint32_t)address) << 24
+#define WRITE_TO_IPI_PAYLOAD(payload) *((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10)) = payload
 
-    uint32_t control = vector;
-
-    /* required to be set for non-INIT IPIs */
-    control |= 1<<14;
-
-    /* otherwise, everything's good: IPI mode, fixed delivery vector,
-        only to the specified APIC, edge-triggered. */
-    sendvalue = control;
-    *((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
+void send_ipi_to(uint8_t apic_id, uint8_t vector, uint32_t control_flags, bool init_ipi) {
+	wait_until_ipi_is_free();
+	uint32_t payload = vector;
+	if (!init_ipi)
+		payload |= 1<<14;
+	payload |= control_flags;
+	WRITE_TO_IPI_ADDRESS(apic_id);
+	WRITE_TO_IPI_PAYLOAD(payload);
 }
 
 extern void* Gdt32;
+#define AP_INIT_LOAD_ADDRESS (2)
+#define INIT_IPI_FLAGS (5<<8)
+#define SIPI_FLAGS (6<<8)
 
 void initialize_mp(unsigned int localcpu){
 	uint32_t proclen = array_get_size(cpus);
-	uintmax_t clock_data;
-	uintmax_t clock_sdata;
-
 	for (uint32_t i=0; i<proclen; i++){
 		cpu_t* cpu = array_get_at(cpus, i);
 		if (cpu->apic_id == localcpu){
 			cpu->started = true;
 			continue;
 		}
-		vlog_msg("Attempting to initialize logical cpu %llu, apic %hhx.", cpu->processor_id, cpu->apic_id);
 
-		// INIT IPI
-		while((*(uint32_t*)physical_to_virtual((apicaddr + 0x30))) & (1<<12))
-			;
-		uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
-		*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
-		sendvalue = 5 << 8;
-		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
+		send_ipi_to(cpu->apic_id, 0, INIT_IPI_FLAGS, true);
 	}
 
-	clock_data = clock_ms+10;
-	clock_sdata = clock_s;
-	while (clock_data <= clock_ms && clock_sdata != clock_s) ;
+	busy_wait_milis(20);
 
 	for (uint32_t i=0; i<proclen; i++){
 		cpu_t* cpu = array_get_at(cpus, i);
@@ -96,22 +91,10 @@ void initialize_mp(unsigned int localcpu){
 			continue;
 		}
 
-		while((*(uint32_t*)physical_to_virtual((apicaddr + 0x30))) & (1<<12))
-			;
-
-		vlog_msg("SIPI cpu %llu, apic %hhx.", cpu->processor_id, cpu->apic_id);
-
-		// SIPI
-		uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
-		*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
-		sendvalue = (6 << 8) | 2;
-		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
-		vlog_msg("Attempted to initialize logical cpu %llu, apic %hhx", cpu->processor_id, cpu->apic_id);
+		send_ipi_to(cpu->apic_id, AP_INIT_LOAD_ADDRESS, SIPI_FLAGS, true);
 	}
 
-	clock_data = clock_ms+200;
-	clock_sdata = clock_s;
-	while (clock_data <= clock_ms && clock_sdata != clock_s) ;
+	busy_wait_milis(200);
 
 	bool initialized = true;
 	for (uint32_t i=0; i<proclen; i++){
@@ -128,13 +111,7 @@ void initialize_mp(unsigned int localcpu){
 			if (cpu->apic_id == localcpu || cpu->started){
 				continue;
 			}
-			// Second SIPI
-			while((*(uint32_t*)physical_to_virtual((apicaddr + 0x30))) & (1<<12))
-				;
-			uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
-			*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
-			sendvalue = (6 << 8) | 2;
-			*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
+			send_ipi_to(cpu->apic_id, AP_INIT_LOAD_ADDRESS, SIPI_FLAGS, true);
 		}
 	}
 }
