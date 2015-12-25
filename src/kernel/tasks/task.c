@@ -27,7 +27,16 @@
 
 #include "task.h"
 
+array_t* cpus;
+extern volatile uintmax_t clock_ms;
+extern volatile uintmax_t clock_s;
+uint32_t cpuid_to_cputord[256];
+uint32_t apicaddr;
+
 void ap_main(uint64_t proc_id){
+	cpu_t* cpu = (cpu_t*)array_get_at(cpus, cpuid_to_cputord[proc_id]);
+	cpu->started = true;
+
 	bool ddebug = true;
 	while (ddebug) ;
 
@@ -35,11 +44,11 @@ void ap_main(uint64_t proc_id){
 }
 
 void send_ipi_to(uint8_t apic_id, uint8_t vector) {
-	while(*(bool*)physical_to_virtual((0xfee00000 + 0x30) & (1<<12)))
+	while(*(bool*)physical_to_virtual((apicaddr + 0x30) & (1<<12)))
     	;
 
     uint32_t sendvalue = ((uint32_t)apic_id) << 24;
-    memcpy((void*)physical_to_virtual(0xfee00000 + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
+    memcpy((void*)physical_to_virtual(apicaddr + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
 
     uint32_t control = vector;
 
@@ -49,48 +58,64 @@ void send_ipi_to(uint8_t apic_id, uint8_t vector) {
     /* otherwise, everything's good: IPI mode, fixed delivery vector,
         only to the specified APIC, edge-triggered. */
     sendvalue = control;
-    memcpy((void*)physical_to_virtual(0xfee00000 + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
+    memcpy((void*)physical_to_virtual(apicaddr + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
 }
-
-array_t* cpus;
-extern volatile uintmax_t clock_ms;
-extern volatile uintmax_t clock_s;
-uint32_t cpuid_to_cputord[256];
 
 void initialize_mp(unsigned int localcpu){
 	uint32_t proclen = array_get_size(cpus);
+	uintmax_t clock_data;
+	uintmax_t clock_sdata;
 
 	for (uint32_t i=0; i<proclen; i++){
 		cpu_t* cpu = array_get_at(cpus, i);
-		if (cpu->processor_id == localcpu)
+		if (cpu->processor_id == localcpu){
+			cpu->started = true;
 			continue;
+		}
 		vlog_msg("Attempting to initialize logical cpu %llu, apic %hhx.", cpu->processor_id, cpu->apic_id);
 
 		// INIT IPI
 		uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
-		memcpy((void*)physical_to_virtual(0xfee00000 + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
-		sendvalue = 5 << 8;
-		memcpy((void*)physical_to_virtual(0xfee00000 + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
+		memcpy((void*)physical_to_virtual(apicaddr + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
+		sendvalue = 5 << 7;
+		memcpy((void*)physical_to_virtual(apicaddr + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
 
-		uintmax_t clock_data = clock_ms;
-		uintmax_t clock_sdata = clock_s;
+		clock_data = clock_ms+10;
+		clock_sdata = clock_s;
 		while (clock_data <= clock_ms && clock_sdata != clock_s) ;
 
 		// SIPI
 		sendvalue = ((uint32_t)cpu->apic_id) << 24;
-		memcpy((void*)physical_to_virtual(0xfee00000 + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
-		sendvalue = (6 << 8) + 8;
-		memcpy((void*)physical_to_virtual(0xfee00000 + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
+		memcpy((void*)physical_to_virtual(apicaddr + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
+		sendvalue = (6 << 7) | 8;
+		memcpy((void*)physical_to_virtual(apicaddr + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
+	}
 
-		clock_data = clock_ms;
-		clock_sdata = clock_s;
-		while (clock_data <= clock_ms && clock_sdata != clock_s) ;
+	clock_data = clock_ms+200;
+	clock_sdata = clock_s;
+	while (clock_data <= clock_ms && clock_sdata != clock_s) ;
 
-		// Second SIPI
-		sendvalue = ((uint32_t)cpu->apic_id) << 24;
-		memcpy((void*)physical_to_virtual(0xfee00000 + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
-		sendvalue = (6 << 8) + 8;
-		memcpy((void*)physical_to_virtual(0xfee00000 + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
+	bool initialized = true;
+	for (uint32_t i=0; i<proclen; i++){
+		cpu_t* cpu = array_get_at(cpus, i);
+		if (!cpu->started){
+			initialized = false;
+			break;
+		}
+	}
+
+	if (!initialized){
+		for (uint32_t i=0; i<proclen; i++){
+			cpu_t* cpu = array_get_at(cpus, i);
+			if (cpu->processor_id == localcpu){
+				continue;
+			}
+			// Second SIPI
+			uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
+			memcpy((void*)physical_to_virtual(apicaddr + 0x31 * 0x10), &sendvalue, sizeof(uint32_t));
+			sendvalue = (6 << 7) | 8;
+			memcpy((void*)physical_to_virtual(apicaddr + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
+		}
 	}
 }
 
@@ -136,6 +161,8 @@ void initialize_cpus() {
 		array_push_data(cpus, make_cpu_default());
 	} else {
 		MADT_LOCAL_APIC* localapic = (MADT_LOCAL_APIC*)physical_to_virtual((uint64_t)madt->address);
+		apicaddr = madt->address;
+		vlog_msg("Local apic address %#X.", apicaddr);
 		localcpu = localapic->id;
 
 		size_t bytes = madt->header.Length;
