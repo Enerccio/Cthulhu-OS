@@ -44,8 +44,8 @@ void ap_main(uint64_t proc_id){
 }
 
 void send_ipi_to(uint8_t apic_id, uint8_t vector) {
-	while(*(uint32_t*)physical_to_virtual((apicaddr + 0x30) & (1<<12)))
-    	;
+	while((*(uint32_t*)physical_to_virtual((apicaddr + 0x30))) & (1<<12))
+		;
 
     uint32_t sendvalue = ((uint32_t)apic_id) << 24;
     *((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
@@ -77,12 +77,12 @@ void initialize_mp(unsigned int localcpu){
 		vlog_msg("Attempting to initialize logical cpu %llu, apic %hhx.", cpu->processor_id, cpu->apic_id);
 
 		// INIT IPI
-		DISABLE_INTERRUPTS();
+		while((*(uint32_t*)physical_to_virtual((apicaddr + 0x30))) & (1<<12))
+			;
 		uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
 		sendvalue = 5 << 7;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
-		ENABLE_INTERRUPTS();
 	}
 
 	clock_data = clock_ms+10;
@@ -96,15 +96,16 @@ void initialize_mp(unsigned int localcpu){
 			continue;
 		}
 
+		while((*(uint32_t*)physical_to_virtual((apicaddr + 0x30))) & (1<<12))
+			;
+
 		vlog_msg("SIPI cpu %llu, apic %hhx.", cpu->processor_id, cpu->apic_id);
 
 		// SIPI
-		DISABLE_INTERRUPTS();
 		uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
 		sendvalue = (6 << 7) | 2;
 		*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
-		ENABLE_INTERRUPTS();
 		vlog_msg("Attempted to initialize logical cpu %llu, apic %hhx", cpu->processor_id, cpu->apic_id);
 	}
 
@@ -128,12 +129,12 @@ void initialize_mp(unsigned int localcpu){
 				continue;
 			}
 			// Second SIPI
-			DISABLE_INTERRUPTS();
+			while((*(uint32_t*)physical_to_virtual((apicaddr + 0x30))) & (1<<12))
+				;
 			uint32_t sendvalue = ((uint32_t)cpu->apic_id) << 24;
 			*((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10))=sendvalue;
 			sendvalue = (6 << 7) | 2;
 			*((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10))=sendvalue;
-			ENABLE_INTERRUPTS();
 		}
 	}
 }
