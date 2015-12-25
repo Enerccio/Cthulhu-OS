@@ -159,10 +159,11 @@ void initialize_cpus() {
 		// no acpi, use single cpu only
 		cpuid_to_cputord[0] = 0;
 		array_push_data(cpus, make_cpu_default());
+		apicaddr = 0;
 	} else {
 		MADT_LOCAL_APIC* localapic = (MADT_LOCAL_APIC*)physical_to_virtual((uint64_t)madt->address);
 		apicaddr = madt->address;
-		vlog_msg("Local apic address %#X.", apicaddr);
+		vlog_msg("Local apic address %#x.", apicaddr);
 		localcpu = localapic->id;
 
 		size_t bytes = madt->header.Length;

@@ -68,8 +68,8 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
     initialize_temporary_heap(heap_start);
     initialize_paging(mboot_addr);
     initialize_standard_heap();
-
     log_msg("Paging memory and kernel heap initialized");
+
     __initialize_kclib();
     log_msg("KCLib initialized");
 
@@ -86,7 +86,7 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
     vlog_msg("Kernel clock initialized, current time in unix time %llu", get_unix_time());
 
     initialize_cpus();
-    vlog_msg("CPU queries. Number of logical cpus %u", array_get_size(cpus));
+    vlog_msg("CPU queried and initialized. Number of logical cpus %u", array_get_size(cpus));
 
     while (true) ;
 }
