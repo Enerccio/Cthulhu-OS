@@ -177,24 +177,9 @@ Trampoline:
     jmp rax
 
 [BITS 32]
-section .ap_stack, write
-align 16
-ap_stack:
-resb 0x48000
-ap_stack_top:
-
-[GLOBAL _cpu_count_addr]
-
-section .ap_data, write
+section .ap_data
 align 16
 ap_data:
-_counter:
-        dw 0
-        dw 0
-_cpu_count_addr:
-        dw 0
-        dw 0
-align 4096
 Gdt32:                           ; Global Descriptor Table (32-bit).
     .Null: equ $ - Gdt32         ; The null descriptor.
     dw 0                         ; Limit (low).
@@ -208,42 +193,26 @@ Gdt32:                           ; Global Descriptor Table (32-bit).
     dw 0                         ; Base (low).
     db 0                         ; Base (middle)
     db 10011011b                 ; Access (exec/read).
-    db 11110000b                 ; Granularity.
+    db 11110001b                 ; Granularity.
     db 0                         ; Base (high).
     .Data: equ $ - Gdt32         ; The data descriptor.
     dw 0                         ; Limit (low).
     dw 0                         ; Base (low).
     db 0                         ; Base (middle)
     db 10010011b                 ; Access (read/write).
-    db 11110000b                 ; Granularity.
+    db 11110001b                 ; Granularity.
     db 0                         ; Base (high).
     .Pointer:                    ; The GDT-pointer.
     dw $ - Gdt32 - 1             ; Limit.
     dq Gdt32                     ; Base.
 
+[BITS 16]
 section .mp_entry
-get_unique_stack_id:
-        mov     ecx, _counter
-        mov     eax, [ecx]
-        mov     ebx, eax
-        inc     eax
-lock    cmpxchg [ecx], ebx
-        jnz     get_unique_stack_id
-        mov     eax, _cpu_count_addr
-        mov     ecx, [eax] ; ecx contains number of cpus to be initialized
-        mov     eax, ebx
-        mov     eax, 0x48000
-        div     ecx ; eax contains each stack size
-        mul     ebx ; eax now contains total offset
-        mov     ecx, eax
-        mov     eax, ap_stack_top
-        sub     eax, ecx  ; actual offset for cpu
-        mov     ecx, eax
-        jmp     cpu_boot_continue
-
 cpu_boot_entry:
-    jmp get_unique_stack_id
-cpu_boot_continue:
+    mov dx, 3F8h
+    mov ax, 'x'
+    out dx, al
+
     mov esp, ecx
     mov ebp, esp
     cli
@@ -260,6 +229,7 @@ cpu_boot_continue:
 .loop:
     jmp .loop
 
+[BITS 32]
 ap_protected_mode:
     mov ax, Gdt32.Data
     mov es, ax

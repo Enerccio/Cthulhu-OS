@@ -80,6 +80,7 @@ struct thread {
 };
 
 typedef struct cpu {
+	void*	 stack;
 	uint64_t processor_id;
 	uint8_t  apic_id;
 	bool     started;

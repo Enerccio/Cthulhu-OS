@@ -23,6 +23,7 @@
  ;      Author: Peter Vanusanik
  ;  Contents: long mode entry
  ;
+[BITS 64]
 section .stack, nobits
 align 16
 stack_bottom64:
@@ -45,6 +46,25 @@ Realm64:
 
 [GLOBAL APRealm64]
 APRealm64:
+    mov rbx, (0xFEE00000 + 2 * 0x10) + (0xFFFF000000000000 + (509<<39))
+    mov rax, [rbx]
+    shr rax, 24
+    and rax, 0xFF
+    mov rdi, rax ; rdi now holds processor id
+    extern cpuid_to_cputord
+    mov rbx, cpuid_to_cputord
+    mov rdx, 32
+    mul rdx
+    mov rcx, [rbx + rax] ; rcx contains proc_id->table_id
+    extern cpus
+    mov rbx, cpus
+    mov rax, 8
+    mul rcx
+    add rax, [rbx] ; rax contains pointer to stack
+    mov rsp, [rax]
+    xor rbp, rbp
+    extern ap_main
+    call ap_main
     cli
 .hangap:
     hlt

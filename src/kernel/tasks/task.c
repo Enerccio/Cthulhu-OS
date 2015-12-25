@@ -27,6 +27,13 @@
 
 #include "task.h"
 
+void ap_main(uint64_t proc_id){
+	bool ddebug = true;
+	while (ddebug) ;
+
+	while (true) ;
+}
+
 void send_ipi_to(uint8_t apic_id, uint8_t vector) {
 	while(*(bool*)physical_to_virtual((0xfee00000 + 0x30) & (1<<12)))
     	;
@@ -47,14 +54,11 @@ void send_ipi_to(uint8_t apic_id, uint8_t vector) {
 
 array_t* cpus;
 extern volatile uintmax_t clock_ms;
-
-extern void* _cpu_count_addr;
+extern volatile uintmax_t clock_s;
+uint32_t cpuid_to_cputord[256];
 
 void initialize_mp(unsigned int localcpu){
 	uint32_t proclen = array_get_size(cpus);
-
-	uint32_t* wa = (uint32_t*)physical_to_virtual((uint64_t)_cpu_count_addr);
-	*wa = proclen - 1;
 
 	for (uint32_t i=0; i<proclen; i++){
 		cpu_t* cpu = array_get_at(cpus, i);
@@ -69,7 +73,8 @@ void initialize_mp(unsigned int localcpu){
 		memcpy((void*)physical_to_virtual(0xfee00000 + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
 
 		uintmax_t clock_data = clock_ms;
-		while (clock_data <= clock_ms) ;
+		uintmax_t clock_sdata = clock_s;
+		while (clock_data <= clock_ms && clock_sdata != clock_s) ;
 
 		// SIPI
 		sendvalue = ((uint32_t)cpu->apic_id) << 24;
@@ -78,7 +83,8 @@ void initialize_mp(unsigned int localcpu){
 		memcpy((void*)physical_to_virtual(0xfee00000 + 0x30 * 0x10), &sendvalue, sizeof(uint32_t));
 
 		clock_data = clock_ms;
-		while (clock_data <= clock_ms) ;
+		clock_sdata = clock_s;
+		while (clock_data <= clock_ms && clock_sdata != clock_s) ;
 
 		// Second SIPI
 		sendvalue = ((uint32_t)cpu->apic_id) << 24;
@@ -96,6 +102,7 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
 	cpu->apic_id = apic->id;
 	cpu->started = false;
 	cpu->processes = create_array();
+	cpu->stack = (void*) (((uintptr_t)malloc(0x2000))+0x2000);
 	if (cpu->processes == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
 	return cpu;
@@ -108,18 +115,17 @@ cpu_t* make_cpu_default() {
 	cpu->processor_id = 0;
 	cpu->started = false;
 	cpu->processes = create_array();
+	cpu->stack = (void*) (((uintptr_t)malloc(0x2000))+0x2000);
 	if (cpu->processes == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
 	return cpu;
 }
 
-uint32_t cpuid_to_cputord[256];
-
 void initialize_cpus() {
 
 	memset(cpuid_to_cputord, 0, sizeof(cpuid_to_cputord));
 
-	cpus = create_array();
+	cpus = create_array_spec(256);
 	unsigned int cnt = 0;
 	unsigned int localcpu = 0;
 	MADT_HEADER* madt = find_madt();
