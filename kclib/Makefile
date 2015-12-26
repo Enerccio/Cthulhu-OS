@@ -46,8 +46,8 @@ kclib: libc.a
 clean:
 	-rm -f $(OBJ)
 	-rm -f $(wildcard *.d)
-	ifneq ($(ADAPTER),)
-	-rm -f $(ADAPTER)
+	ifeq ($(ADAPTER),$(MODE)/$(MACHINE)/$(OS)/adapter.o)
+	-rm -f "$(ADAPTER)"
 	endif
 
 %.o : %.c
