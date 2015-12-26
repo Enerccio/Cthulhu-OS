@@ -91,5 +91,7 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
     initialize_cpus();
     vlog_msg("CPU queried and initialized. Number of logical cpus %u", array_get_size(cpus));
 
+    int x = 1/0;
+
     while (true) ;
 }
