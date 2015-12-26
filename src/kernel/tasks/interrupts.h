@@ -47,6 +47,7 @@
 #define EXC_MC  18
 #define EXC_XM  19
 #define EXC_VE  20
+#define EXC_IPI 255
 
 /**
  * Registers standard interrupt handlers.

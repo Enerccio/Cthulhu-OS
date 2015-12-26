@@ -40,8 +40,8 @@ uint16_t* video_memory;
 /** EBDA memory address */
 void*     ebda;
 
-#define BDA_IO_COM ((uint32_t*)0x0400)
-#define BDA_IO_LPT ((uint32_t*)0x0408)
+#define BDA_IO_COM ((uint16_t*)0x0400)
+#define BDA_IO_LPT ((uint16_t*)0x0408)
 #define BDA_EBDA ((uint32_t*)0x040E)
 
 /**

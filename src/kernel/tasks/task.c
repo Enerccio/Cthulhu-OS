@@ -47,6 +47,53 @@ uint32_t cpuid_to_cputord[256];
 /** Contains LAPIC address from ACPI */
 uint32_t apicaddr;
 
+#define APIC_DESTINATION_FORM_FLAT 0xFFFFFFF
+
+#define APIC_ENABLE_IPI  (0)
+#define APIC_DISABLE_IPI (0x0F)
+
+#define APIC_DISABLE_IRQ_IPI(v) ((v) | (1<<8))
+#define APIC_ENABLE_IRQ_IPI(v) ((v) & ~(1<<8))
+
+void initialize_lapic(){
+	uint32_t* apic_logdest = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xD0);
+	uint32_t* apic_destform = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xE0);
+
+	*apic_logdest = 1 << 24;
+	*apic_destform = APIC_DESTINATION_FORM_FLAT;
+	enable_ipi_interrupts();
+}
+
+void enable_ipi_interrupts(){
+	uint32_t* apic_spurvec = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xF0);
+	uint32_t* apic_taskprior = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0x80);
+	*apic_spurvec = APIC_ENABLE_IRQ_IPI(0xFF);
+	*apic_taskprior = APIC_ENABLE_IPI;
+}
+
+void disable_ipi_interrupts(){
+	uint32_t* apic_spurvec = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xF0);
+	uint32_t* apic_taskprior = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0x80);
+	*apic_taskprior = APIC_DISABLE_IPI;
+	*apic_spurvec = APIC_DISABLE_IRQ_IPI(*apic_spurvec);
+}
+
+/**
+ * Returns local processor_id from MADT, bound local for every cpu
+ */
+uint8_t get_local_processor_id(){
+	MADT_LOCAL_APIC* localapic = (MADT_LOCAL_APIC*)physical_to_virtual((uint64_t)apicaddr);
+	return localapic->processor_id;
+}
+
+/**
+ * Returns local apic_id from MADT, bound local for every cpu
+ */
+uint8_t get_local_apic_id(){
+	MADT_LOCAL_APIC* localapic = (MADT_LOCAL_APIC*)physical_to_virtual((uint64_t)apicaddr);
+	return localapic->id;
+}
+
 /**
  * Main entry point for AP processors.
  *
@@ -61,6 +108,7 @@ void ap_main(uint64_t proc_id){
 
 	idt_flush(&idt_ptr);
 	ENABLE_INTERRUPTS();
+	initialize_lapic();
 
 	while (true) ;
 }
@@ -69,14 +117,14 @@ void ap_main(uint64_t proc_id){
  * Waits until IPI is free for writing.
  */
 void wait_until_ipi_is_free(){
-	while((*(uint32_t*)physical_to_virtual((apicaddr + 0x30))) & (1<<12))
+	while((*(uint32_t*)physical_to_virtual((apicaddr + 0x300))) & (1<<12))
 		;
 }
 
 /** Writes to address portion of IPI */
-#define WRITE_TO_IPI_ADDRESS(address) *((uint32_t*)physical_to_virtual(apicaddr + 0x31 * 0x10)) = ((uint32_t)address) << 24
+#define WRITE_TO_IPI_ADDRESS(address) *((uint32_t*)physical_to_virtual(apicaddr + 0x310)) = ((uint32_t)address) << 24
 /** Writes to data portion of IPI */
-#define WRITE_TO_IPI_PAYLOAD(payload) *((uint32_t*)physical_to_virtual(apicaddr + 0x30 * 0x10)) = payload
+#define WRITE_TO_IPI_PAYLOAD(payload) *((uint32_t*)physical_to_virtual(apicaddr + 0x300)) = payload
 
 /**
  * Sends interprocessor interrupt to a processor.
@@ -92,6 +140,8 @@ void send_ipi_to(uint8_t apic_id, uint8_t vector, uint32_t control_flags, bool i
 	if (!init_ipi)
 		payload |= 1<<14;
 	payload |= control_flags;
+	if (!init_ipi)
+		printf("APIC IPI: 0x%08X, 0x%08X\n", apic_id, payload);
 	WRITE_TO_IPI_ADDRESS(apic_id);
 	WRITE_TO_IPI_PAYLOAD(payload);
 }
@@ -202,6 +252,7 @@ void initialize_cpus() {
 
 	if (madt == NULL){
 		// no acpi, use single cpu only
+		log_warn("No MADT present, only one CPU available.");
 		cpuid_to_cputord[0] = 0;
 		array_push_data(cpus, make_cpu_default());
 		apicaddr = 0;
@@ -229,8 +280,10 @@ void initialize_cpus() {
 		}
 	}
 
-	if (array_get_size(cpus) > 1)
+	if (array_get_size(cpus) > 1){
 		initialize_mp(localcpu);
+		initialize_lapic();
+	}
 }
 
 /**

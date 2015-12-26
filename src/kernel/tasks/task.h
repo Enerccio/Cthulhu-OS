@@ -88,6 +88,7 @@ typedef struct cpu {
 } cpu_t;
 
 extern array_t* cpus;
+extern uint32_t apicaddr;
 
 /**
  * Initializes cpu information. Initializes SMP if available.
@@ -106,3 +107,16 @@ void initialize_kernel_task();
  * control flags and init_ipi decides flags to be sent with.
  */
 void send_ipi_to(uint8_t apic_id, uint8_t vector, uint32_t control_flags, bool init_ipi);
+
+/**
+ * Returns local processor_id from MADT, bound local for every cpu
+ */
+uint8_t get_local_processor_id();
+
+/**
+ * Returns local apic_id from MADT, bound local for every cpu
+ */
+uint8_t get_local_apic_id();
+
+void enable_ipi_interrupts();
+void disable_ipi_interrupts();

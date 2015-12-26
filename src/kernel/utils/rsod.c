@@ -26,6 +26,8 @@
  */
 #include "rsod.h"
 #include "../utils/kstdlib.h"
+#include "../tasks/task.h"
+#include "../structures/ipi.h"
 
 const char* top_message = "We are sorry but kernel has suffered an error";
 const char* top_message_2 = "from which it was unable to recover->";
@@ -75,6 +77,7 @@ void init_errors() {
     error_codes[ERROR_KERNEL_SIMD_FP_EXCEPTION] = "ERROR_KERNEL_SIMD_FP_EXCEPTION";
     error_codes[ERROR_KERNEL_VIRTUALIZATION_EXCEPTION] = "ERROR_KERNEL_VIRTUALIZATION_EXCEPTION";
     error_codes[ERROR_MINIMAL_MEMORY_FAILURE] = "ERROR_MINIMAL_MEMORY_FAILURE";
+    error_codes[ERROR_KERNEL_IPI_EXCEPTION] = "ERROR_KERNEL_IPI_EXCEPTION";
 }
 
 /**
@@ -94,7 +97,6 @@ uint8_t fgc(uint8_t* fgc) {
  * Shows rainbow screen of the death. Halts all processors.
  */
 void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress) {
-    DISABLE_INTERRUPTS();
     uint8_t fg = rand_number(15)+1;
 
     kd_cclear(BACKGROUND_COLOR);
@@ -128,6 +130,19 @@ void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress
     kd_setxy(10, 20);
     kd_cwrite(bottom_message_2, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
-    kp_halt();
+    if (cpus == NULL)
+    	kp_halt();
+    else {
+    	uint8_t self_apic = get_local_apic_id();
+    	for (unsigned int i=0; i<array_get_size(cpus); i++){
+    		cpu_t* cpu = array_get_at(cpus, i);
+    		if (cpu->apic_id != self_apic){
+    			send_ipi_to(cpu->apic_id, IPI_HALT_IMMEDIATELLY, 0, false);
+    		}
+    	}
+    	send_ipi_to(self_apic, IPI_HALT_IMMEDIATELLY, 0, false);
+    }
+
+    while (true) ;
 }
 

@@ -136,7 +136,7 @@ void* find_madt() {
 			return NULL;
 		int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
 		for (int i=0; i<entries; i++){
-			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&rsdt->PointerToOtherSDT)[i]);
+			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&xsdt->PointerToOtherSDT)[i]);
 			if (!strncmp(h->Signature, "APIC", 4)){
 				return h;
 			}
@@ -222,14 +222,17 @@ void init_table_acpi() {
 
 	rsdp_descriptor = find_rsdp();
 
-	if (rsdp_descriptor == NULL)
+	if (rsdp_descriptor == NULL){
+		log_warn("No RSDP Table detected");
 		return;
+	}
 
 	if (acpi_version == 1){
 		RSDT* rsdtp = (RSDT*)physical_to_virtual((uint64_t)rsdp_descriptor->RsdtAddress);
 		if (valid_rsdt(rsdtp)){
 			rsdt = rsdtp;
 		} else {
+			log_warn("No RSDT Table detected");
 			return;
 		}
 	} else {
@@ -237,6 +240,7 @@ void init_table_acpi() {
 		if (valid_xsdt(xsdtp)){
 			xsdt = xsdtp;
 		} else {
+			log_warn("No XSDT Table detected");
 			return;
 		}
 	}
@@ -250,5 +254,7 @@ void init_table_acpi() {
 
 	if (valid_fadt((FADT*)fadt_address)){
 		fadt = (FADT*)fadt_address;
+	} else {
+		log_warn("No FADT Table detected");
 	}
 }

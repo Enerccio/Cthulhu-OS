@@ -27,6 +27,8 @@
 
 #include "idt.h"
 #include "../utils/rsod.h"
+#include "task.h"
+
 #include <string.h>
 
 /** IDT gates stored in this table */
@@ -188,6 +190,10 @@ void isr_handler(registers_t* r) {
 			pic_sendeoi(PIC_EOI_SLAVE);
 		if (r->type != 39)
 			pic_sendeoi(PIC_EOI_MASTER);
+	} else if (r->type == 255){
+		// ipi interrupt
+		uint32_t* eoi = (uint32_t*)physical_to_virtual(apicaddr);
+		*eoi = 0;
 	}
 }
 

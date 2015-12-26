@@ -33,6 +33,8 @@
 ;
 ; extern void kp_halt()
 kp_halt:
+    hlt
+    ret
 .loop:
     jmp .loop
 

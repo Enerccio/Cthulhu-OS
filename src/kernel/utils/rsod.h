@@ -52,6 +52,7 @@
 #define ERROR_KERNEL_SIMD_FP_EXCEPTION           21
 #define ERROR_KERNEL_VIRTUALIZATION_EXCEPTION    22
 #define ERROR_MINIMAL_MEMORY_FAILURE			 23
+#define ERROR_KERNEL_IPI_EXCEPTION				 24
 
 /**
  * Initializes error subsystem.
