@@ -33,6 +33,7 @@ int atexit(void (*func)(void)){
 
 void abort(void){
 	__kclib_terminate(-1);
+	while (true) ; /* sentinel loop */
 }
 
 void exit(int status){
@@ -42,6 +43,7 @@ void exit(int status){
 	fflush(NULL);
 
 	__kclib_terminate(status);
+	while (true) ; /* sentinel loop */
 }
 
 #endif

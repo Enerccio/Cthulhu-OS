@@ -62,4 +62,5 @@ libc.a: $(OBJ) $(ADAPTER)
 	$(AR) -rcs $(LIBDIR)/$@ $(OBJ) $(ADAPTER)
 	
 crt0:
-	$(MAKE) -C $(MODE)/$(MACHINE)/$(OS) $@
+	$(MAKE) -C $(MODE)/$(MACHINE)/$(OS) $@ CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" \
+	 ASFLAGS="$(ASFLAGS)" AS="$(AS)" CC="$(CC)" AR="$(AR)"
