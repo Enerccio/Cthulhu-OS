@@ -46,9 +46,9 @@ kclib: libc.a
 clean:
 	-rm -f $(OBJ)
 	-rm -f $(wildcard *.d)
-	ifeq ($(MODE),user)
+ifeq ($(MODE),user)
 	-rm -f "$(ADAPTER)"
-	endif
+endif
 
 %.o : %.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) -I"../include" $< -MM -MF $(patsubst %.o,%.d,$@)
