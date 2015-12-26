@@ -7,6 +7,6 @@ int fstat(int fdescriptor, struct stat* stat){
 	errno = EIO;
 	return -1;
 #else
-	return __kclib_fstat_u((void*)fdescriptor, stat, &errno);
+	return __kclib_fstat_u((void*)(intptr_t)fdescriptor, stat, &errno);
 #endif
 }

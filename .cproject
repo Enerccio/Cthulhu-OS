@@ -18,7 +18,7 @@
 					<folderInfo id="cdt.managedbuild.toolchain.gnu.base.674926722.1409055088" name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.base.961729091" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.base.492228147" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
-							<builder arguments="PREFIX=../ CPP_FOR_TARGET=-D__KCLIB_EXTENSIONS" buildPath="${workspace_loc:/kclib}" command="make" enableAutoBuild="true" id="cdt.managedbuild.target.gnu.builder.base.1142895496" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.base">
+							<builder arguments="PREFIX=../ CPP_FOR_TARGET=-D__KCLIB_EXTENSIONS MODE=user" buildPath="${workspace_loc:/kclib}" command="make" enableAutoBuild="true" id="cdt.managedbuild.target.gnu.builder.base.1142895496" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.base">
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name=""/>
 								</outputEntries>
@@ -38,7 +38,6 @@
 								<option id="gnu.c.compiler.option.warnings.pedantic.1927911934" name="Pedantic (-pedantic)" superClass="gnu.c.compiler.option.warnings.pedantic" value="true" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.warnings.pedantic.error.1175895373" name="Pedantic warnings as errors (-pedantic-errors)" superClass="gnu.c.compiler.option.warnings.pedantic.error" value="true" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1985430272" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="__KCLIB_KERNEL_MODE"/>
 									<listOptionValue builtIn="false" value="__KCLIB_EXTENSIONS"/>
 									<listOptionValue builtIn="false" value="__CDT_INDEXER__"/>
 								</option>

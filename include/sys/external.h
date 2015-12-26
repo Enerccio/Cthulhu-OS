@@ -55,14 +55,21 @@ extern char*	  __kclib_environ_search_u(char* key);
 #define __MODE_APPEND (1<<3)
 #define __MODE_BINARY (1<<4)
 #define __MODE_UPDATE (1<<5)
+
 /**
  * Opens file with mode and path
  */
 extern void*	  __kclib_open_file_u(const char* path, uint32_t mode);
+
 /**
  * Fills the stat parameter for provided descriptor
  */
 extern int		  __kclib_fstat_u(void* descriptor, struct stat* stat, int* errno);
+
+/**
+ * Terminates the process
+ */
+extern void       __kclib_terminate(int exit_status);
 
 #endif
 

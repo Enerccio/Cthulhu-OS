@@ -1,2 +1,4 @@
 MODE_CFLAGS := -Wno-unused-parameter
 MODE_CPPFLAGS := -D__KCLIB_KERNEL_MODE
+MODE_LDFLAGS  :=
+MODE_ASFLAGS  :=

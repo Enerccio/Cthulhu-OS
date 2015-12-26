@@ -19,14 +19,25 @@ extern "C" {
 #include <sys/external.h>
 #ifndef __KCLIB_KERNEL_MODE
 #include <stdio.h>
+#include <stdlib.h>
 #endif
 
+#ifdef __KCLIB_KERNEL_MODE
 #define __ASSERT_INTERNAL(expression) \
 	do { \
 		if ((expression) == 0) { \
 			__kclib_assert_failure_k(__LINE__, __FILE__, __func__); \
 		} \
 	} while (0)
+#else
+#define __ASSERT_INTERNAL(expression) \
+	do { \
+		if ((expression) == 0) { \
+			fprintf(stderr, "%s(in file %s, at line %u): assert failure " #expression " == 0", __func__, __FILE__, __LINE__); \
+			abort(); \
+		} \
+	} while (0)
+#endif
 
 #undef assert
 #ifdef NDEBUG
