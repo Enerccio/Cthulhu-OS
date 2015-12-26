@@ -1,7 +1,7 @@
 SYSROOT ?=
 PREFIX  ?=
 LIBDIR  ?= $(SYSROOT)/$(PREFIX)/lib
-INCLDIR ?= $(SYSROOT)/include
+INCLDIR ?= $(SYSROOT)/$(PREFIX)/include
 AS 		:= nasm
 
 .PHONY: crt0 all
