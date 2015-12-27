@@ -58,7 +58,7 @@ uint32_t apicaddr;
 #define APIC_ENABLE_IRQ_IPI(v) ((v) | (1<<8))
 #define APIC_DISABLE_IRQ_IPI(v) ((v) & ~(1<<8))
 
-void initialize_lapic(){
+void initialize_lapic() {
 	volatile uint32_t* apic_logdest = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xD0);
 	volatile uint32_t* apic_destform = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xE0);
 
@@ -67,14 +67,14 @@ void initialize_lapic(){
 	enable_ipi_interrupts();
 }
 
-void enable_ipi_interrupts(){
+void enable_ipi_interrupts() {
 	volatile uint32_t* apic_spurvec = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xF0);
 	volatile uint32_t* apic_taskprior = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0x80);
 	*apic_spurvec = APIC_ENABLE_IRQ_IPI(0xFF);
 	*apic_taskprior = APIC_ENABLE_IPI;
 }
 
-void disable_ipi_interrupts(){
+void disable_ipi_interrupts() {
 	volatile uint32_t* apic_spurvec = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xF0);
 	volatile uint32_t* apic_taskprior = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0x80);
 	*apic_taskprior = APIC_DISABLE_IPI;
@@ -84,7 +84,7 @@ void disable_ipi_interrupts(){
 /**
  * Search predicate for searching by apic.
  */
-bool search_for_cpu_by_apic(void* e, void* d){
+bool search_for_cpu_by_apic(void* e, void* d) {
 	uint8_t cpu_apic_id = (uint8_t)(intptr_t)d;
 	cpu_t* cpu = (cpu_t*)e;
 	return cpu->apic_id == cpu_apic_id;
@@ -93,7 +93,7 @@ bool search_for_cpu_by_apic(void* e, void* d){
 /**
  * Returns pointer to current cpu's cput structure
  */
-cpu_t* get_current_cput(){
+cpu_t* get_current_cput() {
 	cpu_t* cpu = (cpu_t*)array_find_by_pred(cpus, search_for_cpu_by_apic, (void*)(uintptr_t)get_local_apic_id());
 	return cpu;
 }
@@ -101,14 +101,14 @@ cpu_t* get_current_cput(){
 /**
  * Returns local processor_id from MADT, bound local for every cpu
  */
-uint8_t get_local_processor_id(){
+uint8_t get_local_processor_id() {
 	return get_current_cput()->processor_id;
 }
 
 /**
  * Returns local apic_id from MADT, bound local for every cpu
  */
-uint8_t get_local_apic_id(){
+uint8_t get_local_apic_id() {
 	return (*((uint32_t*)physical_to_virtual(apicaddr + 0x020))) >> 24;
 }
 
@@ -120,7 +120,7 @@ uint8_t get_local_apic_id(){
  * loads shared idt table, enabling the interrupts
  * afterwards.
  */
-void ap_main(uint64_t proc_id){
+void ap_main(uint64_t proc_id) {
 	cpu_t* cpu = (cpu_t*)array_get_at(cpus, cpuid_to_cputord[proc_id]);
 	cpu->started = true;
 
@@ -136,7 +136,7 @@ void ap_main(uint64_t proc_id){
 /**
  * Waits until IPI is free for writing.
  */
-void wait_until_ipi_is_free(){
+void wait_until_ipi_is_free() {
 	while((*(uint32_t*)physical_to_virtual((apicaddr + 0x300))) & (1<<12))
 		;
 }
@@ -174,11 +174,11 @@ void send_ipi_to(uint8_t apic_id, uint8_t vector, uint32_t control_flags, bool i
  * then waits more, and if any APs are still not initialized,
  * sends SIPI IPI again and returns.
  */
-void initialize_mp(unsigned int localcpu){
+void initialize_mp(unsigned int localcpu) {
 	uint32_t proclen = array_get_size(cpus);
-	for (uint32_t i=0; i<proclen; i++){
+	for (uint32_t i=0; i<proclen; i++) {
 		cpu_t* cpu = array_get_at(cpus, i);
-		if (cpu->apic_id == localcpu){
+		if (cpu->apic_id == localcpu) {
 			cpu->started = true;
 			continue;
 		}
@@ -188,9 +188,9 @@ void initialize_mp(unsigned int localcpu){
 
 	busy_wait_milis(20);
 
-	for (uint32_t i=0; i<proclen; i++){
+	for (uint32_t i=0; i<proclen; i++) {
 		cpu_t* cpu = array_get_at(cpus, i);
-		if (cpu->apic_id == localcpu){
+		if (cpu->apic_id == localcpu) {
 			cpu->started = true;
 			continue;
 		}
@@ -201,18 +201,18 @@ void initialize_mp(unsigned int localcpu){
 	busy_wait_milis(200);
 
 	bool initialized = true;
-	for (uint32_t i=0; i<proclen; i++){
+	for (uint32_t i=0; i<proclen; i++) {
 		cpu_t* cpu = array_get_at(cpus, i);
-		if (!cpu->started){
+		if (!cpu->started) {
 			initialized = false;
 			break;
 		}
 	}
 
-	if (!initialized){
-		for (uint32_t i=0; i<proclen; i++){
+	if (!initialized) {
+		for (uint32_t i=0; i<proclen; i++) {
 			cpu_t* cpu = array_get_at(cpus, i);
-			if (cpu->apic_id == localcpu || cpu->started){
+			if (cpu->apic_id == localcpu || cpu->started) {
 				continue;
 			}
 			send_ipi_to(cpu->apic_id, AP_INIT_LOAD_ADDRESS, SIPI_FLAGS, true);
@@ -231,7 +231,7 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
 	if (cpu == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
 
-	if (apic == NULL){
+	if (apic == NULL) {
 		cpu->processor_id = 0;
 		cpu->apic_id = 0;
 		cpu->started = true;
@@ -275,7 +275,7 @@ void initialize_cpus() {
 	unsigned int localcpu = 0;
 	MADT_HEADER* madt = find_madt();
 
-	if (madt == NULL){
+	if (madt == NULL) {
 		// no acpi, use single cpu only
 		log_warn("No MADT present, only one CPU available.");
 		cpuid_to_cputord[0] = 0;
@@ -289,13 +289,13 @@ void initialize_cpus() {
 		size_t bytes = madt->header.Length;
 		bytes -= sizeof(MADT_HEADER);
 		uint64_t addr = ((uint64_t)madt)+sizeof(MADT_HEADER);
-		while (bytes > 0){
+		while (bytes > 0) {
 			ACPI_SUBTABLE_HEADER* h = (ACPI_SUBTABLE_HEADER*)addr;
 			bytes -= h->length;
 			addr += h->length;
-			if (h->type == ACPI_MADT_TYPE_LOCAL_APIC){
+			if (h->type == ACPI_MADT_TYPE_LOCAL_APIC) {
 				MADT_LOCAL_APIC* lapic = (MADT_LOCAL_APIC*)h;
-				if (lapic->lapic_flags == 1){
+				if (lapic->lapic_flags == 1) {
 					array_push_data(cpus, make_cpu(lapic));
 					cpuid_to_cputord[lapic->processor_id] = array_get_size(cpus)-1;
 					++cnt;
@@ -305,7 +305,7 @@ void initialize_cpus() {
 	}
 
 	initialize_ipi_subsystem();
-	if (array_get_size(cpus) > 1){
+	if (array_get_size(cpus) > 1) {
 		initialize_mp(localcpu);
 	}
 	initialize_lapic();

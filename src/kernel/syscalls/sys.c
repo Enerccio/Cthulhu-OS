@@ -27,6 +27,6 @@
 
 #include "sys.h"
 
-void initialize_system_calls(){
+void initialize_system_calls() {
 
 }

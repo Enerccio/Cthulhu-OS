@@ -92,7 +92,7 @@ void init_errors() {
  */
 uint8_t fgc(uint8_t* fgc) {
     uint8_t fg = *fgc;
-    while (*fgc == fg){
+    while (*fgc == fg) {
         *fgc = ((*fgc + rand_number(16)) % 16);
         if (*fgc == 0)
             *fgc = 1;
@@ -109,7 +109,7 @@ static volatile bool error_displaying = 0;
 void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress) {
 
 	proc_spinlock_lock(&lock);
-	if (error_displaying != 0){
+	if (error_displaying != 0) {
 		proc_spinlock_unlock(&lock);
 		cpu_t* ccput = get_current_cput();
 		ccput->started = false;
@@ -147,7 +147,7 @@ void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress
     kd_cwrite("Address:            ", BACKGROUND_COLOR, FOREGROUND_COLOR);
     kd_cwrite_hex64((uint64_t) eaddress, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
-    if (cpus != NULL){
+    if (cpus != NULL) {
 		kd_setxy(16, 12);
 		kd_cwrite("Faulting processor: ", BACKGROUND_COLOR, FOREGROUND_COLOR);
 		kd_cwrite_hex64(get_local_processor_id(), BACKGROUND_COLOR, FOREGROUND_COLOR);
@@ -162,9 +162,9 @@ void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress
     	kp_halt();
     else {
     	uint8_t self_apic = get_local_apic_id();
-    	for (unsigned int i=0; i<array_get_size(cpus); i++){
+    	for (unsigned int i=0; i<array_get_size(cpus); i++) {
     		cpu_t* cpu = array_get_at(cpus, i);
-    		if (cpu->apic_id != self_apic){
+    		if (cpu->apic_id != self_apic) {
     			send_ipi_message(cpu->apic_id, IPI_HALT_IMMEDIATELLY, ecode);
     		}
     	}

@@ -71,14 +71,14 @@ void initialize_ports() {
 
     com_ports_count = 4;
     memset(com_ports_address, 0, sizeof(uint32_t)*com_ports_count);
-    for (uint8_t i=0; i<com_ports_count; i++){
+    for (uint8_t i=0; i<com_ports_count; i++) {
         com_ports_address[i] = *(BDA_IO_COM + i);
         init_serial_port(com_ports_address[i]);
     }
 
     lpt_ports_count = 3;
     memset(lpt_ports_address, 0, sizeof(uint32_t)*lpt_ports_count);
-    for (uint8_t i=0; i<lpt_ports_count; i++){
+    for (uint8_t i=0; i<lpt_ports_count; i++) {
         lpt_ports_address[i] = *(BDA_IO_LPT + i);
     }
 }

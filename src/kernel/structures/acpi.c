@@ -56,7 +56,7 @@ uintmax_t add_bytes(uint8_t* addr, size_t len) {
 bool acpisdt_checksum(ACPISDTHeader* th) {
 	unsigned char sum = 0;
 
-	for (unsigned int i = 0; i < th->Length; i++){
+	for (unsigned int i = 0; i < th->Length; i++) {
         sum += ((char *) th)[i];
     }
 
@@ -86,7 +86,7 @@ void* findFACP(void* RootSDT) {
     RSDT* rsdt = (RSDT*) RootSDT;
     int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
 
-    for (int i=0; i<entries; i++){
+    for (int i=0; i<entries; i++) {
         ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&rsdt->PointerToOtherSDT)[i]);
         if (!strncmp(h->Signature, "FACP", 4))
             return (void*)h;
@@ -105,7 +105,7 @@ void* findFACP_XSDT(void* RootSDT) {
     XSDT* xsdt = (XSDT*) RootSDT;
     int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
 
-    for (int i=0; i<entries; i++){
+    for (int i=0; i<entries; i++) {
         ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&rsdt->PointerToOtherSDT)[i]);
         if (!strncmp(h->Signature, "FACP", 4))
             return (void*)h;
@@ -121,13 +121,13 @@ void* findFACP_XSDT(void* RootSDT) {
  * Searches either RSDT or XSDT for MADT table and returns it.
  */
 void* find_madt() {
-	if (acpi_version == 1){
+	if (acpi_version == 1) {
 		if (rsdt == NULL)
 			return NULL;
 		int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
-		for (int i=0; i<entries; i++){
+		for (int i=0; i<entries; i++) {
 			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&rsdt->PointerToOtherSDT)[i]);
-			if (!strncmp(h->Signature, "APIC", 4)){
+			if (!strncmp(h->Signature, "APIC", 4)) {
 				return h;
 			}
 		}
@@ -135,9 +135,9 @@ void* find_madt() {
 		if (xsdt == NULL)
 			return NULL;
 		int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
-		for (int i=0; i<entries; i++){
+		for (int i=0; i<entries; i++) {
 			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&xsdt->PointerToOtherSDT)[i]);
-			if (!strncmp(h->Signature, "APIC", 4)){
+			if (!strncmp(h->Signature, "APIC", 4)) {
 				return h;
 			}
 		}
@@ -158,7 +158,7 @@ bool check_lowestbyte(uintmax_t value) {
  */
 bool valid_rsdp(struct RSDPDescriptor* rsdp) {
 	acpi_version = rsdp->Revision+1;
-	if (acpi_version == 1){
+	if (acpi_version == 1) {
 		return check_lowestbyte(add_bytes((uint8_t*)rsdp, sizeof(struct RSDPDescriptor)));
 	} else {
 		return check_lowestbyte(add_bytes((uint8_t*)rsdp, sizeof(struct RSDPDescriptor20)));
@@ -176,18 +176,18 @@ bool valid_rsdp(struct RSDPDescriptor* rsdp) {
 struct RSDPDescriptor* find_rsdp() {
 	struct RSDPDescriptor* desc;
 	uint64_t test_addr = (uint64_t)ebda;
-	for (uint64_t addr = test_addr; addr < test_addr+0x1000; addr += 16){
+	for (uint64_t addr = test_addr; addr < test_addr+0x1000; addr += 16) {
 		char* test_address = (char*)physical_to_virtual(addr);
-		if (strncmp(test_address, "RSD PTR ", 8)==0){
+		if (strncmp(test_address, "RSD PTR ", 8)==0) {
 			desc = (struct RSDPDescriptor*)test_address;
 			if (valid_rsdp(desc))
 				return desc;
 		}
 	}
 	test_addr = 0x000E0000;
-	for (uint64_t addr = test_addr; addr < 0x000FFFFF; addr += 16){
+	for (uint64_t addr = test_addr; addr < 0x000FFFFF; addr += 16) {
 		char* test_address = (char*)physical_to_virtual(addr);
-		if (strncmp(test_address, "RSD PTR ", 8)==0){
+		if (strncmp(test_address, "RSD PTR ", 8)==0) {
 			desc = (struct RSDPDescriptor*)test_address;
 			if (valid_rsdp(desc))
 				return desc;
@@ -222,14 +222,14 @@ void init_table_acpi() {
 
 	rsdp_descriptor = find_rsdp();
 
-	if (rsdp_descriptor == NULL){
+	if (rsdp_descriptor == NULL) {
 		log_warn("No RSDP Table detected");
 		return;
 	}
 
-	if (acpi_version == 1){
+	if (acpi_version == 1) {
 		RSDT* rsdtp = (RSDT*)physical_to_virtual((uint64_t)rsdp_descriptor->RsdtAddress);
-		if (valid_rsdt(rsdtp)){
+		if (valid_rsdt(rsdtp)) {
 			rsdt = rsdtp;
 		} else {
 			log_warn("No RSDT Table detected");
@@ -237,7 +237,7 @@ void init_table_acpi() {
 		}
 	} else {
 		XSDT* xsdtp = (XSDT*)physical_to_virtual(((struct RSDPDescriptor20*)rsdp_descriptor)->XsdtAddress);
-		if (valid_xsdt(xsdtp)){
+		if (valid_xsdt(xsdtp)) {
 			xsdt = xsdtp;
 		} else {
 			log_warn("No XSDT Table detected");
@@ -252,7 +252,7 @@ void init_table_acpi() {
 	else
 		fadt_address = findFACP_XSDT(xsdt);
 
-	if (valid_fadt((FADT*)fadt_address)){
+	if (valid_fadt((FADT*)fadt_address)) {
 		fadt = (FADT*)fadt_address;
 	} else {
 		log_warn("No FADT Table detected");

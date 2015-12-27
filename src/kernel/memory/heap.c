@@ -45,8 +45,8 @@ uint64_t heap_end_address;
  * returns it.
  */
 aligned_ptr_t malign(size_t amount, uint16_t align) {
-    if (tmp_heap != 0){
-        if (tmp_heap % align != 0){
+    if (tmp_heap != 0) {
+        if (tmp_heap % align != 0) {
             tmp_heap = tmp_heap + (align - (tmp_heap % align));
         }
         uint64_t head = tmp_heap;
@@ -56,7 +56,7 @@ aligned_ptr_t malign(size_t amount, uint16_t align) {
 
     uint64_t unaligned = (uint64_t) malloc(amount+align+sizeof(uint64_t));
     uint64_t aligned = unaligned + sizeof(uint64_t);
-    if (!(aligned % align == 0)){
+    if (!(aligned % align == 0)) {
         aligned = aligned + (align - (aligned % align));
     }
     uint64_t* ptr = (uint64_t*) aligned;

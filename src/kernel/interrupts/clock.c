@@ -79,7 +79,7 @@ volatile uintmax_t clock_ms;
  */
 void timer_tick(uint64_t error_code, registers_t* r) {
 	clock_ms += 1;
-	if (clock_ms >= 1000){
+	if (clock_ms >= 1000) {
 		++clock_s;
 		clock_ms -= 1000;
 	}
@@ -90,10 +90,10 @@ void timer_tick(uint64_t error_code, registers_t* r) {
  *
  * TODO: Fix it, might not be correct
  */
-void busy_wait_milis(size_t milis){
+void busy_wait_milis(size_t milis) {
 	uintmax_t oclocks = clock_s;
 	uintmax_t oclockms = clock_ms;
-	while (milis > 0){
+	while (milis > 0) {
 		uintmax_t clocks = clock_s;
 		uintmax_t clockms = clock_ms;
 

@@ -35,10 +35,10 @@ extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
 extern void kp_halt();
 
-void ipi_received(uint64_t ecode, registers_t* registers){
+void ipi_received(uint64_t ecode, registers_t* registers) {
 	// WATCH OUT: registers might be null if it is local interrupt
 	cpu_t* cpu = get_current_cput();
-	switch (cpu->apic_message_type){
+	switch (cpu->apic_message_type) {
 	case IPI_HALT_IMMEDIATELLY:
 		cpu->apic_message_handled = 0;
 		kp_halt();
@@ -50,13 +50,13 @@ void ipi_received(uint64_t ecode, registers_t* registers){
 	cpu->apic_message_handled = 0;
 }
 
-void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, uint64_t message){
+void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, uint64_t message) {
 	cpu_t* cpu = array_find_by_pred(cpus, search_for_cpu_by_apic, (void*)(uintptr_t)cpu_apic_id);
 
 	if (cpu == NULL)
 		return;
 
-	if (cpu_apic_id == get_local_apic_id()){
+	if (cpu_apic_id == get_local_apic_id()) {
 		proc_spinlock_lock(&cpu->__cpu_lock);
 		cpu->apic_message_handled = 1;
 		cpu->apic_message_type = message_type;
@@ -81,6 +81,6 @@ void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, uint64_t messag
 	proc_spinlock_unlock(&cpu->__cpu_lock);
 }
 
-void initialize_ipi_subsystem(){
+void initialize_ipi_subsystem() {
 	register_interrupt_handler(EXC_IPI, ipi_received);
 }

@@ -30,21 +30,21 @@
 /**
  * Creates new array with default allocation size
  */
-array_t* create_array(){
+array_t* create_array() {
 	return create_array_spec(ARRAY_STARTING_SIZE);
 }
 
 /**
  * Creates new array with specified number of elements preallocated.
  */
-array_t* create_array_spec(uint32_t starting_element_size){
+array_t* create_array_spec(uint32_t starting_element_size) {
 	array_t* array = (array_t*) malloc(sizeof(array_t));
 	if (array == NULL)
 		return NULL;
 	array->size = 0;
 	array->data_size = starting_element_size * sizeof(void*);
 	array->data = (void**) malloc(array->data_size);
-	if (array->data == NULL){
+	if (array->data == NULL) {
 		free(array);
 		return NULL;
 	}
@@ -55,8 +55,8 @@ array_t* create_array_spec(uint32_t starting_element_size){
 /**
  * Pushes data to array.
  */
-uint32_t array_push_data(array_t* array, void* data){
-	if (array->size == array->data_size/sizeof(void*)){
+uint32_t array_push_data(array_t* array, void* data) {
+	if (array->size == array->data_size/sizeof(void*)) {
 		array->data = (void**) realloc(array->data, array->data_size + (array->starting_size * sizeof(void*)));
 		array->data_size += array->starting_size * sizeof(void*);
 	}
@@ -69,7 +69,7 @@ uint32_t array_push_data(array_t* array, void* data){
  * Returns index to data, if the data is in the array.
  * Returns -1 if data is not found.
  */
-int32_t array_find_data(array_t* array, void* data){
+int32_t array_find_data(array_t* array, void* data) {
 	uint32_t iterator = 0;
 	for (; iterator<array->size; iterator++)
 		if (array_get_at(array, iterator) == data)
@@ -80,8 +80,8 @@ int32_t array_find_data(array_t* array, void* data){
 /**
  * Inserts data at position (enlarging if necessary).
  */
-void array_insert_at(array_t* array, uint32_t position, void* data){
-	if (position == array->size-1){
+void array_insert_at(array_t* array, uint32_t position, void* data) {
+	if (position == array->size-1) {
 		array_push_data(array, data);
 		return;
 	}
@@ -89,8 +89,8 @@ void array_insert_at(array_t* array, uint32_t position, void* data){
 	if (position > array->size-1)
 		return;
 
-	if (array->size == 0){
-		if (position == 0){
+	if (array->size == 0) {
+		if (position == 0) {
 			array_push_data(array, data);
 			return;
 		} else
@@ -99,7 +99,7 @@ void array_insert_at(array_t* array, uint32_t position, void* data){
 
 	uint32_t it = position;
 	void* prev = data;
-	while (it <= array->size-1){
+	while (it <= array->size-1) {
 		void* tmp = prev;
 		prev = array->data[it];
 		array->data[it] = tmp;
@@ -112,7 +112,7 @@ void array_insert_at(array_t* array, uint32_t position, void* data){
 /**
  * Returns data at position in array. Returns NULL if no data can be found.
  */
-void* array_get_at(array_t* array, uint32_t position){
+void* array_get_at(array_t* array, uint32_t position) {
 	if (position > array->size-1)
 		return 0;
 
@@ -123,7 +123,7 @@ void* array_get_at(array_t* array, uint32_t position){
  * Sets data at position, overwriting any data.
  * If position is not within array, does nothing.
  */
-void array_set_at(array_t* array, uint32_t position, void* data){
+void array_set_at(array_t* array, uint32_t position, void* data) {
 	if (position < array->size-1)
 		array->data[position] = data;
 }
@@ -131,8 +131,8 @@ void array_set_at(array_t* array, uint32_t position, void* data){
 /**
  * Removes item at position in array, moving elements as necessary.
  */
-void array_remove_at(array_t* array, uint32_t position){
-	if (position == array->size-1){
+void array_remove_at(array_t* array, uint32_t position) {
+	if (position == array->size-1) {
 		--array->size;
 		return;
 	}
@@ -146,14 +146,14 @@ void array_remove_at(array_t* array, uint32_t position){
 /**
  * Returns number of elements in this array
  */
-uint32_t array_get_size(array_t* array){
+uint32_t array_get_size(array_t* array) {
 	return array->size;
 }
 
 /**
  * Frees the array's array and array.
  */
-void destroy_array(array_t* array){
+void destroy_array(array_t* array) {
 	free(array->data);
 	free(array);
 }
@@ -162,7 +162,7 @@ void destroy_array(array_t* array){
  * Finds the data that matches predicate. Predicate is called with
  * data element and data provided and returns true or false.
  */
-void* array_find_by_pred(array_t* array, array_search_predicate_t predicate, void* data){
+void* array_find_by_pred(array_t* array, array_search_predicate_t predicate, void* data) {
 	uint32_t i = 0;
 
 	for (; i<array->size; i++)

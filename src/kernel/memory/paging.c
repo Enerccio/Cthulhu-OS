@@ -123,7 +123,7 @@ uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
 
     if (vaddress > ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS) &&
                 vaddress < ADDRESS_OFFSET((RESERVED_KBLOCK_RAM_MAPPINGS+1))	&&
-				is_1GB_paging_supported()){
+				is_1GB_paging_supported()) {
         v_address1GB_t va = *((v_address1GB_t*) &vaddress);
         page_directory1GB_t pd1gb;
         pd1gb.number = (uint64_t) address;
@@ -157,13 +157,13 @@ uint32_t last_searched_location;
  */
 extern void kp_halt();
 static uint64_t get_free_frame() {
-	if (frame_pool == NULL){
+	if (frame_pool == NULL) {
 		return ((uint64_t)malign(0x1000, 0x1000)-0xFFFFFFFF80000000);
 	} else {
 		// TODO add synchronization
 		section_info_t* section = frame_pool;
-		while (section != NULL){
-			if (section->head != NULL){
+		while (section != NULL) {
+			if (section->head != NULL) {
 				stack_element_t* se = section->head;
 				section->head = se->next;
 				section->frame_array[se->array_ord].usage_count = 0;
@@ -185,11 +185,11 @@ static void free_frame(uint64_t frame_address) {
     uint64_t fa = ALIGN(frame_address);
 	// TODO add synchronization
 	section_info_t* section = frame_pool;
-	while (section != NULL){
-		if (section->start_word >= fa && section->end_word < fa){
+	while (section != NULL) {
+		if (section->start_word >= fa && section->end_word < fa) {
 			uint32_t idx = (fa-section->start_word) / 0x1000;
 			--section->frame_array[idx].usage_count;
-			if (section->frame_array[idx].usage_count == 0){
+			if (section->frame_array[idx].usage_count == 0) {
 				section->frame_array[idx].bound_stack_element->next = section->head;
 				section->head = section->frame_array[idx].bound_stack_element;
 				memset((void*)physical_to_virtual(section->head->frame_address), 0xDE, 0x1000);
@@ -332,7 +332,7 @@ static void create_frame_pool(struct multiboot* mboot_addr) {
 			if (base_addr+length < 0x400000) // ram is below autoallocated amount
 				continue;
 
-			if (base_addr < 0x400000){ // ram starts below 0x400000 but grows past it
+			if (base_addr < 0x400000) { // ram starts below 0x400000 but grows past it
 				length = length - (0x400000-base_addr);
 				base_addr = 0x400000;
 			}
@@ -352,9 +352,9 @@ static void create_frame_pool(struct multiboot* mboot_addr) {
 
 			// section starts at base address
 			section_info_t* section = (section_info_t*)base_addr;
-			if (lastfp != NULL){ // link previous section and this one
+			if (lastfp != NULL) { // link previous section and this one
 				lastfp->next_section = section;
-			} else if (firstfp == NULL){ // first section will be this one
+			} else if (firstfp == NULL) { // first section will be this one
 				firstfp = section;
 			}
 
@@ -369,7 +369,7 @@ static void create_frame_pool(struct multiboot* mboot_addr) {
 			section->head = (stack_element_t*) stack_el_addr; // set it as head
 
 			stack_element_t* prev_se = NULL;
-			for (uint64_t i=0; i<uframes; i++){
+			for (uint64_t i=0; i<uframes; i++) {
 				// Fill up information for stack element.
 				// Stack element contains frame address of free frame in this memory section
 				stack_element_t* se = (stack_element_t*)stack_el_addr;
@@ -405,9 +405,9 @@ static void create_frame_pool(struct multiboot* mboot_addr) {
  * paging is used, which means much more physical ram is used.
  */
 void initialize_memory_mirror() {
-    if (is_1GB_paging_supported() != 0){
+    if (is_1GB_paging_supported() != 0) {
         log_msg("Host supports 1GB pages, will use for ram mirror");
-        for (uint64_t start=0; start < maxram; start+=1<<30){
+        for (uint64_t start=0; start < maxram; start+=1<<30) {
             uint64_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
             uint64_t* pdpt_addr = (uint64_t*) MMU_PML4(vaddress)[MMU_PML4_INDEX(
                         vaddress)];
@@ -430,7 +430,7 @@ void initialize_memory_mirror() {
         }
     } else {
         log_warn("Host does not provide 1GB pages, will use 4KB pages for ram mirror");
-        for (uint64_t start=0; start < maxram; start+=0x1000){
+        for (uint64_t start=0; start < maxram; start+=0x1000) {
             uint64_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
             uint64_t* paddress = get_page(vaddress, true);
             page_t page;

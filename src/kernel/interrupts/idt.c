@@ -188,12 +188,12 @@ void isr_handler(registers_t* r) {
         interrupt_handlers[r->type](r->ecode, r);
     }
 
-    if (r->type > 31 && r->type < 48){
+    if (r->type > 31 && r->type < 48) {
 		if (r->type >= 40 && r->type != 47)
 			pic_sendeoi(PIC_EOI_SLAVE);
 		if (r->type != 39)
 			pic_sendeoi(PIC_EOI_MASTER);
-	} else if (r->type == 255){
+	} else if (r->type == 255) {
 		// ipi interrupt
 		volatile uint32_t* eoi = (uint32_t*)physical_to_virtual(apicaddr+0xB0);
 		*eoi = 0;
@@ -205,6 +205,6 @@ void isr_handler(registers_t* r) {
  *
  * Will overwrite interrupt handler set up before.
  */
-void register_interrupt_handler(uint8_t interrupt_id, isr_t handler_func){
+void register_interrupt_handler(uint8_t interrupt_id, isr_t handler_func) {
     interrupt_handlers[interrupt_id] = handler_func;
 }
