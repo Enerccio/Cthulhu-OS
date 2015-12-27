@@ -48,6 +48,7 @@
 		<configuration configurationName="debug">
 			<resource resourceType="FOLDER" workspacePath="/pikokernel64/src/kclib/usr/include"/>
 			<resource resourceType="FOLDER" workspacePath="/pikokernel64/src/kclib/usr"/>
+			<resource resourceType="FOLDER" workspacePath="/pikokernel64/toolchain/usr/lib"/>
 			<resource resourceType="FOLDER" workspacePath="/pikokernel64/src/kclib"/>
 		</configuration>
 	</storageModule>

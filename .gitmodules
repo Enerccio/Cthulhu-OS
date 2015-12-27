@@ -1,0 +1,3 @@
+[submodule "libelrond"]
+	path = libelrond
+	url = https://github.com/Enerccio/libelrond.git

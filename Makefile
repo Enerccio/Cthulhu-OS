@@ -1,6 +1,6 @@
 MODE ?= debug
 
-.PHONY: clean kernel-clean kernel lib all pikodev pikodev-clean 
+.PHONY: clean kernel-clean kernel lib all pikodev pikodev-clean libelrond libelrond-clean 
 
 all: lib kernel pikodev
 
@@ -15,8 +15,14 @@ pikodev-clean:
 lib:
 	bash build_kclib.sh $(MODE)
 	
-kernel:
+kernel: libelrond-clean libelrond
 	$(MAKE) -C src/kernel MODE=$(MODE)
 
 pikodev:
 	$(MAKE) -C src/kernel_dev_lib MODE=$(MODE)
+	
+libelrond:
+	$(MAKE) -C $@ MODE=$(MODE) PREFIX="$(shell pwd)/osroot/usr" CC=x86_64-piko-gcc AR=x86_64-piko-ar
+	
+libelrond-clean:
+	$(MAKE) clean -C libelrond MODE=$(MODE)
