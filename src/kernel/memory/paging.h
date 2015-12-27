@@ -168,6 +168,29 @@ typedef union cr3_page_entry
    uint64_t                 pml;
 } cr3_page_entry_t;
 
+typedef struct stack_element {
+	uint64_t frame_address;
+	uint64_t array_ord;
+	struct stack_element* next;
+} stack_element_t;
+
+typedef struct frame_info frame_info_t;
+
+typedef struct section_info {
+	stack_element_t* head;
+	struct section_info* next_section;
+	frame_info_t* frame_array;
+
+	uint64_t start_word;
+	uint64_t end_word;
+	uint64_t total_frames;
+} section_info_t;
+
+struct frame_info {
+	uint32_t usage_count;
+	stack_element_t* bound_stack_element;
+};
+
 /**
  * Initializes paging subsystem with correct paging, requiring multiboot
  * for memory info.

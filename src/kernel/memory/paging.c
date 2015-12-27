@@ -34,18 +34,10 @@
 
 /** Maximum physical bits in page structures */
 uint64_t maxphyaddr;
-/** Contains bitmap for physical address, ie 1 represents usable ram, 0 represents unusable address */
-uint8_t* phys_map;
-/** Frame map, bitmap containing all frames (even for unusable addresses), 1 means page is used,
- * 0 means page is unused. */
-uint8_t* frame_map;
-/**
- * Bitmap containing frame usage. 0 means kernel is using page, 1 means user space is using page */
-uint8_t* frame_map_usage;
 /** Maximum ram address, might be unusable */
 uint64_t maxram;
-/** Maximum number of frames, some might be unusable */
-uint64_t maxframes;
+
+section_info_t* frame_pool;
 
 extern uint64_t detect_maxphyaddr();
 extern uint64_t get_active_page();
@@ -160,31 +152,56 @@ uint64_t physical_to_virtual(uint64_t vaddress) {
 uint32_t last_searched_location;
 
 /**
- * Always returns free frame, or loops forever!
- *
- * Searches the frame_map bitmap for free frame, then allocates it.
+ * Always returns free frame
  * TODO: add paging to swap
  */
+extern void kp_halt();
 static uint64_t get_free_frame() {
-    uint32_t i, j;
+	if (frame_pool == NULL){
+		return ((uint64_t)malign(0x1000, 0x1000)-0xFFFFFFFF80000000);
+	} else {
+		// TODO add synchronization
+		section_info_t* section = frame_pool;
+		while (section != NULL){
+			if (section->head != NULL){
+				stack_element_t* se = section->head;
+				section->head = se->next;
+				section->frame_array[se->array_ord].usage_count = 0;
+				return se->frame_address;
+			}
+			section = section->next_section;
+		}
 
-    while (1) {
-        for (i = 0; i < BITNSLOTS(maxframes); i++) {
-            if (frame_map[i] != 0xFF) {
-                // some frame available
-                for (j = i * 8; j < (i + 1) * 8; j++) {
-                    if (!BITTEST(frame_map, j)) {
-                        BITSET(frame_map, j);
-                        last_searched_location = i;
-                        return j * 0x1000;
-                    }
-                }
-            }
-        }
+		// TODO handle crap here
+		kp_halt();
+		return 0;
+	}
+}
 
-        last_searched_location = 0;
-    }
+/**
+ * Deallocates frame from frame_map.
+ */
+static void free_frame(uint64_t frame_address) {
+    uint64_t fa = ALIGN(frame_address);
+	// TODO add synchronization
+	section_info_t* section = frame_pool;
+	while (section != NULL){
+		if (section->start_word >= fa && section->end_word < fa){
+			uint32_t idx = (fa-section->start_word) / 0x1000;
+			--section->frame_array[idx].usage_count;
+			if (section->frame_array[idx].usage_count == 0){
+				section->frame_array[idx].bound_stack_element->next = section->head;
+				section->head = section->frame_array[idx].bound_stack_element;
+				memset((void*)physical_to_virtual(section->head->frame_address), 0xDE, 0x1000);
+			}
+		} else {
+			section = section->next_section;
+		}
+	}
 
+	// Should never happen
+	// TODO add error
+	kp_halt();
 }
 
 /**
@@ -234,7 +251,7 @@ static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
         pt.number = get_free_frame();
         pt.flaggable.present = 1;
         MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)] = pt.number;
-        memset(MMU_PT(vaddress), 0, sizeof(uint64_t));
+        memset(MMU_PT(vaddress), 0, sizeof(uint64_t)*512);
     }
 
     return &MMU_PT(vaddress)[MMU_PT_INDEX(vaddress)];
@@ -295,68 +312,80 @@ static uint64_t detect_maxram(struct multiboot* mboot_addr) {
  * Fills bitmaps for frame_map_usage, phys_map and returns bitmap for frame_map
  * from available ram entries.
  */
-static uint8_t* create_frame_map(struct multiboot* mboot_addr) {
-    uint64_t i;
-    uint8_t* bitmap = malign(BITNSLOTS(maxframes), 0x1);
-    memset(bitmap, 0xFF, BITNSLOTS(maxframes)); // mark all ram as "used"
-    frame_map_usage = malign(BITNSLOTS(maxframes), 0x1); // initial value is ignored
-    phys_map = malign(BITNSLOTS(maxframes), 0x1);
-    memset(phys_map, 0xFF, BITNSLOTS(maxframes)); // mark all ram as "unavailable"
+static void create_frame_pool(struct multiboot* mboot_addr) {
+	section_info_t* firstfp = NULL;
+	section_info_t* lastfp = NULL;
 
-    if ((mboot_addr->flags & 0b1) == 1) {
+	if ((mboot_addr->flags & 0b100000) == 0b100000) {
+		uint32_t mem = mboot_addr->mmap_addr + 4;
+		while (mem < (mboot_addr->mmap_addr + mboot_addr->mmap_length)) {
+			mboot_mem_t data = *((mboot_mem_t*) (uint64_t) mem);
+			uint32_t size = *((uint32_t*) (uint64_t) (mem - 4));
+			mem += size + 4;
 
-        uint64_t bulk = (mboot_addr->mem_lower * 1024) / 0x1000;
-        for (i = 0; i < bulk; i++) {
-            BITCLEAR(bitmap, i);
-            BITCLEAR(phys_map, i);
-        }
+			uint64_t base_addr = data.address;
+			uint64_t length = data.size;
 
-        bulk = (0x100000 + (mboot_addr->mem_upper * 1024)) / 0x1000;
-        for (i = 0x100000 / 0x1000; i < bulk; i++) {
-            BITCLEAR(bitmap, i);
-            BITCLEAR(phys_map, i);
-        }
-    }
+			if (data.type != 1)
+				continue;
 
-    if ((mboot_addr->flags & 0b100000) == 0b100000) {
-        uint32_t mem = mboot_addr->mmap_addr + 4;
-        while (mem < (mboot_addr->mmap_addr + mboot_addr->mmap_length)) {
-            mboot_mem_t data = *((mboot_mem_t*) (uint64_t) mem);
-            uint32_t size = *((uint32_t*) (uint64_t) (mem - 4));
-            mem += size + 4;
+			if (base_addr+length < 0x400000)
+				continue;
 
-            uint64_t base_addr = data.address;
-            uint64_t length = data.size;
-            uint32_t type = data.type;
+			if (base_addr < 0x400000){
+				length = length - (0x400000-base_addr);
+				base_addr = 0x400000;
+			}
 
-            if (type == 0x1) {
-                uint64_t start_bit = base_addr / 0x1000;
-                uint64_t end_bit = (base_addr + length) / 0x1000;
+			if (length < 0x10000)
+				continue;
 
-                for (i = start_bit; i < end_bit; i++) {
-                    BITCLEAR(bitmap, i);
-                    BITCLEAR(phys_map, i);
-                }
-            }
-        }
-    }
+			uint64_t uframes = (length-sizeof(section_info_t))/(0x1000-(sizeof(stack_element_t)+sizeof(frame_info_t)))-1;
+			uint64_t total_size = sizeof(section_info_t) + (uframes * sizeof(stack_element_t)) + (uframes * sizeof(frame_info_t));
 
-    // mark first 2MB as used, since it is identity mapped at this point
-    for (i = 0; i < 0x200000 / 0x1000; i++) {
-        BITSET(bitmap, i);
-    }
+			uint64_t after_address = (base_addr + total_size + 0x1000) & ~0xFFF;
 
-    return bitmap;
-}
+			allocate(base_addr, total_size, true, false);
+			section_info_t* section = (section_info_t*)base_addr;
+			if (lastfp != NULL){
+				lastfp->next_section = section;
+			} else if (firstfp == NULL){
+				firstfp = section;
+			}
 
-/**
- * Deallocates frame from frame_map.
- *
- * Marks that frame as 0 in frame_map.
- */
-static void free_frame(uint64_t frame_address) {
-    uint32_t idx = ALIGN(frame_address) / 0x1000;
-    BITCLEAR(frame_map, idx);
+			section->start_word = after_address;
+			section->end_word = base_addr + length;
+			section->total_frames = uframes;
+			section->next_section = NULL;
+			section->frame_array = (frame_info_t*) (base_addr + sizeof(section_info_t));
+			uint64_t stack_el_addr = (base_addr + sizeof(section_info_t) +
+					(sizeof(frame_info_t) * uframes));
+			section->head = (stack_element_t*) stack_el_addr;
+
+			stack_element_t* prev_se = NULL;
+			for (register uint64_t i=0; i<uframes; i++){
+				//kd_write_hex64(i); kd_write("\n");
+				stack_element_t* se = (stack_element_t*)stack_el_addr;
+				stack_el_addr += sizeof(stack_element_t);
+				se->frame_address = after_address + (i*0x1000);
+				if (prev_se != NULL)
+					prev_se->next = se;
+				se->next = NULL;
+				se->array_ord = i;
+				prev_se = se;
+
+				frame_info_t* fi = &section->frame_array[i];
+				fi->usage_count = 0;
+				fi->bound_stack_element = se;
+			}
+
+			lastfp = section;
+		}
+
+	}
+
+	frame_pool = firstfp;
+
 }
 
 /**
@@ -420,18 +449,11 @@ void initialize_memory_mirror() {
  *  6. initializes memory mirror
  */
 void initialize_paging(struct multiboot* mboot_addr) {
-
-    last_searched_location = 0;
-
+    frame_pool = NULL;
     maxram = detect_maxram(mboot_addr);
-    maxframes = maxram / 0x1000;
 
-    frame_map = create_frame_map(mboot_addr);
+    create_frame_pool(mboot_addr);
     maxphyaddr = detect_maxphyaddr();
-
-    for (uint32_t i = 0; i < 0x400000 / 0x1000; i++) {
-        BITSET(frame_map, i);
-    }
 
     initialize_memory_mirror();
 }
@@ -453,13 +475,6 @@ static void allocate_frame(uint64_t* paddress, bool kernel, bool readonly) {
         page.flaggable.rw = readonly ? 0 : 1;
         page.flaggable.us = kernel ? 0 : 1;
         *paddress = page.address;
-
-        uint32_t idx = ALIGN(page.address) / 0x1000;
-        if (kernel){
-            BITCLEAR(frame_map_usage, idx);
-        } else {
-            BITSET(frame_map_usage, idx);
-        }
     }
 }
 
