@@ -109,12 +109,6 @@ void ve_exception(uint64_t ecode, registers_t* registers) {
     error(ERROR_KERNEL_VIRTUALIZATION_EXCEPTION, registers->rip, registers->cs, registers);
 }
 
-void ipi_exception(uint64_t ecode, registers_t* registers){
-	printf("in inter\n");
-	while (true) ;
-	error(ERROR_KERNEL_IPI_EXCEPTION, registers->rip, registers->cs, registers);
-}
-
 /**
  * Registers standard interrupt handlers.
  *
@@ -140,5 +134,4 @@ void register_standard_interrupt_handlers() {
     register_interrupt_handler(EXC_MC, mc_exception);
     register_interrupt_handler(EXC_XM, xm_exception);
     register_interrupt_handler(EXC_VE, ve_exception);
-    register_interrupt_handler(EXC_IPI, ipi_exception);
 }

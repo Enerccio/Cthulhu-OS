@@ -222,7 +222,7 @@ cpu_boot_entry:
     cli
     jmp 0x0:.realMode - cpu_boot_entry + PHYSADDR
 
-.realMode
+.realMode:
     mov esp, ecx
     mov ebp, esp
     lgdt [word Gdt32.Pointer - Gdt32 + 0x1000]  ; load GDT register with start address of Global Descriptor Table

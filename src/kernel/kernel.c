@@ -35,6 +35,7 @@
 #include "tasks/clock.h"
 #include "tasks/task.h"
 #include "structures/acpi.h"
+#include "structures/ipi.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -56,7 +57,6 @@ void print_loader_revision() {
 }
 
 extern volatile uint64_t clock_ms;
-#define WRITE_TO_IPI_PAYLOAD(payload) *((uint32_t*)physical_to_virtual(apicaddr + 0x300)) = payload
 
 void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
 	cpus = NULL;
@@ -89,15 +89,6 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
 
     initialize_cpus();
     vlog_msg("CPU queried and initialized. Number of logical cpus %u", array_get_size(cpus));
-
-    //send_ipi_to(get_local_apic_id(), 32, 0, false);
-    volatile uint32_t y = *((uint32_t*)physical_to_virtual(apicaddr + 0x030)); printf("0x%08X\n", y);
-    wait_until_ipi_is_free();
-    WRITE_TO_IPI_PAYLOAD(0x00084020);
-    volatile bool bbreak = true;
-	while (bbreak)
-		;
-    int x = 1/0;
 
     while (true) ;
 }

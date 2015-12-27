@@ -1,9 +1,22 @@
 [BITS 64]
 
+[GLOBAL wait_until_activated]
+; waits until rax changes to non zero
+;
+; extern void wait_until_activated()
+wait_until_activated:
+    mov rax, 0
+.test:
+    hlt
+    cmp rax, 0
+    je .test
+    ret
+
+
 [GLOBAL proc_spinlock_lock]
 ; Processor bound spinlock lock function
 ;
-; extern proc_spinlock_lock(void* address)
+; extern void proc_spinlock_lock(void* address)
 proc_spinlock_lock:
         mov     rax, 1
 lock    xchg    [rdi], rax
@@ -17,7 +30,7 @@ lock    xchg    [rdi], rax
 [GLOBAL proc_spinlock_unlock]
 ; Processor bound spinlock unlock function
 ;
-; extern proc_spinlock_unlock(void* address)
+; extern void proc_spinlock_unlock(void* address)
 proc_spinlock_unlock:
         mov qword [rdi], 0
         ret

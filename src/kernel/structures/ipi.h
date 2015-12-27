@@ -27,4 +27,10 @@
 
 #pragma once
 
-#define IPI_HALT_IMMEDIATELLY (32)
+#include "../commons.h"
+
+#define IPI_HALT_IMMEDIATELLY (0)
+#define IPI_WAKE_UP_FROM_WUA  (1)
+
+void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, uint64_t message);
+void initialize_ipi_subsystem();

@@ -33,9 +33,9 @@
 ;
 ; extern void kp_halt()
 kp_halt:
-    hlt
-    ret
 .loop:
+    cli
+    hlt
     jmp .loop
 
 [GLOBAL check_cpuid_apic]

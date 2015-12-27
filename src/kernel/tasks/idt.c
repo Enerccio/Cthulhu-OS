@@ -111,6 +111,7 @@ void initialize_interrupts() {
     idt_set_gate(30, (uint64_t) isr30);
     idt_set_gate(31, (uint64_t) isr31);
     idt_set_gate(128, (uint64_t) isr128);
+    idt_set_gate(255, (uint64_t) isr255);
 
     // INTERRUPTS FROM THE BOARD
     // remapping interrupts from irq
@@ -192,7 +193,7 @@ void isr_handler(registers_t* r) {
 			pic_sendeoi(PIC_EOI_MASTER);
 	} else if (r->type == 255){
 		// ipi interrupt
-		uint32_t* eoi = (uint32_t*)physical_to_virtual(apicaddr);
+		volatile uint32_t* eoi = (uint32_t*)physical_to_virtual(apicaddr+0xB0);
 		*eoi = 0;
 	}
 }

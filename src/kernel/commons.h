@@ -99,3 +99,9 @@ typedef void* aligned_ptr_t;
 #define RESERVED_KBLOCK_KHEAP_MAPPINGS   (508UL)
 
 #define ADDRESS_OFFSET(offset) (0xFFFF000000000000UL + (offset<<39))
+
+#define debug_break do { \
+		volatile bool _debug_var = true; \
+		while (_debug_var) \
+			; \
+	} while (0)

@@ -40,6 +40,10 @@ extern void kp_halt();
 #define BACKGROUND_COLOR 0
 #define FOREGROUND_COLOR fgc(&fg)
 
+static uint64_t lock;
+extern void proc_spinlock_lock(void* address);
+extern void proc_spinlock_unlock(void* address);
+
 /**
  * Initializes error subsystem.
  *
@@ -78,6 +82,8 @@ void init_errors() {
     error_codes[ERROR_KERNEL_VIRTUALIZATION_EXCEPTION] = "ERROR_KERNEL_VIRTUALIZATION_EXCEPTION";
     error_codes[ERROR_MINIMAL_MEMORY_FAILURE] = "ERROR_MINIMAL_MEMORY_FAILURE";
     error_codes[ERROR_KERNEL_IPI_EXCEPTION] = "ERROR_KERNEL_IPI_EXCEPTION";
+
+    lock = 0;
 }
 
 /**
@@ -93,10 +99,25 @@ uint8_t fgc(uint8_t* fgc) {
     return fg;
 }
 
+static volatile bool error_displaying = 0;
 /**
  * Shows rainbow screen of the death. Halts all processors.
+ *
+ * If two concurrent attempts to display error code, only displays first and then halt
  */
 void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress) {
+
+	proc_spinlock_lock(&lock);
+	if (error_displaying != 0){
+		proc_spinlock_unlock(&lock);
+		cpu_t* ccput = get_current_cput();
+		ccput->started = false;
+		kp_halt();
+	} else {
+		error_displaying = 1;
+	}
+	proc_spinlock_unlock(&lock);
+
     uint8_t fg = rand_number(15)+1;
 
     kd_cclear(BACKGROUND_COLOR);
@@ -107,23 +128,29 @@ void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress
     kd_cwrite(top_message_2, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
     kd_setxy(16, 5);
-    kd_cwrite("Error code:      ", BACKGROUND_COLOR, FOREGROUND_COLOR);
+    kd_cwrite("Error code:         ", BACKGROUND_COLOR, FOREGROUND_COLOR);
     kd_cwrite_hex64(ecode, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
     kd_setxy(16, 6);
     kd_cwrite(error_codes[ecode], BACKGROUND_COLOR, FOREGROUND_COLOR);
 
     kd_setxy(16, 7);
-    kd_cwrite("Specific code:   ", BACKGROUND_COLOR, FOREGROUND_COLOR);
+    kd_cwrite("Specific code:      ", BACKGROUND_COLOR, FOREGROUND_COLOR);
     kd_cwrite_hex64(speccode, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
     kd_setxy(16, 8);
-    kd_cwrite("Additional code: ", BACKGROUND_COLOR, FOREGROUND_COLOR);
+    kd_cwrite("Additional code:    ", BACKGROUND_COLOR, FOREGROUND_COLOR);
     kd_cwrite_hex64(speccode2, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
     kd_setxy(16, 10);
-    kd_cwrite("Address:         ", BACKGROUND_COLOR, FOREGROUND_COLOR);
+    kd_cwrite("Address:            ", BACKGROUND_COLOR, FOREGROUND_COLOR);
     kd_cwrite_hex64((uint64_t) eaddress, BACKGROUND_COLOR, FOREGROUND_COLOR);
+
+    if (cpus != NULL){
+		kd_setxy(16, 12);
+		kd_cwrite("Faulting processor: ", BACKGROUND_COLOR, FOREGROUND_COLOR);
+		kd_cwrite_hex64(get_local_processor_id(), BACKGROUND_COLOR, FOREGROUND_COLOR);
+    }
 
     kd_setxy(10, 19);
     kd_cwrite(bottom_message, BACKGROUND_COLOR, FOREGROUND_COLOR);
@@ -137,10 +164,10 @@ void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress
     	for (unsigned int i=0; i<array_get_size(cpus); i++){
     		cpu_t* cpu = array_get_at(cpus, i);
     		if (cpu->apic_id != self_apic){
-    			send_ipi_to(cpu->apic_id, IPI_HALT_IMMEDIATELLY, 0, false);
+    			send_ipi_message(cpu->apic_id, IPI_HALT_IMMEDIATELLY, ecode);
     		}
     	}
-    	send_ipi_to(self_apic, IPI_HALT_IMMEDIATELLY, 0, false);
+    	send_ipi_message(self_apic, IPI_HALT_IMMEDIATELLY, ecode);
     }
 
     while (true) ;

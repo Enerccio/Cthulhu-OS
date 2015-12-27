@@ -29,12 +29,14 @@
 #include "idt.h"
 #include "clock.h"
 #include "../ports/ports.h"
+#include "../structures/ipi.h"
 
 extern volatile uintmax_t clock_ms;
 extern volatile uintmax_t clock_s;
 extern void idt_flush(void* addr);
 extern idt_ptr_t idt_ptr;
 extern void* Gdt32;
+extern void wait_until_activated();
 
 #define AP_INIT_LOAD_ADDRESS (2)
 #define INIT_IPI_FLAGS (5<<8)
@@ -52,12 +54,12 @@ uint32_t apicaddr;
 #define APIC_ENABLE_IPI  (0)
 #define APIC_DISABLE_IPI (0x0F)
 
-#define APIC_DISABLE_IRQ_IPI(v) ((v) | (1<<8))
-#define APIC_ENABLE_IRQ_IPI(v) ((v) & ~(1<<8))
+#define APIC_ENABLE_IRQ_IPI(v) ((v) | (1<<8))
+#define APIC_DISABLE_IRQ_IPI(v) ((v) & ~(1<<8))
 
 void initialize_lapic(){
-	uint32_t* apic_logdest = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xD0);
-	uint32_t* apic_destform = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xE0);
+	volatile uint32_t* apic_logdest = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xD0);
+	volatile uint32_t* apic_destform = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xE0);
 
 	*apic_logdest = 1 << 24;
 	*apic_destform = APIC_DESTINATION_FORM_FLAT;
@@ -65,33 +67,48 @@ void initialize_lapic(){
 }
 
 void enable_ipi_interrupts(){
-	uint32_t* apic_spurvec = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xF0);
-	uint32_t* apic_taskprior = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0x80);
+	volatile uint32_t* apic_spurvec = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xF0);
+	volatile uint32_t* apic_taskprior = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0x80);
 	*apic_spurvec = APIC_ENABLE_IRQ_IPI(0xFF);
 	*apic_taskprior = APIC_ENABLE_IPI;
 }
 
 void disable_ipi_interrupts(){
-	uint32_t* apic_spurvec = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xF0);
-	uint32_t* apic_taskprior = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0x80);
+	volatile uint32_t* apic_spurvec = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0xF0);
+	volatile uint32_t* apic_taskprior = (uint32_t*)(uintptr_t)physical_to_virtual(apicaddr+0x80);
 	*apic_taskprior = APIC_DISABLE_IPI;
 	*apic_spurvec = APIC_DISABLE_IRQ_IPI(*apic_spurvec);
+}
+
+/**
+ * Search predicate for searching by apic.
+ */
+bool search_for_cpu_by_apic(void* e, void* d){
+	uint8_t cpu_apic_id = (uint8_t)(intptr_t)d;
+	cpu_t* cpu = (cpu_t*)e;
+	return cpu->apic_id == cpu_apic_id;
+}
+
+/**
+ * Returns pointer to current cpu's cput structure
+ */
+cpu_t* get_current_cput(){
+	cpu_t* cpu = (cpu_t*)array_find_by_pred(cpus, search_for_cpu_by_apic, (void*)(uintptr_t)get_local_apic_id());
+	return cpu;
 }
 
 /**
  * Returns local processor_id from MADT, bound local for every cpu
  */
 uint8_t get_local_processor_id(){
-	MADT_LOCAL_APIC* localapic = (MADT_LOCAL_APIC*)physical_to_virtual((uint64_t)apicaddr);
-	return localapic->processor_id;
+	return get_current_cput()->processor_id;
 }
 
 /**
  * Returns local apic_id from MADT, bound local for every cpu
  */
 uint8_t get_local_apic_id(){
-	MADT_LOCAL_APIC* localapic = (MADT_LOCAL_APIC*)physical_to_virtual((uint64_t)apicaddr);
-	return localapic->id;
+	return (*((uint32_t*)physical_to_virtual(apicaddr + 0x020))) >> 24;
 }
 
 /**
@@ -109,6 +126,8 @@ void ap_main(uint64_t proc_id){
 	idt_flush(&idt_ptr);
 	ENABLE_INTERRUPTS();
 	initialize_lapic();
+
+	wait_until_activated();
 
 	while (true) ;
 }
@@ -140,8 +159,6 @@ void send_ipi_to(uint8_t apic_id, uint8_t vector, uint32_t control_flags, bool i
 	if (!init_ipi)
 		payload |= 1<<14;
 	payload |= control_flags;
-	if (!init_ipi)
-		printf("APIC IPI: 0x%08X, 0x%08X\n", apic_id, payload);
 	WRITE_TO_IPI_ADDRESS(apic_id);
 	WRITE_TO_IPI_PAYLOAD(payload);
 }
@@ -213,6 +230,8 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
 	cpu->apic_id = apic->id;
 	cpu->started = false;
 	cpu->processes = create_array();
+	cpu->__cpu_lock = 0;
+	cpu->apic_message_handled = 0;
 	cpu->stack = (void*) (((uintptr_t)malloc(0x2000))+0x2000);
 	if (cpu->processes == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
@@ -229,6 +248,7 @@ cpu_t* make_cpu_default() {
 	cpu->processor_id = 0;
 	cpu->started = false;
 	cpu->processes = create_array();
+	cpu->__cpu_lock = 0;
 	cpu->stack = (void*) (((uintptr_t)malloc(0x2000))+0x2000);
 	if (cpu->processes == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
@@ -245,6 +265,8 @@ void initialize_cpus() {
 	memcpy((void*)physical_to_virtual(0x1000), (void*)physical_to_virtual((uint64_t)&Gdt32), 0x2000);
 	memset(cpuid_to_cputord, 0, sizeof(cpuid_to_cputord));
 
+	apicaddr = 0xFEE00000;
+
 	cpus = create_array_spec(256);
 	unsigned int cnt = 0;
 	unsigned int localcpu = 0;
@@ -255,7 +277,6 @@ void initialize_cpus() {
 		log_warn("No MADT present, only one CPU available.");
 		cpuid_to_cputord[0] = 0;
 		array_push_data(cpus, make_cpu_default());
-		apicaddr = 0;
 	} else {
 		MADT_LOCAL_APIC* localapic = (MADT_LOCAL_APIC*)physical_to_virtual((uint64_t)madt->address);
 		apicaddr = madt->address;
@@ -280,10 +301,11 @@ void initialize_cpus() {
 		}
 	}
 
+	initialize_ipi_subsystem();
 	if (array_get_size(cpus) > 1){
 		initialize_mp(localcpu);
-		initialize_lapic();
 	}
+	initialize_lapic();
 }
 
 /**

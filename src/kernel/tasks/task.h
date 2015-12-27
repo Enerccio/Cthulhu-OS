@@ -83,6 +83,12 @@ typedef struct cpu {
 	void*	 stack;
 	uint64_t processor_id;
 	uint8_t  apic_id;
+
+	volatile uint64_t __cpu_lock;
+	volatile uint64_t apic_message;
+	volatile bool apic_message_handled;
+	volatile uint8_t apic_message_type;
+
 	volatile bool started;
 	array_t* processes;
 } cpu_t;
@@ -107,6 +113,16 @@ void initialize_kernel_task();
  * control flags and init_ipi decides flags to be sent with.
  */
 void send_ipi_to(uint8_t apic_id, uint8_t vector, uint32_t control_flags, bool init_ipi);
+
+/**
+ * Returns pointer to current cpu's cput structure
+ */
+cpu_t* get_current_cput();
+
+/**
+ * Search cpu array by apic predicate
+ */
+bool search_for_cpu_by_apic(void* e, void* d);
 
 /**
  * Returns local processor_id from MADT, bound local for every cpu
