@@ -19,7 +19,7 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * cpu.h
+ * cpu_mgmt.h
  *  Created on: Dec 23, 2015
  *      Author: Peter Vanusanik
  *  Contents: cpu management
@@ -46,6 +46,8 @@ typedef struct cpu {
 	volatile uint64_t apic_message;
 	volatile bool apic_message_handled;
 	volatile uint8_t apic_message_type;
+
+	volatile uint64_t __cpu_sched_lock;
 
 	volatile bool started;
 	array_t* processes;

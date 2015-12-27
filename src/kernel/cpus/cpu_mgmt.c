@@ -19,7 +19,7 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * cpu.c
+ * cpu_mgmt.c
  *  Created on: Dec 23, 2015
  *      Author: Peter Vanusanik
  *  Contents: cpu management
@@ -230,11 +230,20 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
 	cpu_t* cpu = malloc(sizeof(cpu_t));
 	if (cpu == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
-	cpu->processor_id = apic->processor_id;
-	cpu->apic_id = apic->id;
-	cpu->started = false;
+
+	if (apic == NULL){
+		cpu->processor_id = 0;
+		cpu->apic_id = 0;
+		cpu->started = true;
+	} else {
+		cpu->processor_id = apic->processor_id;
+		cpu->apic_id = apic->id;
+		cpu->started = false;
+	}
+
 	cpu->processes = create_array();
 	cpu->__cpu_lock = 0;
+	cpu->__cpu_sched_lock = 0;
 	cpu->apic_message_handled = 0;
 	cpu->stack = (void*) PAGE_ALIGN(((uintptr_t)malloc(KERNEL_STACK_SIZE))+KERNEL_STACK_SIZE);
 	if (cpu->processes == NULL)
@@ -246,17 +255,7 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
  * Creates cpu_t for default cpu, if MADT is unavailable.
  */
 cpu_t* make_cpu_default() {
-	cpu_t* cpu = malloc(sizeof(cpu_t));
-	if (cpu == NULL)
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
-	cpu->processor_id = 0;
-	cpu->started = false;
-	cpu->processes = create_array();
-	cpu->__cpu_lock = 0;
-	cpu->stack = (void*) PAGE_ALIGN(((uintptr_t)malloc(KERNEL_STACK_SIZE))+KERNEL_STACK_SIZE);
-	if (cpu->processes == NULL)
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
-	return cpu;
+	return make_cpu(NULL);
 }
 
 /**
