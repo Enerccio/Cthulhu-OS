@@ -30,17 +30,17 @@
 #include "utils/collections/array.h"
 #include "memory/heap.h"
 #include "memory/paging.h"
-#include "tasks/idt.h"
-#include "tasks/interrupts.h"
-#include "tasks/clock.h"
-#include "tasks/task.h"
 #include "structures/acpi.h"
-#include "structures/ipi.h"
 #include "syscalls/sys.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/kernel.h>
+
+#include "cpus/cpu_mgmt.h"
+#include "cpus/ipi.h"
+#include "interrupts/clock.h"
+#include "interrupts/idt.h"
+#include "interrupts/interrupts.h"
 
 /**
  * Prints kernel version.

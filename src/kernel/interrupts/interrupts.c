@@ -19,16 +19,16 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *
- * interrupt.c
+ * interrupts.c
  *  Created on: Dec 23, 2015
  *      Author: Peter Vanusanik
  *  Contents: Interrupt handler definitions
  */
 
-#include "interrupts.h"
 #include "../utils/rsod.h"
 
 #include <stdio.h>
+#include "../interrupts/interrupts.h"
 
 extern void* get_faulting_address();
 

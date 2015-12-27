@@ -26,9 +26,10 @@
  */
 
 #include "ipi.h"
-#include "../tasks/idt.h"
-#include "../tasks/interrupts.h"
-#include "../tasks/task.h"
+
+#include "../interrupts/idt.h"
+#include "../interrupts/interrupts.h"
+#include "cpu_mgmt.h"
 
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);

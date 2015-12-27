@@ -25,11 +25,12 @@
  *  Contents: 
  */
 
-#include "idt.h"
-#include "../utils/rsod.h"
-#include "task.h"
+#include "../interrupts/idt.h"
 
+#include "../utils/rsod.h"
 #include <string.h>
+
+#include "../cpus/cpu_mgmt.h"
 
 /** IDT gates stored in this table */
 idt_gate_t idt_entries[256];

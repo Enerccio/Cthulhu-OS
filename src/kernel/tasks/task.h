@@ -20,21 +20,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * task.h
- *  Created on: Dec 23, 2015
+ *  Created on: Dec 27, 2015
  *      Author: Peter Vanusanik
- *  Contents: task management
+ *  Contents: 
  */
 
 #pragma once
 
 #include "../commons.h"
-#include "../utils/random.h"
-#include "../memory/paging.h"
 #include "../utils/collections/array.h"
-#include "../structures/acpi.h"
-
-#include <stdlib.h>
-#include <string.h>
 
 typedef struct file_descriptor {
 	uint32_t fd_pid;
@@ -78,61 +72,3 @@ struct thread {
 	uint64_t stack_top_address;
 	uint64_t stack_bottom_address;
 };
-
-typedef struct cpu {
-	void*	 stack;
-	uint64_t processor_id;
-	uint8_t  apic_id;
-
-	volatile uint64_t __cpu_lock;
-	volatile uint64_t apic_message;
-	volatile bool apic_message_handled;
-	volatile uint8_t apic_message_type;
-
-	volatile bool started;
-	array_t* processes;
-} cpu_t;
-
-extern array_t* cpus;
-extern uint32_t apicaddr;
-
-/**
- * Initializes cpu information. Initializes SMP if available.
- */
-void initialize_cpus();
-
-/**
- * Initializes kernel task as a task.
- */
-void initialize_kernel_task();
-
-/**
- * Sends interprocessor interrupt to a processor.
- *
- * Processor is identified by apic_id, vector is data sent,
- * control flags and init_ipi decides flags to be sent with.
- */
-void send_ipi_to(uint8_t apic_id, uint8_t vector, uint32_t control_flags, bool init_ipi);
-
-/**
- * Returns pointer to current cpu's cput structure
- */
-cpu_t* get_current_cput();
-
-/**
- * Search cpu array by apic predicate
- */
-bool search_for_cpu_by_apic(void* e, void* d);
-
-/**
- * Returns local processor_id from MADT, bound local for every cpu
- */
-uint8_t get_local_processor_id();
-
-/**
- * Returns local apic_id from MADT, bound local for every cpu
- */
-uint8_t get_local_apic_id();
-
-void enable_ipi_interrupts();
-void disable_ipi_interrupts();

@@ -25,7 +25,7 @@
  *  Contents: ticker implementation
  */
 
-#include "clock.h"
+#include "../interrupts/clock.h"
 
 #define CURRENT_YEAR        2015                            // Change this each year!
 int century_register = 0x00;                                // Set by ACPI table parsing code if possible

@@ -26,7 +26,7 @@
  */
 
 #pragma once
-#include "idt.h"
+#include "../interrupts/idt.h"
 
 #define EXC_DE  0
 #define EXC_DB  1

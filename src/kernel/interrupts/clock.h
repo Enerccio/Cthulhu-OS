@@ -27,9 +27,9 @@
 
 #pragma once
 
-#include "interrupts.h"
-#include "idt.h"
 #include "../commons.h"
+#include "../interrupts/idt.h"
+#include "../interrupts/interrupts.h"
 
 /**
  * Initializes clock subsystem.

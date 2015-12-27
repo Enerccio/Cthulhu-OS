@@ -25,9 +25,10 @@
  *  Contents: nonrecoverable error presentation screen
  */
 #include "rsod.h"
+
+#include "../cpus/cpu_mgmt.h"
+#include "../cpus/ipi.h"
 #include "../utils/kstdlib.h"
-#include "../tasks/task.h"
-#include "../structures/ipi.h"
 
 const char* top_message = "We are sorry but kernel has suffered an error";
 const char* top_message_2 = "from which it was unable to recover->";
