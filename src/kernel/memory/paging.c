@@ -326,54 +326,63 @@ static void create_frame_pool(struct multiboot* mboot_addr) {
 			uint64_t base_addr = data.address;
 			uint64_t length = data.size;
 
-			if (data.type != 1)
+			if (data.type != 1) // not a ram
 				continue;
 
-			if (base_addr+length < 0x400000)
+			if (base_addr+length < 0x400000) // ram is below autoallocated amount
 				continue;
 
-			if (base_addr < 0x400000){
+			if (base_addr < 0x400000){ // ram starts below 0x400000 but grows past it
 				length = length - (0x400000-base_addr);
 				base_addr = 0x400000;
 			}
 
-			if (length < 0x10000)
+			if (length < 0x10000) // ram is effectively too small to use
 				continue;
 
-			uint64_t uframes = (length-sizeof(section_info_t))/(0x1000-(sizeof(stack_element_t)+sizeof(frame_info_t)))-1;
+			// total amount of frames available if we count in metadata
+			uint64_t uframes = (length-sizeof(section_info_t))/(0x1000+(sizeof(stack_element_t)+sizeof(frame_info_t)))-1;
+			// total size of metadata header
 			uint64_t total_size = sizeof(section_info_t) + (uframes * sizeof(stack_element_t)) + (uframes * sizeof(frame_info_t));
-
+			// address of first effective frame
 			uint64_t after_address = (base_addr + total_size + 0x1000) & ~0xFFF;
 
+			// allocate base_addr and size of metadata header in virt. memory
 			allocate(base_addr, total_size, true, false);
+
+			// section starts at base address
 			section_info_t* section = (section_info_t*)base_addr;
-			if (lastfp != NULL){
+			if (lastfp != NULL){ // link previous section and this one
 				lastfp->next_section = section;
-			} else if (firstfp == NULL){
+			} else if (firstfp == NULL){ // first section will be this one
 				firstfp = section;
 			}
 
+			// fill up section with information
 			section->start_word = after_address;
 			section->end_word = base_addr + length;
 			section->total_frames = uframes;
 			section->next_section = NULL;
-			section->frame_array = (frame_info_t*) (base_addr + sizeof(section_info_t));
+			section->frame_array = (frame_info_t*) (base_addr + sizeof(section_info_t)); // starts at end of this structure
 			uint64_t stack_el_addr = (base_addr + sizeof(section_info_t) +
-					(sizeof(frame_info_t) * uframes));
-			section->head = (stack_element_t*) stack_el_addr;
+					(sizeof(frame_info_t) * uframes)); // first stack element describing the memory
+			section->head = (stack_element_t*) stack_el_addr; // set it as head
 
 			stack_element_t* prev_se = NULL;
-			for (register uint64_t i=0; i<uframes; i++){
-				//kd_write_hex64(i); kd_write("\n");
+			for (uint64_t i=0; i<uframes; i++){
+				// Fill up information for stack element.
+				// Stack element contains frame address of free frame in this memory section
 				stack_element_t* se = (stack_element_t*)stack_el_addr;
 				stack_el_addr += sizeof(stack_element_t);
 				se->frame_address = after_address + (i*0x1000);
+				// link stack elements together
 				if (prev_se != NULL)
 					prev_se->next = se;
 				se->next = NULL;
 				se->array_ord = i;
 				prev_se = se;
 
+				// fill up frame info with this stack element and number of times it has been used (0)
 				frame_info_t* fi = &section->frame_array[i];
 				fi->usage_count = 0;
 				fi->bound_stack_element = se;
@@ -384,8 +393,8 @@ static void create_frame_pool(struct multiboot* mboot_addr) {
 
 	}
 
+	// we have our pool, so we set it and thus disable temp. heap allocation for page structures
 	frame_pool = firstfp;
-
 }
 
 /**
