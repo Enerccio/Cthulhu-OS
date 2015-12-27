@@ -219,6 +219,9 @@ void initialize_mp(unsigned int localcpu){
 	}
 }
 
+#define KERNEL_STACK_SIZE (0x3000)
+#define PAGE_ALIGN(x) (x & (~(0xFFF)))
+
 /**
  * Creates cpu_t structure from APIC MADT information.
  */
@@ -232,7 +235,7 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
 	cpu->processes = create_array();
 	cpu->__cpu_lock = 0;
 	cpu->apic_message_handled = 0;
-	cpu->stack = (void*) (((uintptr_t)malloc(0x2000))+0x2000);
+	cpu->stack = (void*) PAGE_ALIGN(((uintptr_t)malloc(KERNEL_STACK_SIZE))+KERNEL_STACK_SIZE);
 	if (cpu->processes == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
 	return cpu;
@@ -249,7 +252,7 @@ cpu_t* make_cpu_default() {
 	cpu->started = false;
 	cpu->processes = create_array();
 	cpu->__cpu_lock = 0;
-	cpu->stack = (void*) (((uintptr_t)malloc(0x2000))+0x2000);
+	cpu->stack = (void*) PAGE_ALIGN(((uintptr_t)malloc(KERNEL_STACK_SIZE))+KERNEL_STACK_SIZE);
 	if (cpu->processes == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
 	return cpu;

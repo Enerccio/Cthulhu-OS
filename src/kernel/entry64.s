@@ -64,7 +64,6 @@ APRealm64:
     add rax, [rbx] ; rax contains pointer to cpu
     mov rsi, [rax] ; rsi contains pointer to stack
     mov rsp, [rsi]
-    sub rsp, 16
     xor rbp, rbp
     extern ap_main
     call ap_main
