@@ -46,10 +46,17 @@
 			<resource resourceType="PROJECT" workspacePath="/pikokernel64"/>
 		</configuration>
 		<configuration configurationName="debug">
+			<resource resourceType="FOLDER" workspacePath="/pikokernel64/osroot/usr/lib"/>
 			<resource resourceType="FOLDER" workspacePath="/pikokernel64/src/kclib/usr/include"/>
 			<resource resourceType="FOLDER" workspacePath="/pikokernel64/src/kclib/usr"/>
 			<resource resourceType="FOLDER" workspacePath="/pikokernel64/toolchain/usr/lib"/>
+			<resource resourceType="FOLDER" workspacePath="/pikokernel64/osroot/usr/include/sys"/>
+			<resource resourceType="FOLDER" workspacePath="/pikokernel64/osroot/usr/include"/>
+			<resource resourceType="FOLDER" workspacePath="/pikokernel64/osroot"/>
 			<resource resourceType="FOLDER" workspacePath="/pikokernel64/src/kclib"/>
+			<resource resourceType="FOLDER" workspacePath="/pikokernel64/osroot/usr/include/elrond"/>
+			<resource resourceType="FOLDER" workspacePath="/pikokernel64/osroot/usr"/>
+			<resource resourceType="FOLDER" workspacePath="/pikokernel64/osroot/usr/include/machine"/>
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
