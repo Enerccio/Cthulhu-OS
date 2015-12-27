@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <title>Pikokernel by Enerccio</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Pikokernel</h1>
+        <h2>x86-64 SMP enabled microkernel hobbyist OS</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/Enerccio/PIKOKernel/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/Enerccio/PIKOKernel/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/Enerccio/PIKOKernel" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>
+<a id="pikokernel-os" class="anchor" href="#pikokernel-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>PIKOKernel OS</h1>
+
+<h2>
+<a id="information" class="anchor" href="#information" aria-hidden="true"><span class="octicon octicon-link"></span></a>Information</h2>
+
+<h3>
+<a id="what-is-pikokernel-os" class="anchor" href="#what-is-pikokernel-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is PIKOKernel OS?</h3>
+
+<p>PIKOKernel is minimalistic hobbyist OS. It uses it's own libc (KCLib). Its long term goal is
+to support user space applications.</p>
+
+<h3>
+<a id="what-type-of-kernel-does-pikokernel-os-use" class="anchor" href="#what-type-of-kernel-does-pikokernel-os-use" aria-hidden="true"><span class="octicon octicon-link"></span></a>What type of kernel does PIKOKernel OS use?</h3>
+
+<p>PIKOKernel OS uses PIKOKernel as its main kernel, which will be microkernel.</p>
+
+<h3>
+<a id="what-is-the-point-of-pikokernel" class="anchor" href="#what-is-the-point-of-pikokernel" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is the point of PIKOKernel?</h3>
+
+<p>The point is to have fun making a complete OS and then use it as replacement to current OSes. </p>
+
+<h3>
+<a id="what-are-pikokernels-requirements" class="anchor" href="#what-are-pikokernels-requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>What are PIKOKernel's requirements</h3>
+
+<p>At the moment, PIKOKernel only supports x86-64 architecture. Should work on both intel and amd,
+however, it was only tested on intel. So far it was only tested on qemu/bochs, I do not recommend
+putting it on real hardware yet (not that it can do anything at the moment).</p>
+
+<h3>
+<a id="what-is-the-status-of-pikokernel" class="anchor" href="#what-is-the-status-of-pikokernel" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is the status of PIKOKernel?</h3>
+
+<p>PIKOKernel is under heavy development. So far it has working long mode, paging memory, interrupt handling, symmetrical multiprocessing, interprocessor communication. What needs to be done (and probably more):</p>
+
+<ul>
+<li>Loading initrd</li>
+<li>Loading init and daemons</li>
+<li>Userspace mode</li>
+<li>Scheduling, Scheduling with SMP support</li>
+<li>Lots and lots of daemons</li>
+<li>Porting user space programs</li>
+</ul>
+
+<h2>
+<a id="building-pikokernel-os" class="anchor" href="#building-pikokernel-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building PIKOKernel OS</h2>
+
+<p>Compiling PIKOKernel requires Unix-like environment (was not tested on windows, but will probably require
+cygwin).</p>
+
+<h3>
+<a id="pikokernel-cross-compiler" class="anchor" href="#pikokernel-cross-compiler" aria-hidden="true"><span class="octicon octicon-link"></span></a>PIKOKernel cross compiler</h3>
+
+<p>PIKOKernel requires it's own toolchain (x86-64-piko-*). To compile one, these components are required to be 
+present at these locations</p>
+
+<ul>
+<li>binutils version 2.24 in folder <code>build-toolchain/sources/binutils/binutils-2.24</code>
+</li>
+<li>gcc version 5.1.0 in folder <code>build-toolchain/sources/gcc/gcc-5.1.0</code>
+</li>
+<li>latest version of kclib, will be automatically downloaded from github</li>
+</ul>
+
+<p>To build/rebuild toolchain, execute shell script <code>build-toolchain/create-toolchain.sh</code> 
+in <code>build-toolchain</code> directory. After the compilation is done, you should have working C environment 
+in <code>toolchain</code> directory and user-space clib in <code>osroot</code> directory. </p>
+
+<h3>
+<a id="compiling-kernel" class="anchor" href="#compiling-kernel" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compiling kernel</h3>
+
+<p>Simply invoke <code>make kernel</code> in projects root directory. You need to have path to <code>toolchain/usr/bin</code> in
+your path for compiler to find <code>x86_64-piko-gcc</code> and <code>x86_64-piko-as</code>. Your environment has to provide
+<code>nasm</code> assembler (<a href="http://www.nasm.us">http://www.nasm.us</a>) and working shell. </p>
+
+<p>After compilation is done, you should have <code>piko-kernel.img</code> in <code>build</code> directory.</p>
+
+<h3>
+<a id="compiling-libpikodev" class="anchor" href="#compiling-libpikodev" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compiling libpikodev</h3>
+
+<p><code>libpikodev</code> is library used by daemons and other system components. You can create it by invoking 
+<code>make pikodev</code>. </p>
+
+<p>After compilation is done, you should have <code>libpikodev.a</code> and <code>libpikodev.h</code> in <code>build/libpikodev</code> directory.</p>
+
+<h2>
+<a id="running-pikokernel-os" class="anchor" href="#running-pikokernel-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running PIKOKernel OS</h2>
+
+<h3>
+<a id="run-environment" class="anchor" href="#run-environment" aria-hidden="true"><span class="octicon octicon-link"></span></a>Run environment</h3>
+
+<p>PIKOKernel OS can be run on <code>qemu</code> (recommended version 2.5.0, as it was tested on it), <code>bochs</code> or real 
+hardware (not recommended). </p>
+
+<p>PIKOKernel OS kernel requires <code>initrd</code> in its own file format. You can use provided python script <code>mkfs.py</code> to create <code>initrd</code>. This script is located in <code>disk</code> directory. <code>mkfs.py</code> requires <code>python 2.7</code>. To use <code>mkfs.py</code> you have to provide input directory and output file. Input directory's content will be packed 
+into <code>initrd</code> output file, which should have name <code>piko-initramfs</code>.  </p>
+
+<p>PIKOKernel OS requires <code>GRUB 2</code> as its bootloader (since it is mixed 16-32-64bit elf) with <code>multiboot support</code>.
+If you do not have <code>GRUB 2</code> to create new image, you may create 64MB empty disk file and then use <code>bspatch</code> to 
+patch that empty disk file with <code>disk.img.patch</code>. Then you have to mount that image with offset <code>1048576</code>. 
+For more information check <code>disk/update_image.sh</code>.</p>
+
+<h3>
+<a id="initrd-contents" class="anchor" href="#initrd-contents" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>initrd</code> contents</h3>
+
+<p><code>initrd</code> input directory must contain <code>init</code> directory containing <code>init</code> init file and directory 
+<code>init/daemons</code> containing daemons to be loaded initially.  </p>
+
+<h3>
+<a id="running-pikokernel-os-on-qemu" class="anchor" href="#running-pikokernel-os-on-qemu" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running PIKOKernel OS on QEMU</h3>
+
+<p>Simply invoke <code>qemu-system-x86_64 -hdc &lt;yourdiskimagefile&gt; -m 128 -s -smp cores=&lt;numbercores&gt;,threads=&lt;numberthreads&gt;,sockets=&lt;numsockets&gt; -cpu Haswell,+pdpe1gb</code></p>
+
+<p>For more information check <code>debug.sh</code>.</p>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
