@@ -111,6 +111,7 @@ void initialize_interrupts() {
     idt_set_gate(30, (uint64_t) isr30);
     idt_set_gate(31, (uint64_t) isr31);
     idt_set_gate(128, (uint64_t) isr128);
+    idt_set_gate(128, (uint64_t) isr129);
     idt_set_gate(255, (uint64_t) isr255);
 
     // INTERRUPTS FROM THE BOARD

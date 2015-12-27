@@ -36,6 +36,7 @@
 #include "tasks/task.h"
 #include "structures/acpi.h"
 #include "structures/ipi.h"
+#include "syscalls/sys.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -90,5 +91,6 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
     initialize_cpus();
     vlog_msg("CPU queried and initialized. Number of logical cpus %u", array_get_size(cpus));
 
-    while (true) ;
+    initialize_system_calls();
+    log_msg("System calls initialized");
 }
