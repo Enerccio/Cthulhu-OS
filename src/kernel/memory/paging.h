@@ -220,3 +220,5 @@ void deallocate(uint64_t from, size_t amount);
  * Returns whether specific virtual address is allocated or not.
  */
 bool allocated(uint64_t addr);
+
+void deallocate_start_memory();

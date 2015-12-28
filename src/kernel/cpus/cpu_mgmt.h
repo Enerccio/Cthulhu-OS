@@ -39,11 +39,19 @@
 
 typedef struct cpu {
 	void*	 stack;
+	void*    handler_stack;
+	void*    pf_stack;
+	void*    df_stack;
+	void*    ipi_stack;
+
+	size_t   insert_id;
 	uint64_t processor_id;
 	uint8_t  apic_id;
 
 	volatile uint64_t __cpu_lock;
+	volatile uint64_t __message_clear_lock;
 	volatile uint64_t apic_message;
+	volatile uint64_t apic_message2;
 	volatile bool apic_message_handled;
 	volatile uint8_t apic_message_type;
 
@@ -60,6 +68,8 @@ extern uint32_t apicaddr;
  * Initializes cpu information. Initializes SMP if available.
  */
 void initialize_cpus();
+
+void initialize_mp(unsigned int localcpu);
 
 /**
  * Sends interprocessor interrupt to a processor.

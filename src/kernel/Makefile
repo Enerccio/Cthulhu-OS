@@ -25,7 +25,7 @@ AS := nasm
 all: piko-kernel.img
 
 clean: kclib-clean memory-clean utils-clean ports-clean tasks-clean structures-clean \
-		cpus-clean utils-collections-clean
+		cpus-clean utils-collections-clean interrupts-clean syscalls-clean
 	-rm -f $(OBJ)
 	-rm -f $(wildcard *.d)
 	-rm ${TARGETPATH}piko-kernel.img

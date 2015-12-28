@@ -26,6 +26,7 @@
  */
 #include "paging.h"
 #include "heap.h"
+#include "../cpus/ipi.h"
 
 /** aligns the address to 0x1000 */
 #define ALIGN(addr) (((uint64_t)addr) & 0xFFFFFFFFFFFFF000)
@@ -42,8 +43,9 @@ section_info_t* frame_pool;
 extern uint64_t detect_maxphyaddr();
 extern uint64_t get_active_page();
 extern void set_active_page(uint64_t address);
-extern void invalidate_address(uint64_t address);
 extern uint64_t is_1GB_paging_supported();
+extern uint16_t* video_memory;
+extern void*     ebda;
 
 /**
  * Virtual address structure for standard paging.
@@ -199,9 +201,7 @@ static void free_frame(uint64_t frame_address) {
 		}
 	}
 
-	// Should never happen
-	// TODO add error
-	kp_halt();
+	// unmapped address not in a pool, most likely <4MB.
 }
 
 /**
@@ -224,7 +224,7 @@ static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
         pdpt.number = get_free_frame();
         pdpt.flaggable.present = 1;
         MMU_PML4(vaddress)[MMU_PML4_INDEX(vaddress)] = pdpt.number;
-        memset(MMU_PDPT(vaddress), 0, sizeof(uint64_t));
+        memset(MMU_PDPT(vaddress), 0, sizeof(uint64_t)*512);
     }
 
     uint64_t* pdir_addr = (uint64_t*) MMU_PDPT(vaddress)[MMU_PDPT_INDEX(
@@ -238,7 +238,7 @@ static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
         dir.number = get_free_frame();
         dir.flaggable.present = 1;
         MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)] = dir.number;
-        memset(MMU_PD(vaddress), 0, sizeof(uint64_t));
+        memset(MMU_PD(vaddress), 0, sizeof(uint64_t)*512);
     }
 
     uint64_t* pt_addr = (uint64_t*) MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)];
@@ -255,6 +255,61 @@ static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
     }
 
     return &MMU_PT(vaddress)[MMU_PT_INDEX(vaddress)];
+}
+
+void free_page_structure(uint64_t vaddress) {
+	uint64_t* pdpt_addr = (uint64_t*) MMU_PML4(vaddress)[MMU_PML4_INDEX(
+	            vaddress)];
+
+	if (!PRESENT(pdpt_addr))
+		return;
+
+	uint64_t* pdir_addr = (uint64_t*) MMU_PDPT(vaddress)[MMU_PDPT_INDEX(
+	            vaddress)];
+
+	if (!PRESENT(pdir_addr))
+		return;
+
+	uint64_t* pt_addr = (uint64_t*) MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)];
+
+	if (!PRESENT(pt_addr))
+		return;
+
+	MMU_PT(vaddress)[MMU_PT_INDEX(vaddress)] = 0; // free table entry
+
+	// check for other table entries
+	uint64_t* pt_virt = (uint64_t*)physical_to_virtual(ALIGN((uint64_t)pt_addr));
+	for (size_t i=0; i<512; i++) {
+		if (pt_virt[i] != 0)
+			return;
+	}
+
+	free_frame(ALIGN(MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)]));
+	MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)] = 0; // free pt address
+
+	// check for other pdir adresses
+	uint64_t* pdir_virt = (uint64_t*)physical_to_virtual(ALIGN((uint64_t)pdir_addr));
+	for (size_t i=0; i<512; i++) {
+		if (pdir_virt[i] != 0)
+			return;
+	}
+
+	free_frame(ALIGN(MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)]));
+	MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)] = 0; // free pdir address
+
+	uint64_t* pdpt_virt = (uint64_t*)physical_to_virtual(ALIGN((uint64_t)pdpt_addr));
+	for (size_t i=0; i<512; i++) {
+		if (pdpt_virt[i] != 0)
+			return;
+	}
+
+	free_frame(ALIGN(MMU_PML4(vaddress)[MMU_PML4_INDEX(vaddress)]));
+	MMU_PML4(vaddress)[MMU_PML4_INDEX(vaddress)] = 0; // free pdpt address
+}
+
+void deallocate_start_memory(){
+	MMU_PML4(0)[MMU_PML4_INDEX(0)] = 0;
+	broadcast_ipi_message(IPI_INVALIDATE_PAGE, 0, 0x400000);
 }
 
 /**
@@ -445,19 +500,21 @@ void initialize_memory_mirror() {
     }
 }
 
+bool __mem_mirror_present;
+
 /**
  * Initializes correct paging.
  *
  * Performs it by these steps:
  *
  *  1. detects max ram via detect_maxram
- *  2. denotes max frames from that
- *  3. creates frame_map via create_frame_map
- *  4. detects max physical address bits
- *  5. marks first 4MBytes of physical address as used
- *  6. initializes memory mirror
+ *  2. creates frame pool stack and array structure for all available ram
+ *  3. detects maxphyaddr
+ *  4. initializes memory mirror
+ *  5- deallocates old memory (frames are not returned).
  */
 void initialize_paging(struct multiboot* mboot_addr) {
+	__mem_mirror_present = false;
     frame_pool = NULL;
     maxram = detect_maxram(mboot_addr);
 
@@ -465,6 +522,10 @@ void initialize_paging(struct multiboot* mboot_addr) {
     maxphyaddr = detect_maxphyaddr();
 
     initialize_memory_mirror();
+    __mem_mirror_present = true;
+
+    // remap direct memory pointers
+    video_memory = physical_to_virtual(video_memory);
 }
 
 /**
@@ -484,6 +545,8 @@ static void allocate_frame(uint64_t* paddress, bool kernel, bool readonly) {
         page.flaggable.rw = readonly ? 0 : 1;
         page.flaggable.us = kernel ? 0 : 1;
         *paddress = page.address;
+        if (__mem_mirror_present)
+        	memset((void*)physical_to_virtual(ALIGN(page.address)), 0xCC, 0x1000);
     }
 }
 
@@ -492,16 +555,16 @@ static void allocate_frame(uint64_t* paddress, bool kernel, bool readonly) {
  *
  * If paddress is NULL or is already free, does nothing.
  */
-static void deallocate_frame(uint64_t* paddress) {
+static void deallocate_frame(uint64_t* paddress, uint64_t va) {
     if (paddress == 0)
         return; // no upper memory structures, we are done
     if (!PRESENT(*paddress))
         return; // already cleared
     page_t page;
     page.address = *paddress;
-    memset(paddress, 0, sizeof(uint64_t));
     uint64_t address = ALIGN(page.address);
     free_frame(address);
+    free_page_structure(va);
 }
 
 /**
@@ -534,8 +597,7 @@ void deallocate(uint64_t from, size_t amount) {
 
     if (aligned < end_addr) {
         for (uint64_t addr = aligned; addr < end_addr; addr += 0x1000) {
-            memset((void*)addr, 0, 0x1000);
-            deallocate_frame(get_page(addr, false));
+            deallocate_frame(get_page(addr, false), addr);
             invalidate_address(addr);
         }
     }

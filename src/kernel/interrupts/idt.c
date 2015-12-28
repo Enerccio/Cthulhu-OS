@@ -33,11 +33,11 @@
 #include "../cpus/cpu_mgmt.h"
 
 /** IDT gates stored in this table */
-idt_gate_t idt_entries[256];
+idt_gate_t idt_entries[256] __attribute__((aligned(16)));
 /** ISR function vectors stored in this table */
-isr_t interrupt_handlers[256];
+isr_t interrupt_handlers[256] __attribute__((aligned(16)));
 /** IDT PTR stored here */
-idt_ptr_t idt_ptr;
+idt_ptr_t idt_ptr __attribute__((aligned(16)));
 
 extern void idt_flush(idt_ptr_t* ptr);
 
@@ -54,8 +54,16 @@ void idt_set_gate(uint8_t gn, uint64_t funcall) {
     gate->offset3263 = (funcall>>32) & 0xFFFFFFFF;
     gate->selector = 8; // CODE descriptor, see GDT64.Code
     gate->flags.p = 1;
+    gate->flags.ist = 1;
     gate->flags.type = 14 & 0b1111;
     gate->flags.dpl = 0;
+
+    if (gn == 14) // page fault
+    	gate->flags.ist = 1;
+    if (gn == 8) // double fault
+        gate->flags.ist = 2;
+    if (gn == 255) // ipi fault
+    	gate->flags.ist = 3;
 }
 
 /**

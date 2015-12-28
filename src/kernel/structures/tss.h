@@ -19,20 +19,30 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * ipi.h
- *  Created on: Dec 26, 2015
+ * tss.h
+ *  Created on: Dec 28, 2015
  *      Author: Peter Vanusanik
- *  Contents: ipi messages
+ *  Contents: 
  */
 
 #pragma once
 
 #include "../commons.h"
 
-#define IPI_HALT_IMMEDIATELLY (0)
-#define IPI_WAKE_UP_FROM_WUA  (1)
-#define IPI_INVALIDATE_PAGE   (2)
-
-void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, uint64_t message, uint64_t message2);
-void broadcast_ipi_message(uint8_t message_type, uint64_t message, uint64_t message2);
-void initialize_ipi_subsystem();
+typedef struct __attribute__((packed)) tss {
+	uint32_t reserved;
+	uint64_t rsp0;
+	uint64_t rsp1;
+	uint64_t rsp2;
+	uint64_t r0;
+	uint64_t ist1;
+	uint64_t ist2;
+	uint64_t ist3;
+	uint64_t ist4;
+	uint64_t ist5;
+	uint64_t ist6;
+	uint64_t ist7;
+	uint64_t r1;
+	uint16_t r2;
+	uint16_t io_map_base_address;
+} tss_t;

@@ -33,12 +33,12 @@ struct idt_gate {
     uint16_t offset015;
     uint16_t selector;
     struct {
-        uint16_t ist  : 2; // interrupt stack table
-        uint16_t ist1 : 1;
-        uint16_t ist2 : 1;
-        uint16_t r0   : 4;
-        uint16_t type : 4;
+        uint16_t ist  : 3; // interrupt stack table
+        uint16_t r0   : 1;
         uint16_t r1   : 1;
+        uint16_t r2   : 3;
+        uint16_t type : 4;
+        uint16_t r3   : 1;
         uint16_t dpl  : 2; // descriptor priviledge level
         uint16_t p    : 1; // segment present flag
     } __attribute__((packed)) flags;

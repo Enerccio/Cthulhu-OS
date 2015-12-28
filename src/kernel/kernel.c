@@ -41,6 +41,7 @@
 #include "interrupts/clock.h"
 #include "interrupts/idt.h"
 #include "interrupts/interrupts.h"
+#include "structures/gdt.h"
 
 /**
  * Prints kernel version.
@@ -76,20 +77,35 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
     __initialize_kclib();
     log_msg("KCLib initialized");
 
+    init_table_acpi();
+    vlog_msg("ACPI Initialized, local apic: %xh", (uint64_t)apicaddr);
+
+    initialize_cpus();
+    log_msg("CPU status queried.");
+
+    reinitialize_gdt();
+    vlog_msg("GDT reinitialized to %xh", (uint64_t)&gdt);
+
     initialize_interrupts();
     log_msg("Interrupt table initialized");
 
     register_standard_interrupt_handlers();
     log_msg("Preliminary interrupt handlers set up");
 
-    init_table_acpi();
-    log_msg("ACPI initialized");
-
     initialize_clock();
     vlog_msg("Kernel clock initialized, current time in unix time %llu", get_unix_time());
 
-    initialize_cpus();
+    if (array_get_size(cpus) > 1) {
+		initialize_mp(get_local_apic_id());
+	}
     vlog_msg("CPU queried and initialized. Number of logical cpus %u", array_get_size(cpus));
+
+    initialize_ipi_subsystem();
+	initialize_lapic();
+	log_msg("Inter-processor interrupts initialized");
+
+    deallocate_start_memory();
+    vlog_msg("Bootup memory removed.");
 
     initialize_system_calls();
     log_msg("System calls initialized");

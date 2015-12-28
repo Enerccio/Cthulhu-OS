@@ -161,14 +161,7 @@ void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress
     if (cpus == NULL)
     	kp_halt();
     else {
-    	uint8_t self_apic = get_local_apic_id();
-    	for (unsigned int i=0; i<array_get_size(cpus); i++) {
-    		cpu_t* cpu = array_get_at(cpus, i);
-    		if (cpu->apic_id != self_apic) {
-    			send_ipi_message(cpu->apic_id, IPI_HALT_IMMEDIATELLY, ecode);
-    		}
-    	}
-    	send_ipi_message(self_apic, IPI_HALT_IMMEDIATELLY, ecode);
+    	broadcast_ipi_message(IPI_HALT_IMMEDIATELLY, ecode+1, 0);
     }
 
     while (true) ;

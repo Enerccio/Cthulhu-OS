@@ -28,6 +28,7 @@
 #include "cpu_mgmt.h"
 
 #include "ipi.h"
+#include "../structures/gdt.h"
 #include "../interrupts/clock.h"
 #include "../interrupts/idt.h"
 #include "../ports/ports.h"
@@ -38,6 +39,8 @@ extern void idt_flush(void* addr);
 extern idt_ptr_t idt_ptr;
 extern void* Gdt32;
 extern void wait_until_activated();
+extern void load_gdt(gdt_ptr_t* gdt, uint16_t tssid);
+extern gdt_ptr_t gdt;
 
 #define AP_INIT_LOAD_ADDRESS (2)
 #define INIT_IPI_FLAGS (5<<8)
@@ -124,7 +127,9 @@ void ap_main(uint64_t proc_id) {
 	cpu_t* cpu = (cpu_t*)array_get_at(cpus, cpuid_to_cputord[proc_id]);
 	cpu->started = true;
 
+	load_gdt(&gdt, (uint16_t)(cpuid_to_cputord[proc_id]*16)+(40));
 	idt_flush(&idt_ptr);
+
 	ENABLE_INTERRUPTS();
 	initialize_lapic();
 
@@ -220,13 +225,17 @@ void initialize_mp(unsigned int localcpu) {
 	}
 }
 
-#define KERNEL_STACK_SIZE (0x3000)
+#define KERNEL_INIT_STACK_SIZE 		   (0x2000)
+#define KERNEL_HANDLER_STACK_SIZE      (0x4000)
+#define KERNEL_PF_STACK_SIZE   		   (0x3000)
+#define KERNEL_DF_STACK_SIZE           (0x2000)
+#define KERNEL_IPI_STACK_SIZE          (0x3000)
 #define PAGE_ALIGN(x) ((x) & (~(0xFFF)))
 
 /**
  * Creates cpu_t structure from APIC MADT information.
  */
-cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
+cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
 	cpu_t* cpu = malloc(sizeof(cpu_t));
 	if (cpu == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
@@ -241,11 +250,17 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
 		cpu->started = false;
 	}
 
+	cpu->insert_id = insertid;
 	cpu->processes = create_array();
 	cpu->__cpu_lock = 0;
 	cpu->__cpu_sched_lock = 0;
+	cpu->__message_clear_lock = 0;
 	cpu->apic_message_handled = 0;
-	cpu->stack = (void*) PAGE_ALIGN(((uintptr_t)malloc(KERNEL_STACK_SIZE))+KERNEL_STACK_SIZE);
+	cpu->stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_INIT_STACK_SIZE));
+	cpu->handler_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_HANDLER_STACK_SIZE));
+	cpu->pf_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_PF_STACK_SIZE));
+	cpu->df_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_DF_STACK_SIZE));
+	cpu->ipi_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_IPI_STACK_SIZE));
 	if (cpu->processes == NULL)
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
 	return cpu;
@@ -255,7 +270,7 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic) {
  * Creates cpu_t for default cpu, if MADT is unavailable.
  */
 cpu_t* make_cpu_default() {
-	return make_cpu(NULL);
+	return make_cpu(NULL, 0);
 }
 
 /**
@@ -272,7 +287,6 @@ void initialize_cpus() {
 
 	cpus = create_array_spec(256);
 	unsigned int cnt = 0;
-	unsigned int localcpu = 0;
 	MADT_HEADER* madt = find_madt();
 
 	if (madt == NULL) {
@@ -281,10 +295,8 @@ void initialize_cpus() {
 		cpuid_to_cputord[0] = 0;
 		array_push_data(cpus, make_cpu_default());
 	} else {
-		MADT_LOCAL_APIC* localapic = (MADT_LOCAL_APIC*)physical_to_virtual((uint64_t)madt->address);
 		apicaddr = madt->address;
-		localcpu = localapic->id;
-		vlog_msg("Local apic address %#x, local cpu apic %x.", apicaddr, localcpu);
+		vlog_msg("Local apic address %#x, local cpu apic %x.", apicaddr, get_local_apic_id());
 
 		size_t bytes = madt->header.Length;
 		bytes -= sizeof(MADT_HEADER);
@@ -296,17 +308,11 @@ void initialize_cpus() {
 			if (h->type == ACPI_MADT_TYPE_LOCAL_APIC) {
 				MADT_LOCAL_APIC* lapic = (MADT_LOCAL_APIC*)h;
 				if (lapic->lapic_flags == 1) {
-					array_push_data(cpus, make_cpu(lapic));
+					array_push_data(cpus, make_cpu(lapic, array_get_size(cpus)));
 					cpuid_to_cputord[lapic->processor_id] = array_get_size(cpus)-1;
 					++cnt;
 				}
 			}
 		}
 	}
-
-	initialize_ipi_subsystem();
-	if (array_get_size(cpus) > 1) {
-		initialize_mp(localcpu);
-	}
-	initialize_lapic();
 }
