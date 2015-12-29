@@ -195,7 +195,7 @@ struct frame_info {
  * Initializes paging subsystem with correct paging, requiring multiboot
  * for memory info.
  */
-void initialize_paging(struct multiboot* mb);
+void initialize_physical_memory_allocation(struct multiboot* mb);
 
 /**
  * Translates virtual address to physical. valid pointer will

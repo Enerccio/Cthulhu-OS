@@ -78,6 +78,13 @@ struct multiboot
    uint32_t vbe_interface_len;
 }  __attribute__((packed));
 
+struct mb_mod_table {
+	uint32_t mod_start;
+	uint32_t mod_end;
+	uint32_t string;
+	uint32_t reserved;
+};
+
 typedef struct multiboot_header multiboot_header_t;
 
 #define ENABLE_INTERRUPTS() do { __asm __volatile__ ("sti"); } while (0)
@@ -105,3 +112,9 @@ typedef void* aligned_ptr_t;
 		while (_debug_var) \
 			; \
 	} while (0)
+
+#define debug_cond(cond) do { \
+	if (cond){ \
+		debug_break; \
+	} while (0)
+

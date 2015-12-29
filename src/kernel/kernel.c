@@ -60,7 +60,17 @@ void print_loader_revision() {
 
 extern volatile uint64_t clock_ms;
 
+uint64_t kernel_tmp_heap_start;
+
 void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
+	debug_break;
+
+	kernel_tmp_heap_start = heap_start;
+
+	initialize_temporary_heap(heap_start);
+	initialize_physical_memory_allocation(mboot_addr);
+	initialize_standard_heap();
+
 	cpus = NULL;
 
     initialize_ports();
@@ -69,9 +79,6 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
     print_loader_revision();
     init_errors();
 
-    initialize_temporary_heap(heap_start);
-    initialize_paging(mboot_addr);
-    initialize_standard_heap();
     log_msg("Paging memory and kernel heap initialized");
 
     __initialize_kclib();

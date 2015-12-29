@@ -28,10 +28,13 @@
 #include "heap.h"
 #include "../cpus/ipi.h"
 
-/** aligns the address to 0x1000 */
+/** aligns the address to 0x1000 down */
 #define ALIGN(addr) (((uint64_t)addr) & 0xFFFFFFFFFFFFF000)
+/** aligns the address to 0x1000 up */
+#define ALIGN_UP(v) ((v) % 0x1000 == 0 ? (v)+0x1000 : ALIGN((v) + 0x1000))
 /** aligns the address to 0x1000 and then casts it to type */
 #define PALIGN(type, addr) ((type)ALIGN(addr))
+
 
 /** Maximum physical bits in page structures */
 uint64_t maxphyaddr;
@@ -44,8 +47,10 @@ extern uint64_t detect_maxphyaddr();
 extern uint64_t get_active_page();
 extern void set_active_page(uint64_t address);
 extern uint64_t is_1GB_paging_supported();
+extern void invalidate_address(void* addr);
 extern uint16_t* video_memory;
 extern void*     ebda;
+extern size_t    kernel_tmp_heap_start;
 
 /**
  * Virtual address structure for standard paging.
@@ -354,11 +359,65 @@ static uint64_t detect_maxram(struct multiboot* mboot_addr) {
     }
 
     if (highest == 0) {
-        error(ERROR_NO_MEMORY_DETECTED, mboot_addr->flags,
-                (uint64_t) mboot_addr, &detect_maxram);
+        kp_halt();
     }
 
     return highest;
+}
+
+size_t __strlen(char* c){
+	size_t len = 0;
+	while (*c++ != '\0') ;
+	return len;
+}
+
+bool check_used_range(uint64_t test, uint64_t fa, size_t sa) {
+	uint64_t from = ALIGN(sa);
+	sa += fa - from;
+	uint64_t size = ALIGN_UP(fa);
+	if (from <= test && test < from + size) {
+		return true;
+	}
+	return false;
+}
+
+bool check_if_used_string(uint64_t test, char* string) {
+	return check_used_range(test, (uint64_t)string, __strlen(string)+1);
+}
+
+#define BASE_RESERVE_FOR_TMPHEAP 0x20000
+
+bool check_if_used(struct multiboot* mbheader, uint64_t test) {
+	uint64_t kend = kernel_tmp_heap_start - 0xFFFFFFFF80000000;
+	if (check_used_range(test, 0, kend+BASE_RESERVE_FOR_TMPHEAP))
+		return true;
+
+	if (check_used_range(test, (uint64_t)mbheader, sizeof(struct multiboot)))
+		return true;
+
+	char* cmdline = (char*) (uint64_t) mbheader->cmdline;
+	if (check_if_used_string(test, cmdline))
+		return true;
+
+	size_t mods_size = mbheader->mods_count * sizeof(struct mb_mod_table);
+	if (check_used_range(test, mbheader->mods_addr, mods_size))
+		return true;
+
+	struct mb_mod_table* modules = (struct mb_mod_table*) (uint64_t) mbheader->mods_addr;
+	for (uint32_t i=0; i<mbheader->mods_count; i++) {
+		struct mb_mod_table* module = &modules[i];
+		size_t mod_size = module->mod_end-module->mod_start;
+		if (check_used_range(test, (uint64_t)module->mod_start, mod_size))
+			return true;
+		char* mod_name = (char*)(uint64_t)module->string;
+		if (check_if_used_string(test, mod_name))
+			return true;
+	}
+
+	if (check_used_range(test, mbheader->mmap_addr, mbheader->mmap_length))
+		return true;
+
+	return false;
 }
 
 /**
@@ -367,6 +426,11 @@ static uint64_t detect_maxram(struct multiboot* mboot_addr) {
  * Fills bitmaps for frame_map_usage, phys_map and returns bitmap for frame_map
  * from available ram entries.
  */
+
+
+/////////// TODO: SOMEWHERE HERE IS BUG WITH SECTIONS OVERWRITING OR SOMETHING
+/////////// FIND IT
+
 static void create_frame_pool(struct multiboot* mboot_addr) {
 	section_info_t* firstfp = NULL;
 	section_info_t* lastfp = NULL;
@@ -378,72 +442,126 @@ static void create_frame_pool(struct multiboot* mboot_addr) {
 			uint32_t size = *((uint32_t*) (uint64_t) (mem - 4));
 			mem += size + 4;
 
-			uint64_t base_addr = data.address;
-			uint64_t length = data.size;
+			uint64_t ba = data.address;
+			uint64_t len = data.size;
 
 			if (data.type != 1) // not a ram
 				continue;
+			if (len < 0x10000)
+				continue; // waste of a section
 
-			if (base_addr+length < 0x400000) // ram is below autoallocated amount
-				continue;
+			uint64_t base_addr = ba;
+			uint64_t length = len;
 
-			if (base_addr < 0x400000) { // ram starts below 0x400000 but grows past it
-				length = length - (0x400000-base_addr);
-				base_addr = 0x400000;
+			while (true) {
+				// if we fail to find any useful starting address but there is more to search
+				// restart the search here
+start_search_again:;
+
+				// search from current base_addr up to maximum in the block
+				if (base_addr >= len+ba)
+					break; // end of search
+				for (uint64_t test = base_addr; test<len; test+=0x1000){
+					if (check_if_used(mboot_addr, test)){
+						// memory address is used by some internal structure
+						// write up how much size we have for this pool and then
+						// decide upon it
+						length = test - base_addr;
+						if (length == 0){
+							// first 0x1000 already used
+							// check if there is more, if so, continue from 0x1000 onwards
+							// if not, this section is garbage
+							if (base_addr+0x1000<ba+len){
+								base_addr += 0x1000;
+								goto start_search_again;
+							} else {
+								goto finish_this_section;
+							}
+						} else if (length < 0x10000){
+							// pool with size <0x10000, same as above
+							// but add length, skipping good but too small pool
+							if (base_addr+length<ba+len){
+								base_addr += length;
+								goto start_search_again;
+							} else {
+								goto finish_this_section;
+							}
+						}
+						// found a barrier, can only use this much in a block
+						break;
+					}
+					// no used address up to len, awesome, use this as a pool
+					length = len;
+				}
+
+				// total amount of frames available if we count in metadata
+				uint64_t uframes = (length-sizeof(section_info_t))/(0x1000+(sizeof(stack_element_t)+sizeof(frame_info_t)))-1;
+				// total size of metadata header
+				uint64_t total_size = sizeof(section_info_t) + (uframes * sizeof(stack_element_t)) + (uframes * sizeof(frame_info_t));
+				// address of first effective frame
+				uint64_t after_address = (base_addr + total_size + 0x1000) & ~0xFFF;
+
+				// allocate base_addr and size of metadata header in virt. memory
+				allocate(base_addr, total_size, true, false);
+
+				// section starts at base address
+				section_info_t* section = (section_info_t*)base_addr;
+				if (lastfp != NULL) { // link previous section and this one
+					lastfp->next_section = section;
+				} else if (firstfp == NULL) { // first section will be this one
+					firstfp = section;
+				}
+
+				// fill up section with information
+				section->start_word = after_address;
+				section->end_word = base_addr + length;
+				section->total_frames = uframes;
+				section->next_section = NULL;
+				section->frame_array = (frame_info_t*) (base_addr + sizeof(section_info_t)); // starts at end of this structure
+				uint64_t stack_el_addr = (base_addr + sizeof(section_info_t) +
+						(sizeof(frame_info_t) * uframes)); // first stack element describing the memory
+				section->head = NULL;
+
+				stack_element_t* prev_se = NULL;
+				for (uint64_t i=0; i<uframes; i++) {
+					// Fill up information for stack element.
+					// Stack element contains frame address of free frame in this memory section
+					stack_element_t* se = (stack_element_t*)stack_el_addr;
+					stack_el_addr += sizeof(stack_element_t);
+					se->frame_address = after_address + (i*0x1000);
+					frame_info_t* fi = &section->frame_array[i];
+
+					if (se->frame_address < 0x400000){
+						// "already used" stack element
+						// so do not link this stack element at all
+						// link stack elements together
+						// fill up frame info with this stack element and number of times it has been used (0)
+
+						fi->usage_count = 1;
+					} else {
+						// normal stack element
+						// link stack elements together
+						if (prev_se != NULL)
+							prev_se->next = se;
+						else
+							section->head = se;
+						se->next = NULL;
+						se->array_ord = i;
+						prev_se = se;
+
+						// fill up frame info with this stack element and number of times it has been used (0)
+						fi->usage_count = 0;
+					}
+					fi->bound_stack_element = se;
+				}
+
+				lastfp = section;
+
+				// increment base address by length
+				base_addr += length;
 			}
+finish_this_section:;
 
-			if (length < 0x10000) // ram is effectively too small to use
-				continue;
-
-			// total amount of frames available if we count in metadata
-			uint64_t uframes = (length-sizeof(section_info_t))/(0x1000+(sizeof(stack_element_t)+sizeof(frame_info_t)))-1;
-			// total size of metadata header
-			uint64_t total_size = sizeof(section_info_t) + (uframes * sizeof(stack_element_t)) + (uframes * sizeof(frame_info_t));
-			// address of first effective frame
-			uint64_t after_address = (base_addr + total_size + 0x1000) & ~0xFFF;
-
-			// allocate base_addr and size of metadata header in virt. memory
-			allocate(base_addr, total_size, true, false);
-
-			// section starts at base address
-			section_info_t* section = (section_info_t*)base_addr;
-			if (lastfp != NULL) { // link previous section and this one
-				lastfp->next_section = section;
-			} else if (firstfp == NULL) { // first section will be this one
-				firstfp = section;
-			}
-
-			// fill up section with information
-			section->start_word = after_address;
-			section->end_word = base_addr + length;
-			section->total_frames = uframes;
-			section->next_section = NULL;
-			section->frame_array = (frame_info_t*) (base_addr + sizeof(section_info_t)); // starts at end of this structure
-			uint64_t stack_el_addr = (base_addr + sizeof(section_info_t) +
-					(sizeof(frame_info_t) * uframes)); // first stack element describing the memory
-			section->head = (stack_element_t*) stack_el_addr; // set it as head
-
-			stack_element_t* prev_se = NULL;
-			for (uint64_t i=0; i<uframes; i++) {
-				// Fill up information for stack element.
-				// Stack element contains frame address of free frame in this memory section
-				stack_element_t* se = (stack_element_t*)stack_el_addr;
-				stack_el_addr += sizeof(stack_element_t);
-				se->frame_address = after_address + (i*0x1000);
-				// link stack elements together
-				if (prev_se != NULL)
-					prev_se->next = se;
-				se->next = NULL;
-				se->array_ord = i;
-				prev_se = se;
-
-				// fill up frame info with this stack element and number of times it has been used (0)
-				frame_info_t* fi = &section->frame_array[i];
-				fi->usage_count = 0;
-				fi->bound_stack_element = se;
-			}
-
-			lastfp = section;
 		}
 
 	}
@@ -461,7 +579,6 @@ static void create_frame_pool(struct multiboot* mboot_addr) {
  */
 void initialize_memory_mirror() {
     if (is_1GB_paging_supported() != 0) {
-        log_msg("Host supports 1GB pages, will use for ram mirror");
         for (uint64_t start=0; start < maxram; start+=1<<30) {
             uint64_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
             uint64_t* pdpt_addr = (uint64_t*) MMU_PML4(vaddress)[MMU_PML4_INDEX(
@@ -484,7 +601,6 @@ void initialize_memory_mirror() {
             MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)] = dir.number;
         }
     } else {
-        log_warn("Host does not provide 1GB pages, will use 4KB pages for ram mirror");
         for (uint64_t start=0; start < maxram; start+=0x1000) {
             uint64_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
             uint64_t* paddress = get_page(vaddress, true);
@@ -513,7 +629,7 @@ bool __mem_mirror_present;
  *  4. initializes memory mirror
  *  5- deallocates old memory (frames are not returned).
  */
-void initialize_paging(struct multiboot* mboot_addr) {
+void initialize_physical_memory_allocation(struct multiboot* mboot_addr) {
 	__mem_mirror_present = false;
     frame_pool = NULL;
     maxram = detect_maxram(mboot_addr);
@@ -525,7 +641,7 @@ void initialize_paging(struct multiboot* mboot_addr) {
     __mem_mirror_present = true;
 
     // remap direct memory pointers
-    video_memory = physical_to_virtual(video_memory);
+    video_memory = physical_to_virtual((uint64_t)video_memory);
 }
 
 /**

@@ -29,7 +29,10 @@
 ; Declare constants used for creating a multiboot header.
 MBALIGN     equ  1<<0                   ; align loaded modules on page boundaries
 MEMINFO     equ  1<<1                   ; provide memory map
-FLAGS       equ  MBALIGN | MEMINFO      ; this is the Multiboot 'flag' field
+GRAPHINFO   equ  1<<2                   ; graphics info
+DRVINFO     equ  1<<7
+FLAGS       equ  MBALIGN | MEMINFO | GRAPHINFO | DRVINFO
+    ; this is the Multiboot 'flag' field
 MAGIC       equ  0x1BADB002             ; 'magic number' lets bootloader find the header
 CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum of above, to prove we are multiboot
 
@@ -42,6 +45,15 @@ magic_header:
     dd MAGIC
     dd FLAGS
     dd CHECKSUM
+    dd 0
+    dd 0
+    dd 0
+    dd 0
+    dd 0
+    dd 0
+    dd 800
+    dd 600
+    dd 32
 
 section .init
 GDT64:                           ; Global Descriptor Table (64-bit).
@@ -72,7 +84,7 @@ GDT64:                           ; Global Descriptor Table (64-bit).
 
 [GLOBAL _start]
 _start:
-    mov dword [0x7E00], 0
+    ;mov dword [0x7E00], 0
     jmp piko_loader
 piko_loader:
     push ebx
