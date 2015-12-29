@@ -1,66 +1,83 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset='utf-8'>
+    <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Cthulhu OS by Enerccio</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-dark.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
-
-    <title>Pikokernel by Enerccio</title>
   </head>
-
   <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/Enerccio/Cthulhu-OS">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/Enerccio/Cthulhu-OS/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/Enerccio/Cthulhu-OS/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
 
-    <header>
-      <div class="container">
-        <h1>Pikokernel</h1>
-        <h2>x86-64 SMP enabled microkernel hobbyist OS</h2>
+    <div class="wrapper">
 
-        <section id="downloads">
-          <a href="https://github.com/Enerccio/PIKOKernel/zipball/master" class="btn">Download as .zip</a>
-          <a href="https://github.com/Enerccio/PIKOKernel/tarball/master" class="btn">Download as .tar.gz</a>
-          <a href="https://github.com/Enerccio/PIKOKernel" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
-        </section>
-      </div>
-    </header>
+      <section>
+        <div id="title">
+          <h1>Cthulhu OS</h1>
+          <p>x86-64 SMP enabled microkernel hobbyist OS</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/Enerccio">Enerccio</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
 
-    <div class="container">
-      <section id="main_content">
         <h1>
-<a id="pikokernel-os" class="anchor" href="#pikokernel-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>PIKOKernel OS</h1>
+<a id="cthulhu-os" class="anchor" href="#cthulhu-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>Cthulhu OS</h1>
+
+<blockquote>
+<p>“Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.</p>
+
+<p>In his house at R'lyeh dead Cthulhu waits dreaming.”
+  ― H.P. Lovecraft, The Call of Cthulhu </p>
+</blockquote>
 
 <h2>
 <a id="information" class="anchor" href="#information" aria-hidden="true"><span class="octicon octicon-link"></span></a>Information</h2>
 
 <h3>
-<a id="what-is-pikokernel-os" class="anchor" href="#what-is-pikokernel-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is PIKOKernel OS?</h3>
+<a id="what-is-cthulhu-os" class="anchor" href="#what-is-cthulhu-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is Cthulhu OS?</h3>
 
-<p>PIKOKernel is minimalistic hobbyist OS. It uses it's own libc (KCLib). Its long term goal is
+<p>Cthulhu OS is minimalistic hobbyist OS. It uses it's own libc (KCLib). Its long term goal is
 to support user space applications.</p>
 
 <h3>
-<a id="what-type-of-kernel-does-pikokernel-os-use" class="anchor" href="#what-type-of-kernel-does-pikokernel-os-use" aria-hidden="true"><span class="octicon octicon-link"></span></a>What type of kernel does PIKOKernel OS use?</h3>
+<a id="what-type-of-kernel-does-cthulhu-os-use" class="anchor" href="#what-type-of-kernel-does-cthulhu-os-use" aria-hidden="true"><span class="octicon octicon-link"></span></a>What type of kernel does Cthulhu OS use?</h3>
 
-<p>PIKOKernel OS uses PIKOKernel as its main kernel, which will be microkernel.</p>
+<p>Cthulhu OS uses Azathoth as its main kernel, which will be microkernel.</p>
 
 <h3>
-<a id="what-is-the-point-of-pikokernel" class="anchor" href="#what-is-the-point-of-pikokernel" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is the point of PIKOKernel?</h3>
+<a id="what-is-the-point-of-cthulhu-os" class="anchor" href="#what-is-the-point-of-cthulhu-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is the point of Cthulhu OS?</h3>
 
 <p>The point is to have fun making a complete OS and then use it as replacement to current OSes. </p>
 
 <h3>
-<a id="what-are-pikokernels-requirements" class="anchor" href="#what-are-pikokernels-requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>What are PIKOKernel's requirements</h3>
+<a id="what-are-cthulhu-oss-requirements" class="anchor" href="#what-are-cthulhu-oss-requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>What are Cthulhu OS's requirements</h3>
 
-<p>At the moment, PIKOKernel only supports x86-64 architecture. Should work on both intel and amd,
-however, it was only tested on intel. So far it was only tested on qemu/bochs, I do not recommend
+<p>At the moment, Cthulhu OS only supports x86-64 architecture. Should work on both Intel and AMD,
+however, it was only tested on Intel. So far it was only tested on qemu/bochs, I do not recommend
 putting it on real hardware yet (not that it can do anything at the moment).</p>
 
 <h3>
-<a id="what-is-the-status-of-pikokernel" class="anchor" href="#what-is-the-status-of-pikokernel" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is the status of PIKOKernel?</h3>
+<a id="what-is-the-status-of-cthulhu-os" class="anchor" href="#what-is-the-status-of-cthulhu-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is the status of Cthulhu OS?</h3>
 
-<p>PIKOKernel is under heavy development. So far it has working long mode, paging memory, interrupt handling, symmetrical multiprocessing, interprocessor communication. What needs to be done (and probably more):</p>
+<p>Cthulhu OS is under heavy development. So far it has working long mode, paging memory, interrupt handling, symmetrical multiprocessing, interprocessor communication. What needs to be done (and probably more):</p>
 
 <ul>
 <li>Loading initrd</li>
@@ -72,15 +89,15 @@ putting it on real hardware yet (not that it can do anything at the moment).</p>
 </ul>
 
 <h2>
-<a id="building-pikokernel-os" class="anchor" href="#building-pikokernel-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building PIKOKernel OS</h2>
+<a id="building-cthulhu-os" class="anchor" href="#building-cthulhu-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building Cthulhu OS</h2>
 
-<p>Compiling PIKOKernel requires Unix-like environment (was not tested on windows, but will probably require
+<p>Compiling Cthulhu OS requires Unix-like environment (was not tested on windows, but will probably require
 cygwin).</p>
 
 <h3>
-<a id="pikokernel-cross-compiler" class="anchor" href="#pikokernel-cross-compiler" aria-hidden="true"><span class="octicon octicon-link"></span></a>PIKOKernel cross compiler</h3>
+<a id="cthulhu-os-cross-compiler" class="anchor" href="#cthulhu-os-cross-compiler" aria-hidden="true"><span class="octicon octicon-link"></span></a>Cthulhu OS cross compiler</h3>
 
-<p>PIKOKernel requires it's own toolchain (x86-64-piko-*). To compile one, these components are required to be 
+<p>Cthulhu OS requires it's own toolchain (x86-64-fhtagn-*). To compile one, these components are required to be 
 present at these locations</p>
 
 <ul>
@@ -99,35 +116,37 @@ in <code>toolchain</code> directory and user-space clib in <code>osroot</code> d
 <a id="compiling-kernel" class="anchor" href="#compiling-kernel" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compiling kernel</h3>
 
 <p>Simply invoke <code>make kernel</code> in projects root directory. You need to have path to <code>toolchain/usr/bin</code> in
-your path for compiler to find <code>x86_64-piko-gcc</code> and <code>x86_64-piko-as</code>. Your environment has to provide
+your path for compiler to find <code>x86_64-fhtagn-gcc</code> and <code>x86_64-fhtagn-as</code>. Your environment has to provide
 <code>nasm</code> assembler (<a href="http://www.nasm.us">http://www.nasm.us</a>) and working shell. </p>
 
-<p>After compilation is done, you should have <code>piko-kernel.img</code> in <code>build</code> directory.</p>
+<p>After compilation is done, you should have <code>azathoth.img</code> in <code>build</code> directory.</p>
 
 <h3>
-<a id="compiling-libpikodev" class="anchor" href="#compiling-libpikodev" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compiling libpikodev</h3>
+<a id="compiling-libnyarlathotep" class="anchor" href="#compiling-libnyarlathotep" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compiling libnyarlathotep</h3>
 
-<p><code>libpikodev</code> is library used by daemons and other system components. You can create it by invoking 
-<code>make pikodev</code>. </p>
+<p><code>libnyarlathotep</code> is library used by daemons and other system components. You can create it by invoking 
+<code>make nyarlathotep</code>. </p>
 
-<p>After compilation is done, you should have <code>libpikodev.a</code> and <code>libpikodev.h</code> in <code>build/libpikodev</code> directory.</p>
+<p>After compilation is done, you should have <code>libnyarlathotep.a</code> and <code>nyarlathotep.h</code> in <code>build/libnyarlathotep</code> directory.</p>
 
 <h2>
-<a id="running-pikokernel-os" class="anchor" href="#running-pikokernel-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running PIKOKernel OS</h2>
+<a id="running-cthulhu-os" class="anchor" href="#running-cthulhu-os" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running Cthulhu OS</h2>
 
 <h3>
 <a id="run-environment" class="anchor" href="#run-environment" aria-hidden="true"><span class="octicon octicon-link"></span></a>Run environment</h3>
 
-<p>PIKOKernel OS can be run on <code>qemu</code> (recommended version 2.5.0, as it was tested on it), <code>bochs</code> or real 
+<p>Cthulhu OS can be run on <code>qemu</code> (recommended version 2.5.0, as it was tested on it), <code>bochs</code> or real 
 hardware (not recommended). </p>
 
-<p>PIKOKernel OS kernel requires <code>initrd</code> in its own file format. You can use provided python script <code>mkfs.py</code> to create <code>initrd</code>. This script is located in <code>disk</code> directory. <code>mkfs.py</code> requires <code>python 2.7</code>. To use <code>mkfs.py</code> you have to provide input directory and output file. Input directory's content will be packed 
-into <code>initrd</code> output file, which should have name <code>piko-initramfs</code>.  </p>
+<p>Cthulhu OS's kernel Azatoth requires <code>initrd</code> in its own file format. You can use provided python script <code>mkfs.py</code> to create <code>initrd</code>. This script is located in <code>disk</code> directory. <code>mkfs.py</code> requires <code>python 2.7</code>. To use <code>mkfs.py</code> you have to provide input directory and output file. Input directory's content will be packed 
+into <code>initrd</code> output file, which should have name <code>rlyeh</code>.  </p>
 
-<p>PIKOKernel OS requires <code>GRUB 2</code> as its bootloader (since it is mixed 16-32-64bit elf) with <code>multiboot support</code>.
+<p>Cthulhu OS requires <code>GRUB 2</code> as its bootloader (since it is mixed 16-32-64bit elf) with <code>multiboot support</code>.
 If you do not have <code>GRUB 2</code> to create new image, you may create 64MB empty disk file and then use <code>bspatch</code> to 
 patch that empty disk file with <code>disk.img.patch</code>. Then you have to mount that image with offset <code>1048576</code>. 
 For more information check <code>disk/update_image.sh</code>.</p>
+
+<p>Sample grub configuration is in directory <code>boot</code>, which you can copy into your boot partition.</p>
 
 <h3>
 <a id="initrd-contents" class="anchor" href="#initrd-contents" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>initrd</code> contents</h3>
@@ -136,14 +155,15 @@ For more information check <code>disk/update_image.sh</code>.</p>
 <code>init/daemons</code> containing daemons to be loaded initially.  </p>
 
 <h3>
-<a id="running-pikokernel-os-on-qemu" class="anchor" href="#running-pikokernel-os-on-qemu" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running PIKOKernel OS on QEMU</h3>
+<a id="running-cthulhu-os-on-qemu" class="anchor" href="#running-cthulhu-os-on-qemu" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running Cthulhu OS on QEMU</h3>
 
 <p>Simply invoke <code>qemu-system-x86_64 -hdc &lt;yourdiskimagefile&gt; -m 128 -s -smp cores=&lt;numbercores&gt;,threads=&lt;numberthreads&gt;,sockets=&lt;numsockets&gt; -cpu Haswell,+pdpe1gb</code></p>
 
 <p>For more information check <code>debug.sh</code>.</p>
       </section>
-    </div>
 
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
     
   </body>
 </html>
