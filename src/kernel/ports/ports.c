@@ -26,6 +26,7 @@
  */
 
 #include "ports.h"
+#include "../memory/paging.h"
 
 /** number maximum of available com ports, some might be unusable */
 uint8_t   com_ports_count;
@@ -36,7 +37,7 @@ uint8_t   lpt_ports_count;
 /** available lpt ports are listed here */
 uint32_t  lpt_ports_address[3];
 /** VGA memory address */
-uint16_t* video_memory;
+volatile uint16_t* video_memory;
 /** EBDA memory address */
 void*     ebda;
 
@@ -66,20 +67,20 @@ void init_serial_port(uint32_t pa) {
  * TODO: Add lpt initialization
  */
 void initialize_ports() {
-    ebda = (void*) (((uintptr_t)*BDA_EBDA)>>4);
-    video_memory = (uint16_t*)(0xB8000);
+    ebda = (void*)physical_to_virtual((((uintptr_t)*BDA_EBDA)>>4));
+    video_memory = (uint16_t*)physical_to_virtual((uint64_t)(0xB8000));
 
     com_ports_count = 4;
     memset(com_ports_address, 0, sizeof(uint32_t)*com_ports_count);
     for (uint8_t i=0; i<com_ports_count; i++) {
-        com_ports_address[i] = *(BDA_IO_COM + i);
+        com_ports_address[i] = *(uint16_t*)physical_to_virtual((uintptr_t)(BDA_IO_COM + i));
         init_serial_port(com_ports_address[i]);
     }
 
     lpt_ports_count = 3;
     memset(lpt_ports_address, 0, sizeof(uint32_t)*lpt_ports_count);
     for (uint8_t i=0; i<lpt_ports_count; i++) {
-        lpt_ports_address[i] = *(BDA_IO_LPT + i);
+        lpt_ports_address[i] = *(uint16_t*)physical_to_virtual((uintptr_t)(BDA_IO_LPT + i));
     }
 }
 

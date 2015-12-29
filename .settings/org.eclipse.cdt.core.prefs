@@ -1,7 +1,7 @@
 eclipse.preferences.version=1
 environment/project/cdt.managedbuild.config.gnu.exe.debug.469210083/PATH/delimiter=\:
-environment/project/cdt.managedbuild.config.gnu.exe.debug.469210083/PATH/operation=replace
-environment/project/cdt.managedbuild.config.gnu.exe.debug.469210083/PATH/value=/usr2/fast/projects/pikokernel/pikokernel64/toolchain/usr/bin\:/usr/local/sbin\:/usr/local/bin\:/usr/bin\:/usr/lib/jvm/default/bin\:/usr/bin/site_perl\:/usr/bin/vendor_perl\:/usr/bin/core_perl
+environment/project/cdt.managedbuild.config.gnu.exe.debug.469210083/PATH/operation=append
+environment/project/cdt.managedbuild.config.gnu.exe.debug.469210083/PATH/value=/usr5/pikokernel64/PIKOKernel/toolchain/usr/bin\:/usr/local/sbin\:/usr/local/bin\:/usr/bin\:/usr/lib/jvm/default/bin\:/usr/bin/site_perl\:/usr/bin/vendor_perl\:/usr/bin/core_perl
 environment/project/cdt.managedbuild.config.gnu.exe.debug.469210083/append=true
 environment/project/cdt.managedbuild.config.gnu.exe.debug.469210083/appendContributed=true
 environment/project/cdt.managedbuild.config.gnu.exe.debug.727392688/append=true

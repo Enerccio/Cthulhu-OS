@@ -31,7 +31,7 @@
 /** aligns the address to 0x1000 down */
 #define ALIGN(addr) (((uint64_t)addr) & 0xFFFFFFFFFFFFF000)
 /** aligns the address to 0x1000 up */
-#define ALIGN_UP(v) ((v) % 0x1000 == 0 ? (v)+0x1000 : ALIGN((v) + 0x1000))
+#define ALIGN_UP(v) ((v) % 0x1000 == 0 ? (v) : ALIGN((v) + 0x1000))
 /** aligns the address to 0x1000 and then casts it to type */
 #define PALIGN(type, addr) ((type)ALIGN(addr))
 
@@ -50,7 +50,7 @@ extern uint64_t is_1GB_paging_supported();
 extern void invalidate_address(void* addr);
 extern uint16_t* video_memory;
 extern void*     ebda;
-extern size_t    kernel_tmp_heap_start;
+extern uint64_t kernel_tmp_heap_start;
 
 /**
  * Virtual address structure for standard paging.
@@ -372,9 +372,9 @@ size_t __strlen(char* c){
 }
 
 bool check_used_range(uint64_t test, uint64_t fa, size_t sa) {
-	uint64_t from = ALIGN(sa);
+	uint64_t from = ALIGN(fa);
 	sa += fa - from;
-	uint64_t size = ALIGN_UP(fa);
+	uint64_t size = ALIGN_UP(sa);
 	if (from <= test && test < from + size) {
 		return true;
 	}
@@ -385,11 +385,11 @@ bool check_if_used_string(uint64_t test, char* string) {
 	return check_used_range(test, (uint64_t)string, __strlen(string)+1);
 }
 
-#define BASE_RESERVE_FOR_TMPHEAP 0x20000
+
 
 bool check_if_used(struct multiboot* mbheader, uint64_t test) {
-	uint64_t kend = kernel_tmp_heap_start - 0xFFFFFFFF80000000;
-	if (check_used_range(test, 0, kend+BASE_RESERVE_FOR_TMPHEAP))
+	uint64_t kend = kernel_tmp_heap_start - 0xFFFFFFFF80000000 + 0x40000;
+	if (check_used_range(test, 0, kend))
 		return true;
 
 	if (check_used_range(test, (uint64_t)mbheader, sizeof(struct multiboot)))
@@ -502,7 +502,16 @@ start_search_again:;
 				uint64_t after_address = (base_addr + total_size + 0x1000) & ~0xFFF;
 
 				// allocate base_addr and size of metadata header in virt. memory
-				allocate(base_addr, total_size, true, false);
+				for (uint64_t addr = base_addr; addr < base_addr + total_size; addr += 0x1000) {
+					uint64_t* paddress = get_page(addr, true);
+					page_t page;
+					memset(&page, 0, sizeof(page_t));
+					page.address = addr;
+					page.flaggable.present = 1;
+					page.flaggable.rw = 1;
+					page.flaggable.us = 1;
+					*paddress = page.address;
+				}
 
 				// section starts at base address
 				section_info_t* section = (section_info_t*)base_addr;
@@ -639,9 +648,6 @@ void initialize_physical_memory_allocation(struct multiboot* mboot_addr) {
 
     initialize_memory_mirror();
     __mem_mirror_present = true;
-
-    // remap direct memory pointers
-    video_memory = physical_to_virtual((uint64_t)video_memory);
 }
 
 /**
@@ -714,7 +720,7 @@ void deallocate(uint64_t from, size_t amount) {
     if (aligned < end_addr) {
         for (uint64_t addr = aligned; addr < end_addr; addr += 0x1000) {
             deallocate_frame(get_page(addr, false), addr);
-            invalidate_address(addr);
+            invalidate_address((void*)addr);
         }
     }
 }

@@ -177,7 +177,7 @@ struct RSDPDescriptor* find_rsdp() {
 	struct RSDPDescriptor* desc;
 	uint64_t test_addr = (uint64_t)ebda;
 	for (uint64_t addr = test_addr; addr < test_addr+0x1000; addr += 16) {
-		char* test_address = (char*)physical_to_virtual(addr);
+		char* test_address = (char*)addr;
 		if (strncmp(test_address, "RSD PTR ", 8)==0) {
 			desc = (struct RSDPDescriptor*)test_address;
 			if (valid_rsdp(desc))
@@ -186,7 +186,7 @@ struct RSDPDescriptor* find_rsdp() {
 	}
 	test_addr = 0x000E0000;
 	for (uint64_t addr = test_addr; addr < 0x000FFFFF; addr += 16) {
-		char* test_address = (char*)physical_to_virtual(addr);
+		char* test_address = (char*)addr;
 		if (strncmp(test_address, "RSD PTR ", 8)==0) {
 			desc = (struct RSDPDescriptor*)test_address;
 			if (valid_rsdp(desc))

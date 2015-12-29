@@ -30,8 +30,7 @@
 MBALIGN     equ  1<<0                   ; align loaded modules on page boundaries
 MEMINFO     equ  1<<1                   ; provide memory map
 GRAPHINFO   equ  1<<2                   ; graphics info
-DRVINFO     equ  1<<7
-FLAGS       equ  MBALIGN | MEMINFO | GRAPHINFO | DRVINFO
+FLAGS       equ  MBALIGN | MEMINFO | GRAPHINFO
     ; this is the Multiboot 'flag' field
 MAGIC       equ  0x1BADB002             ; 'magic number' lets bootloader find the header
 CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum of above, to prove we are multiboot

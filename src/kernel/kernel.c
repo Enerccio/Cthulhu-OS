@@ -63,8 +63,6 @@ extern volatile uint64_t clock_ms;
 uint64_t kernel_tmp_heap_start;
 
 void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
-	debug_break;
-
 	kernel_tmp_heap_start = heap_start;
 
 	initialize_temporary_heap(heap_start);

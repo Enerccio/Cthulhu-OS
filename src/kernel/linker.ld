@@ -66,6 +66,11 @@ SECTIONS
    }
 
    _end = .;
+   
+   .temp_heap_storage BLOCK(40K) : AT(ADDR(.temp_heap_storage)  - 0xFFFFFFFF80000000) {
+   		_tempheap = .;
+   		*(.temp_heap_storage)
+   }
 
    /DISCARD/ :
    {

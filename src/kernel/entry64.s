@@ -35,7 +35,7 @@ section .text
 Realm64:
     mov rsp, stack_top64
     mov rdi, rbx
-    mov rsi, rsp
+    mov rsi, heap
     xor rbp, rbp
     extern kernel_main
     call kernel_main
@@ -71,3 +71,9 @@ APRealm64:
 .hangap:
     hlt
     jmp .hangap
+
+section .temp_heap_storage, nobits
+align 16
+heap:
+resb 0x40000
+

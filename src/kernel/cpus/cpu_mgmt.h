@@ -108,3 +108,8 @@ void enable_ipi_interrupts();
  * Disable IPI interrupts
  */
 void disable_ipi_interrupts();
+
+/**
+ * Initializes lapic
+ */
+void initialize_lapic();

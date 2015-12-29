@@ -30,7 +30,7 @@
 #include "../ports/ports.h"
 #endif
 
-extern uint16_t* video_memory;
+extern volatile uint16_t* video_memory;
 uint8_t cursor_y = 0;
 uint8_t cursor_x = 0;
 
@@ -105,7 +105,7 @@ void kd_cput(char c, uint8_t backColour, uint8_t foreColour) {
     uint8_t attributeByte = (backColour << 4) | (foreColour & 0x0F);
 
     uint16_t attribute = attributeByte << 8;
-    uint16_t* location;
+    volatile uint16_t* location;
 
     if (c == 0x08 && cursor_x) {
         if (cursor_x)
