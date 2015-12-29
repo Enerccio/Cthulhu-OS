@@ -35,10 +35,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "multiboot.h"
+
 #include "utils/textinput.h"
 #include "utils/logger.h"
-
-#include "multiboot.h"
 
 #define ENABLE_INTERRUPTS() do { __asm __volatile__ ("sti"); } while (0)
 #define DISABLE_INTERRUPTS() do { __asm __volatile__ ("cli"); } while (0)

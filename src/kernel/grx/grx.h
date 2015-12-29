@@ -34,4 +34,4 @@
 
 extern uint8_t mode;
 
-void initialize_grx(struct multiboot_header* mb);
+void initialize_grx(struct multiboot_info* mb);

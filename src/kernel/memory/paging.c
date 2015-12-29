@@ -51,7 +51,8 @@ extern void invalidate_address(void* addr);
 extern uint16_t* text_mode_video_memory;
 extern void*     ebda;
 extern uint64_t kernel_tmp_heap_start;
-extern void _frame_block;
+extern unsigned char _frame_block[0];
+struct multiboot_info multiboot_info;
 
 /**
  * Virtual address structure for standard paging.
@@ -315,7 +316,7 @@ void free_page_structure(uint64_t vaddress) {
 
 void deallocate_start_memory() {
 	MMU_PML4(0)[MMU_PML4_INDEX(0)] = 0;
-	broadcast_ipi_message(IPI_INVALIDATE_PAGE, 0, 0x400000);
+	broadcast_ipi_message(IPI_INVALIDATE_PAGE, 0, 0x200000);
 }
 
 /**
@@ -366,32 +367,42 @@ static uint64_t detect_maxram(struct multiboot_info* mboot_addr) {
     return highest;
 }
 
-static void* remap(void* phys_address) {
-	if (phys_address < 0x400000)
-		return phys_address;
+static void* remap(uint64_t phys_address) {
+	if (phys_address < 0x200000)
+		return (void*)phys_address;
 
-	uint64_t map_address = (uint64_t)&_frame_block;
+	uint64_t map_address = (uint64_t)_frame_block;
 	uint64_t* paddress = get_page(map_address, false);
 
 	page_t page;
 	memset(&page, 0, sizeof(page_t));
-	page.address = phys_address;
+	page.address = ALIGN(phys_address);
 	page.flaggable.present = 1;
 	page.flaggable.rw = 1;
 	page.flaggable.us = 0;
 	*paddress = page.address;
 
-	invalidate_address(map_address);
-	return (void*)map_address;
+	paddress = get_page(map_address+0x1000, false);
+	memset(&page, 0, sizeof(page_t));
+	page.address = ALIGN(phys_address) + 0x1000;
+	page.flaggable.present = 1;
+	page.flaggable.rw = 1;
+	page.flaggable.us = 0;
+	*paddress = page.address;
+
+	invalidate_address((void*)map_address);
+	invalidate_address((void*)(map_address+0x1000));
+
+	return (void*)(map_address+(phys_address-ALIGN(phys_address)));
 }
 
 size_t __strlen(char* c) {
 	size_t len = 0;
 	do {
 		if (len % 0x1000 == 0){
-			c = (char*)remap(c);
+			c = (char*)remap((uint64_t)c);
 		}
-		if (c++ == '\0')
+		if (*c++ == '\0')
 			break;
 		else
 			++len;
@@ -421,7 +432,7 @@ bool check_if_used(struct multiboot_info* mbheader, uint64_t test) {
 	if (check_used_range(test, (uint64_t)mbheader, sizeof(struct multiboot_info)))
 		return true;
 
-	char* cmdline = (char*) (uint64_t) mbheader->cmdline;
+	char* cmdline = (char*)(uint64_t)mbheader->cmdline;
 	if (check_if_used_string(test, cmdline))
 		return true;
 
@@ -431,7 +442,7 @@ bool check_if_used(struct multiboot_info* mbheader, uint64_t test) {
 
 	struct multiboot_mod_list* modules = (struct multiboot_mod_list*) (uint64_t) mbheader->mods_addr;
 	for (uint32_t i=0; i<mbheader->mods_count; i++) {
-		struct multiboot_mod_list* module = (struct multiboot_mod_list*)(&modules[i]);
+		struct multiboot_mod_list* module = (struct multiboot_mod_list*)remap((uint64_t)&modules[i]);
 		size_t mod_size = module->mod_end-module->mod_start;
 		if (check_used_range(test, (uint64_t)module->mod_start, mod_size))
 			return true;
@@ -509,12 +520,13 @@ start_search_again:;
 							}
 						}
 						// found a barrier, can only use this much in a block
-						break;
+						goto use_length_found;
 					}
-					// no used address up to len, awesome, use this as a pool
-					length = len;
 				}
+				// no used address up to len, awesome, use this as a pool
+				length = len;
 
+use_length_found:;
 				// total amount of frames available if we count in metadata
 				uint64_t uframes = (length-sizeof(section_info_t))/(0x1000+(sizeof(stack_element_t)+sizeof(frame_info_t)))-1;
 				// total size of metadata header
@@ -561,7 +573,7 @@ start_search_again:;
 					se->frame_address = after_address + (i*0x1000);
 					frame_info_t* fi = &section->frame_array[i];
 
-					if (se->frame_address < 0x400000) {
+					if (se->frame_address < 0x200000) {
 						// "already used" stack element
 						// so do not link this stack element at all
 						// link stack elements together
@@ -660,11 +672,14 @@ bool __mem_mirror_present;
  *  5- deallocates old memory (frames are not returned).
  */
 void initialize_physical_memory_allocation(struct multiboot_info* mboot_addr) {
+	struct multiboot_info* msource = (struct multiboot_info*)remap((uint64_t)mboot_addr);
+	memcpy(&multiboot_info, msource, sizeof(struct multiboot_info));
+
 	__mem_mirror_present = false;
     frame_pool = NULL;
-    maxram = detect_maxram(mboot_addr);
+    maxram = detect_maxram(&multiboot_info);
 
-    create_frame_pool(mboot_addr);
+    create_frame_pool(&multiboot_info);
     maxphyaddr = detect_maxphyaddr();
 
     initialize_memory_mirror();

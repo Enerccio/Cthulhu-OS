@@ -67,7 +67,7 @@ SECTIONS
 
    _end = .;
    
-   .temp_heap_storage BLOCK(40K) : AT(ADDR(.temp_heap_storage)  - 0xFFFFFFFF80000000) {
+   .temp_heap_storage BLOCK(48K) : AT(ADDR(.temp_heap_storage)  - 0xFFFFFFFF80000000) {
    		. = ALIGN(4096);
    		_tempheap = .;
    		*(.temp_heap_storage)

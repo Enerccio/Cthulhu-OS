@@ -44,7 +44,29 @@
 		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/pikokernel64"/>
 		</configuration>
-		<configuration configurationName="debug"/>
+		<configuration configurationName="debug">
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/build/libnyarlathotep"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/osroot/usr/lib"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/osroot/usr/include/sys"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/osroot/usr"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/osroot/usr/include"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/toolchain/usr/lib/gcc/x86_64-fhtagn/5.1.0"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/src/kclib"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/toolchain/usr/lib"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/osroot"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/src/kclib/usr/include/machine"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/src/kclib/usr/include/sys"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/toolchain/usr/lib/gcc/x86_64-fhtagn"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/src/kclib/usr/include"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/src/kclib/usr"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/toolchain/usr/lib/gcc/x86_64-fhtagn/5.1.0/include"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/build"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/osroot/usr/include/machine"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/toolchain"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/toolchain/usr"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/toolchain/usr/lib/gcc"/>
+			<resource resourceType="FOLDER" workspacePath="/cthulhuos/src/kclib/usr/lib"/>
+		</configuration>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>

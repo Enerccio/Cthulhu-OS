@@ -44,6 +44,7 @@
 #include "structures/gdt.h"
 
 extern volatile uint64_t clock_ms;
+extern struct multiboot_info multiboot_info;
 
 uint64_t kernel_tmp_heap_start;
 
@@ -53,6 +54,8 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	initialize_temporary_heap(heap_start);
 	initialize_physical_memory_allocation(mboot_addr);
 	initialize_standard_heap();
+
+	mboot_addr = &multiboot_info;
 
 	initialize_grx(mboot_addr);
 
