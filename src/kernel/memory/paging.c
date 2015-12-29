@@ -48,9 +48,10 @@ extern uint64_t get_active_page();
 extern void set_active_page(uint64_t address);
 extern uint64_t is_1GB_paging_supported();
 extern void invalidate_address(void* addr);
-extern uint16_t* video_memory;
+extern uint16_t* text_mode_video_memory;
 extern void*     ebda;
 extern uint64_t kernel_tmp_heap_start;
+extern void _frame_block;
 
 /**
  * Virtual address structure for standard paging.
@@ -312,7 +313,7 @@ void free_page_structure(uint64_t vaddress) {
 	MMU_PML4(vaddress)[MMU_PML4_INDEX(vaddress)] = 0; // free pdpt address
 }
 
-void deallocate_start_memory(){
+void deallocate_start_memory() {
 	MMU_PML4(0)[MMU_PML4_INDEX(0)] = 0;
 	broadcast_ipi_message(IPI_INVALIDATE_PAGE, 0, 0x400000);
 }
@@ -365,9 +366,36 @@ static uint64_t detect_maxram(struct multiboot_info* mboot_addr) {
     return highest;
 }
 
-size_t __strlen(char* c){
+static void* remap(void* phys_address) {
+	if (phys_address < 0x400000)
+		return phys_address;
+
+	uint64_t map_address = (uint64_t)&_frame_block;
+	uint64_t* paddress = get_page(map_address, false);
+
+	page_t page;
+	memset(&page, 0, sizeof(page_t));
+	page.address = phys_address;
+	page.flaggable.present = 1;
+	page.flaggable.rw = 1;
+	page.flaggable.us = 0;
+	*paddress = page.address;
+
+	invalidate_address(map_address);
+	return (void*)map_address;
+}
+
+size_t __strlen(char* c) {
 	size_t len = 0;
-	while (*c++ != '\0') ;
+	do {
+		if (len % 0x1000 == 0){
+			c = (char*)remap(c);
+		}
+		if (c++ == '\0')
+			break;
+		else
+			++len;
+	} while (true);
 	return len;
 }
 
@@ -403,7 +431,7 @@ bool check_if_used(struct multiboot_info* mbheader, uint64_t test) {
 
 	struct multiboot_mod_list* modules = (struct multiboot_mod_list*) (uint64_t) mbheader->mods_addr;
 	for (uint32_t i=0; i<mbheader->mods_count; i++) {
-		struct multiboot_mod_list* module = &modules[i];
+		struct multiboot_mod_list* module = (struct multiboot_mod_list*)(&modules[i]);
 		size_t mod_size = module->mod_end-module->mod_start;
 		if (check_used_range(test, (uint64_t)module->mod_start, mod_size))
 			return true;
@@ -454,26 +482,26 @@ start_search_again:;
 				// search from current base_addr up to maximum in the block
 				if (base_addr >= len+ba)
 					break; // end of search
-				for (uint64_t test = base_addr; test<len; test+=0x1000){
-					if (check_if_used(mboot_addr, test)){
+				for (uint64_t test = base_addr; test<len; test+=0x1000) {
+					if (check_if_used(mboot_addr, test)) {
 						// memory address is used by some internal structure
 						// write up how much size we have for this pool and then
 						// decide upon it
 						length = test - base_addr;
-						if (length == 0){
+						if (length == 0) {
 							// first 0x1000 already used
 							// check if there is more, if so, continue from 0x1000 onwards
 							// if not, this section is garbage
-							if (base_addr+0x1000<ba+len){
+							if (base_addr+0x1000<ba+len) {
 								base_addr += 0x1000;
 								goto start_search_again;
 							} else {
 								goto finish_this_section;
 							}
-						} else if (length < 0x10000){
+						} else if (length < 0x10000) {
 							// pool with size <0x10000, same as above
 							// but add length, skipping good but too small pool
-							if (base_addr+length<ba+len){
+							if (base_addr+length<ba+len) {
 								base_addr += length;
 								goto start_search_again;
 							} else {
@@ -533,7 +561,7 @@ start_search_again:;
 					se->frame_address = after_address + (i*0x1000);
 					frame_info_t* fi = &section->frame_array[i];
 
-					if (se->frame_address < 0x400000){
+					if (se->frame_address < 0x400000) {
 						// "already used" stack element
 						// so do not link this stack element at all
 						// link stack elements together

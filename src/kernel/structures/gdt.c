@@ -34,7 +34,7 @@ gdt_ptr_t gdt;
 
 extern void load_gdt(gdt_ptr_t* gdt, uint16_t tssid);
 
-void reinitialize_gdt(){
+void reinitialize_gdt() {
 	uint16_t numdesc = 5+(2*array_get_size(cpus));
 	descriptor_t* dscp = malloc(sizeof(descriptor_t)*numdesc);
 	gdt.descriptors = dscp;
@@ -69,7 +69,7 @@ void reinitialize_gdt(){
 	tss_descriptor_t* tsd;
 	size_t asize = array_get_size(cpus);
 	int itc = 5;
-	for (size_t i=0; i<asize; i++){
+	for (size_t i=0; i<asize; i++) {
 		cpu_t* cpu = array_get_at(cpus, i);
 		tsd = (tss_descriptor_t*)&gdt.descriptors[itc];
 		itc += 2;

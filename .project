@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>pikokernel64</name>
+	<name>cthulhuos</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -25,7 +25,7 @@
 	</natures>
 	<filteredResources>
 		<filter>
-			<id>1450817009999</id>
+			<id>0</id>
 			<name>src/kernel</name>
 			<type>30</type>
 			<matcher>
@@ -34,7 +34,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1450817010000</id>
+			<id>0</id>
 			<name>src/kernel</name>
 			<type>22</type>
 			<matcher>
@@ -43,7 +43,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1451208617726</id>
+			<id>0</id>
 			<name>src/kernel_dev_lib</name>
 			<type>30</type>
 			<matcher>
@@ -52,7 +52,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1451208617728</id>
+			<id>0</id>
 			<name>src/kernel_dev_lib</name>
 			<type>30</type>
 			<matcher>

@@ -68,8 +68,15 @@ SECTIONS
    _end = .;
    
    .temp_heap_storage BLOCK(40K) : AT(ADDR(.temp_heap_storage)  - 0xFFFFFFFF80000000) {
+   		. = ALIGN(4096);
    		_tempheap = .;
    		*(.temp_heap_storage)
+   }
+   
+   .map_frame BLOCK(8K) : AT(ADDR(.map_frame)  - 0xFFFFFFFF80000000) {
+        . = ALIGN(4096);
+        _frame_block = .;
+        *(.map_frame)
    }
 
    /DISCARD/ :

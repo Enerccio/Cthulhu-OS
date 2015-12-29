@@ -67,7 +67,7 @@ typedef void* aligned_ptr_t;
 	} while (0)
 
 #define debug_cond(cond) do { \
-	if (cond){ \
+	if (cond) { \
 		debug_break; \
 	} while (0)
 

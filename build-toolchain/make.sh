@@ -34,13 +34,13 @@ cd ..
 
 pushd sources/kclib/kclib
 make clean
-make all PREFIX=${SYSROOT}/usr CC=x86_64-piko-gcc AR=x86_64-piko-ar MODE=user
+make all PREFIX=${SYSROOT}/usr CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar MODE=user
 make crt0 PREFIX=usr SYSROOT=${SYSROOT} MODE=user
 popd
 
 pushd sources/kclib/kclib
 make clean
-make all PREFIX=${KERNELLIB}/usr CC=x86_64-piko-gcc AR=x86_64-piko-ar
+make all PREFIX=${KERNELLIB}/usr CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar
 popd
 
 cd build-gcc

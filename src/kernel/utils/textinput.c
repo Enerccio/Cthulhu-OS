@@ -30,7 +30,7 @@
 #include "../ports/ports.h"
 #endif
 
-extern volatile uint16_t* video_memory;
+extern volatile uint16_t* text_mode_video_memory;
 uint8_t cursor_y = 0;
 uint8_t cursor_x = 0;
 
@@ -57,20 +57,24 @@ typedef enum vga_color {
  * Scrolls the screen by one line.
  */
 static inline void scroll() {
-    uint8_t attributeByte = (0 /*black*/<< 4) | (15 /*white*/& 0x0F);
-    uint16_t blank = 0x20 | (attributeByte << 8);
+	if (mode == MODE_TEXT) {
+		uint8_t attributeByte = (0 /*black*/<< 4) | (15 /*white*/& 0x0F);
+		uint16_t blank = 0x20 | (attributeByte << 8);
 
-    if (cursor_y >= 25) {
-        int i;
-        for (i = 0 * 80; i < 24 * 80; i++) {
-            video_memory[i] = video_memory[i + 80];
-        }
+		if (cursor_y >= 25) {
+			int i;
+			for (i = 0 * 80; i < 24 * 80; i++) {
+				text_mode_video_memory[i] = text_mode_video_memory[i + 80];
+			}
 
-        for (i = 24 * 80; i < 25 * 80; i++) {
-            video_memory[i] = blank;
-        }
-        cursor_y = 24;
-    }
+			for (i = 24 * 80; i < 25 * 80; i++) {
+				text_mode_video_memory[i] = blank;
+			}
+			cursor_y = 24;
+		}
+	} else {
+		// TODO
+	}
 }
 
 /**
@@ -102,10 +106,6 @@ void kd_cput(char c, uint8_t backColour, uint8_t foreColour) {
         write_byte_com(COM1, '\r');
     write_byte_com(COM1, c);
 #endif
-    uint8_t attributeByte = (backColour << 4) | (foreColour & 0x0F);
-
-    uint16_t attribute = attributeByte << 8;
-    volatile uint16_t* location;
 
     if (c == 0x08 && cursor_x) {
         if (cursor_x)
@@ -118,9 +118,16 @@ void kd_cput(char c, uint8_t backColour, uint8_t foreColour) {
         cursor_x = 0;
         cursor_y++;
     } else if (c >= ' ') {
-        location = video_memory + (cursor_y * 80 + cursor_x);
-        *location = c | attribute;
-        cursor_x++;
+    	if (mode == MODE_TEXT) {
+			uint8_t attributeByte = (backColour << 4) | (foreColour & 0x0F);
+			uint16_t attribute = attributeByte << 8;
+			volatile uint16_t* location;
+			location = text_mode_video_memory + (cursor_y * 80 + cursor_x);
+			*location = c | attribute;
+			cursor_x++;
+    	} else {
+    		// TODO
+    	}
     }
 
     if (cursor_x >= 80) {
@@ -129,7 +136,9 @@ void kd_cput(char c, uint8_t backColour, uint8_t foreColour) {
     }
 
     scroll();
-    move_cursor();
+    if (mode == MODE_TEXT) {
+    	move_cursor();
+    }
 }
 
 /**
@@ -143,17 +152,21 @@ void kd_clear() {
  * Clears screen with selected color.
  */
 void kd_cclear(uint8_t backColour) {
-    uint8_t attributeByte = (backColour << 4) | (15 & 0x0F);
-    uint16_t blank = 0x20 | (attributeByte << 8);
+	if (mode == MODE_TEXT) {
+		uint8_t attributeByte = (backColour << 4) | (15 & 0x0F);
+		uint16_t blank = 0x20 | (attributeByte << 8);
 
-    int i;
-    for (i = 0; i < 80 * 25; i++) {
-        video_memory[i] = blank;
-    }
+		int i;
+		for (i = 0; i < 80 * 25; i++) {
+			text_mode_video_memory[i] = blank;
+		}
 
-    cursor_x = 0;
-    cursor_y = 0;
-    move_cursor();
+	    cursor_x = 0;
+	    cursor_y = 0;
+	    move_cursor();
+	} else {
+		// TODO
+	}
 }
 
 /**

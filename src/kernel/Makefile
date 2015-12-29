@@ -20,12 +20,13 @@ AS := nasm
 
 .PHONY: all clean kclib memory utils kclib-clean memory-clean utils-clean ports ports-clean tasks tasks-clean \
 		structures structures-clean syscalls syscalls-clean cpus cpus-clean interrupts interrupts-clean \
+		grx grx-clean \
 		utils-collections utils-collections-clean
 
 all: azathoth.img
 
 clean: kclib-clean memory-clean utils-clean ports-clean tasks-clean structures-clean \
-		cpus-clean utils-collections-clean interrupts-clean syscalls-clean
+		cpus-clean utils-collections-clean interrupts-clean syscalls-clean grx-clean
 	-rm -f $(OBJ)
 	-rm -f $(wildcard *.d)
 	-rm ${TARGETPATH}azathoth.img
@@ -90,6 +91,12 @@ cpus:
 
 cpus-clean:
 	$(MAKE) clean -C cpus MODE=$(MODE)
+
+grx:
+	$(MAKE) -C $@ MODE=$(MODE)
+
+grx-clean:
+	$(MAKE) clean -C grx MODE=$(MODE)
 	
 utils-collections:
 	$(MAKE) -C utils/collections MODE=$(MODE)
@@ -97,10 +104,12 @@ utils-collections:
 utils-collections-clean:
 	$(MAKE) clean -C utils/collections MODE=$(MODE)
 	
-azathoth.img: $(OBJ) kclib memory utils ports tasks structures syscalls cpus interrupts utils-collections 
+azathoth.img: $(OBJ) kclib memory utils ports tasks structures syscalls cpus interrupts utils-collections \
+					 grx
 	$(LD) -Tlinker.ld -o ${TARGETPATH}$@ $(OBJ) \
 		$(wildcard kclib/*.o) $(wildcard utils/*.o) $(wildcard memory/*.o) \
 		$(wildcard ports/*.o) $(wildcard tasks/*.o) $(wildcard structures/*.o) \
 		$(wildcard syscalls/*.o) $(wildcard cpus/*.o) $(wildcard interrupts/*.o)\
+		$(wildcard grx/*.o)\
 		$(wildcard utils/collections/*.o) \
 		$(LDFLAGS) -L../kclib/usr/lib

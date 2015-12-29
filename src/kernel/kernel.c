@@ -54,6 +54,8 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	initialize_physical_memory_allocation(mboot_addr);
 	initialize_standard_heap();
 
+	initialize_grx(mboot_addr);
+
 	cpus = NULL;
 
     initialize_ports();

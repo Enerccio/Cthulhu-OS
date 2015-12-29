@@ -77,3 +77,6 @@ align 16
 heap:
 resb 0x40000
 
+section .map_frame, nobits
+map_frame:
+resb 0x2000

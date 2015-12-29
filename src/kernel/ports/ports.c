@@ -37,7 +37,7 @@ uint8_t   lpt_ports_count;
 /** available lpt ports are listed here */
 uint32_t  lpt_ports_address[3];
 /** VGA memory address */
-volatile uint16_t* video_memory;
+volatile uint16_t* text_mode_video_memory;
 /** EBDA memory address */
 void*     ebda;
 
@@ -68,7 +68,7 @@ void init_serial_port(uint32_t pa) {
  */
 void initialize_ports() {
     ebda = (void*)physical_to_virtual((((uintptr_t)*BDA_EBDA)>>4));
-    video_memory = (uint16_t*)physical_to_virtual((uint64_t)(0xB8000));
+    text_mode_video_memory = (uint16_t*)physical_to_virtual((uint64_t)(0xB8000));
 
     com_ports_count = 4;
     memset(com_ports_address, 0, sizeof(uint32_t)*com_ports_count);
