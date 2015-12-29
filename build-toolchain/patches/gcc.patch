@@ -9,7 +9,7 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/config.sub gcc/config.sub
 +	# Each alternative MUST END IN A *, to match a version number. 
  	# -sysv* is not here because it comes later, after sysvr4.
 -	-gnu* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
-+	-gnu* | -piko* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
++	-gnu* | -fhtagn* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
  	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -cnk* | -sunos | -sunos[34]*\
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
  	      | -sym* | -kopensolaris* | -plan9* \
@@ -20,7 +20,7 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/fixincludes/mkfixinc.sh gcc/fix
  
  # Check for special fix rules for particular targets
  case $machine in
-+	*-piko* | \
++	*-fhtagn* | \
      i?86-*-cygwin* | \
      i?86-*-mingw32* | \
      x86_64-*-mingw32* | \
@@ -30,13 +30,13 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/i386/t-x86_64-elf gc
 @@ -0,0 +1,2 @@
 +MULTILIB_OPTIONS  += mno-red-zone
 +MULTILIB_DIRNAMES += no-red-zone
-diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/piko.h gcc/gcc/config/piko.h
---- build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/piko.h	1970-01-01 01:00:00.000000000 +0100
-+++ gcc/gcc/config/piko.h	2015-12-01 18:14:29.037314293 +0100
+diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/fhtagn.h gcc/gcc/config/fhtagn.h
+--- build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/fhtagn.h	1970-01-01 01:00:00.000000000 +0100
++++ gcc/gcc/config/fhtagn.h	2015-12-01 18:14:29.037314293 +0100
 @@ -0,0 +1,32 @@
 +/* Useful if you wish to make target-specific gcc changes. */
-+#undef TARGET_PIKO
-+#define TARGET_PIKO 1
++#undef TARGET_fhtagn
++#define TARGET_fhtagn 1
 + 
 +/* Default arguments you want when running your
 +   i686-myos-gcc/x86_64-myos-gcc toolchain */
@@ -60,9 +60,9 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/piko.h gcc/gcc/confi
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS()      \
 +  do {                                \
-+    builtin_define ("__piko__");      \
++    builtin_define ("__fhtagn__");      \
 +    builtin_define ("__unix__");      \
-+    builtin_assert ("system=piko");   \
++    builtin_assert ("system=fhtagn");   \
 +    builtin_assert ("system=unix");   \
 +    builtin_assert ("system=posix");   \
 +  } while(0); 
@@ -73,7 +73,7 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config.gcc gcc/gcc/config.g
  
  # Common parts for widely ported systems.
  case ${target} in
-+*-*-piko*)
++*-*-fhtagn*)
 +  gas=yes
 +  gnu_ld=yes
 +  default_use_cxa_atexit=yes
@@ -94,12 +94,12 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config.gcc gcc/gcc/config.g
  esac
  
  case ${target} in
-+i[34567]86-*-piko*)
-+    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h piko.h"
++i[34567]86-*-fhtagn*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h fhtagn.h"
 +    ;;
-+x86_64-*-piko*)
++x86_64-*-fhtagn*)
 +	tmake_file="${tmake_file} i386/t-x86_64-elf"
-+    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h piko.h"
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h fhtagn.h"
 +    ;;
  aarch64*-*-elf)
  	tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h"
@@ -112,11 +112,11 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/libgcc/config.host gcc/libgcc/c
  
  case ${host} in
 -aarch64*-*-elf)
-+i[34567]86-*-piko*)
++i[34567]86-*-fhtagn*)
 +	extra_parts="$extra_parts crtbegin.o crtend.o"
 +	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
 +	;;
-+x86_64-*-piko*)
++x86_64-*-fhtagn*)
 +	extra_parts="$extra_parts crtbegin.o crtend.o"
 +	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
 +	;;
@@ -131,7 +131,7 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/libstdc++-v3/crossconfig.m4 gcc
  AC_DEFUN([GLIBCXX_CROSSCONFIG],[
  # Base decisions on target environment.
  case "${host}" in
-+	*-piko*)
++	*-fhtagn*)
 +    GLIBCXX_CHECK_COMPILER_FEATURES
 +    GLIBCXX_CHECK_LINKER_FEATURES 
 +    GLIBCXX_CHECK_MATH_SUPPORT

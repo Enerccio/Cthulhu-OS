@@ -14,21 +14,21 @@ CPPFLAGS  := $(BASE_CPPFLAGS)  $(MODE_CPPFLAGS)
 LDFLAGS   := $(BASE_LDFLAGS)   $(MODE_LDFLAGS)
 NASMFLAGS := $(BASE_NASMFLAGS) $(MODE_NASMFLAGS)
 
-CC := x86_64-piko-gcc
-LD := x86_64-piko-gcc
+CC := x86_64-fhtagn-gcc
+LD := x86_64-fhtagn-gcc
 AS := nasm
 
 .PHONY: all clean kclib memory utils kclib-clean memory-clean utils-clean ports ports-clean tasks tasks-clean \
 		structures structures-clean syscalls syscalls-clean cpus cpus-clean interrupts interrupts-clean \
 		utils-collections utils-collections-clean
 
-all: piko-kernel.img
+all: azathoth.img
 
 clean: kclib-clean memory-clean utils-clean ports-clean tasks-clean structures-clean \
 		cpus-clean utils-collections-clean interrupts-clean syscalls-clean
 	-rm -f $(OBJ)
 	-rm -f $(wildcard *.d)
-	-rm ${TARGETPATH}piko-kernel.img
+	-rm ${TARGETPATH}azathoth.img
 
 %.o : %.c 
 	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/usr/include"-c $<
@@ -97,7 +97,7 @@ utils-collections:
 utils-collections-clean:
 	$(MAKE) clean -C utils/collections MODE=$(MODE)
 	
-piko-kernel.img: $(OBJ) kclib memory utils ports tasks structures syscalls cpus interrupts utils-collections 
+azathoth.img: $(OBJ) kclib memory utils ports tasks structures syscalls cpus interrupts utils-collections 
 	$(LD) -Tlinker.ld -o ${TARGETPATH}$@ $(OBJ) \
 		$(wildcard kclib/*.o) $(wildcard utils/*.o) $(wildcard memory/*.o) \
 		$(wildcard ports/*.o) $(wildcard tasks/*.o) $(wildcard structures/*.o) \

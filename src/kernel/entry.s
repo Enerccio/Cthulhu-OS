@@ -84,8 +84,8 @@ GDT64:                           ; Global Descriptor Table (64-bit).
 [GLOBAL _start]
 _start:
     ;mov dword [0x7E00], 0
-    jmp piko_loader
-piko_loader:
+    jmp azathoth_loader
+azathoth_loader:
     push ebx
     push ebp
 query_cpuid:

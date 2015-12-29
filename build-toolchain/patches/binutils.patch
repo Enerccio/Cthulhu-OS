@@ -5,13 +5,13 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/bfd/config.bfd binutil
      ;;
  
  # START OF targmatch.h
-+  i[3-7]86-*-piko*)
++  i[3-7]86-*-fhtagn*)
 +	targ_defvec=bfd_elf32_i386_vec
 +	targ_selvecs=
 +	targ64_selvecs=bfd_elf64_x86_64_vec
 +	;;
 +#ifdef BFD64
-+  x86_64-*-piko*)
++  x86_64-*-fhtagn*)
 +	targ_defvec=bfd_elf64_x86_64_vec
 +	targ_selvecs=bfd_elf32_i386_vec
 +	want64=true
@@ -28,7 +28,7 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/config.sub binutils/bi
  	# Each alternative MUST END IN A *, to match a version number.
  	# -sysv* is not here because it comes later, after sysvr4.
 -	-gnu* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
-+	-gnu* | -piko* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
++	-gnu* | -fhtagn* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
  	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -cnk* | -sunos | -sunos[34]*\
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
  	      | -sym* | -kopensolaris* | -plan9* \
@@ -39,7 +39,7 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/gas/configure.tgt binu
  generic_target=${cpu_type}-$vendor-$os
  # Note: This table is alpha-sorted, please try to keep it that way.
  case ${generic_target} in
-+  i386-*-piko*)    			fmt=elf;;
++  i386-*-fhtagn*)    			fmt=elf;;
    aarch64*-*-elf)			fmt=elf;;
    aarch64*-*-linux*)			fmt=elf em=linux ;;
  
@@ -20902,28 +20902,28 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/configure.tgt binut
  # architecture variants should be kept together even if their names
  # break the alpha sorting.
  case "${targ}" in
-+i[3-7]86-*-piko*)
-+			targ_emul=elf_i386_piko
++i[3-7]86-*-fhtagn*)
++			targ_emul=elf_i386_fhtagn
 +			targ_extra_emuls=elf_i386
-+			targ64_extra_emuls="elf_x86_64_piko elf_x86_64"
++			targ64_extra_emuls="elf_x86_64_fhtagn elf_x86_64"
 +			;;
-+x86_64-*-piko*)
-+			targ_emul=elf_x86_64_piko
-+			targ_extra_emuls="elf_i386_piko elf_x86_64 elf_i386"
++x86_64-*-fhtagn*)
++			targ_emul=elf_x86_64_fhtagn
++			targ_extra_emuls="elf_i386_fhtagn elf_x86_64 elf_i386"
 +			;;
  aarch64_be-*-elf)	targ_emul=aarch64elfb
  			targ_extra_emuls="aarch64elf aarch64elf32 aarch64elf32b armelfb armelf" ;;
  aarch64-*-elf)		targ_emul=aarch64elf
-diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/emulparams/elf_i386_piko.sh binutils/binutils-2.24/ld/emulparams/elf_i386_piko.sh
---- build-toolchain/sources/binutils/binutils-2.24/ld/emulparams/elf_i386_piko.sh	1970-01-01 01:00:00.000000000 +0100
-+++ binutils/binutils-2.24/ld/emulparams/elf_i386_piko.sh	2015-12-02 21:25:01.276867211 +0100
+diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/emulparams/elf_i386_fhtagn.sh binutils/binutils-2.24/ld/emulparams/elf_i386_fhtagn.sh
+--- build-toolchain/sources/binutils/binutils-2.24/ld/emulparams/elf_i386_fhtagn.sh	1970-01-01 01:00:00.000000000 +0100
++++ binutils/binutils-2.24/ld/emulparams/elf_i386_fhtagn.sh	2015-12-02 21:25:01.276867211 +0100
 @@ -0,0 +1,3 @@
 +. ${srcdir}/emulparams/elf_i386.sh
 +GENERATE_SHLIB_SCRIPT=yes
 +GENERATE_PIE_SCRIPT=yes
-diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/emulparams/elf_x86_64_piko.sh binutils/binutils-2.24/ld/emulparams/elf_x86_64_piko.sh
---- build-toolchain/sources/binutils/binutils-2.24/ld/emulparams/elf_x86_64_piko.sh	1970-01-01 01:00:00.000000000 +0100
-+++ binutils/binutils-2.24/ld/emulparams/elf_x86_64_piko.sh	2015-12-02 21:25:25.316970668 +0100
+diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/emulparams/elf_x86_64_fhtagn.sh binutils/binutils-2.24/ld/emulparams/elf_x86_64_fhtagn.sh
+--- build-toolchain/sources/binutils/binutils-2.24/ld/emulparams/elf_x86_64_fhtagn.sh	1970-01-01 01:00:00.000000000 +0100
++++ binutils/binutils-2.24/ld/emulparams/elf_x86_64_fhtagn.sh	2015-12-02 21:25:25.316970668 +0100
 @@ -0,0 +1 @@
 +. ${srcdir}/emulparams/elf_x86_64.sh
 diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/Makefile.am binutils/binutils-2.24/ld/Makefile.am
@@ -20933,7 +20933,7 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/Makefile.am binutil
  	eelf32xstormy16.c \
  	eelf32xtensa.c \
  	eelf_i386.c \
-+	eelf_i386_piko.c \
++	eelf_i386_fhtagn.c \
  	eelf_i386_be.c \
  	eelf_i386_chaos.c \
  	eelf_i386_fbsd.c \
@@ -20941,7 +20941,7 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/Makefile.am binutil
  	eelf_k1om.c \
  	eelf_k1om_fbsd.c \
  	eelf_x86_64.c \
-+	eelf_x86_64_piko.c \
++	eelf_x86_64_fhtagn.c \
  	eelf_x86_64_fbsd.c \
  	eelf_x86_64_nacl.c \
  	eelf_x86_64_sol2.c \
@@ -20949,9 +20949,9 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/Makefile.am binutil
  eelf_i386.c: $(srcdir)/emulparams/elf_i386.sh \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  	${GENSCRIPTS} elf_i386 "$(tdir_elf_i386)"
-+eelf_i386_piko.c: $(srcdir)/emulparams/elf_i386_piko.sh \
++eelf_i386_fhtagn.c: $(srcdir)/emulparams/elf_i386_fhtagn.sh \
 +  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-+	${GENSCRIPTS} elf_i386_piko "$(tdir_elf_i386_piko)"
++	${GENSCRIPTS} elf_i386_fhtagn "$(tdir_elf_i386_fhtagn)"
  eelf_i386_be.c: $(srcdir)/emulparams/elf_i386_be.sh \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  	${GENSCRIPTS} elf_i386_be "$(tdir_elf_i386_be)"
@@ -20959,9 +20959,9 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/Makefile.am binutil
  eelf_x86_64.c: $(srcdir)/emulparams/elf_x86_64.sh \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  	${GENSCRIPTS} elf_x86_64 "$(tdir_elf_x86_64)"
-+eelf_x86_64_piko.c: $(srcdir)/emulparams/elf_x86_64_piko.sh \
++eelf_x86_64_fhtagn.c: $(srcdir)/emulparams/elf_x86_64_fhtagn.sh \
 +  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-+	${GENSCRIPTS} elf_x86_64_piko "$(tdir_elf_x86_64_piko)"
++	${GENSCRIPTS} elf_x86_64_fhtagn "$(tdir_elf_x86_64_fhtagn)"
  eelf_x86_64_fbsd.c: $(srcdir)/emulparams/elf_x86_64_fbsd.sh \
    $(srcdir)/emulparams/elf_x86_64.sh \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
@@ -20972,7 +20972,7 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/Makefile.in binutil
  	eelf32xstormy16.c \
  	eelf32xtensa.c \
  	eelf_i386.c \
-+	eelf_i386_piko.c \
++	eelf_i386_fhtagn.c \
  	eelf_i386_be.c \
  	eelf_i386_chaos.c \
  	eelf_i386_fbsd.c \
@@ -20980,7 +20980,7 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/Makefile.in binutil
  	eelf_k1om.c \
  	eelf_k1om_fbsd.c \
  	eelf_x86_64.c \
-+	eelf_x86_64_piko.c \
++	eelf_x86_64_fhtagn.c \
  	eelf_x86_64_fbsd.c \
  	eelf_x86_64_nacl.c \
  	eelf_x86_64_sol2.c \
@@ -20988,7 +20988,7 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/Makefile.in binutil
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_fbsd.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_ldso.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_nacl.Po@am__quote@
-+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_piko.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_fhtagn.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_sol2.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_vxworks.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_k1om.Po@am__quote@
@@ -20996,7 +20996,7 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/Makefile.in binutil
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_fbsd.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_nacl.Po@am__quote@
-+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_piko.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_fhtagn.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_sol2.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/egld960.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/egld960coff.Po@am__quote@
@@ -21004,9 +21004,9 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/Makefile.in binutil
  eelf_i386.c: $(srcdir)/emulparams/elf_i386.sh \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  	${GENSCRIPTS} elf_i386 "$(tdir_elf_i386)"
-+eelf_i386_piko.c: $(srcdir)/emulparams/elf_i386_piko.sh \
++eelf_i386_fhtagn.c: $(srcdir)/emulparams/elf_i386_fhtagn.sh \
 +  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-+	${GENSCRIPTS} elf_i386_piko "$(tdir_elf_i386_piko)"
++	${GENSCRIPTS} elf_i386_fhtagn "$(tdir_elf_i386_fhtagn)"
  eelf_i386_be.c: $(srcdir)/emulparams/elf_i386_be.sh \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  	${GENSCRIPTS} elf_i386_be "$(tdir_elf_i386_be)"
@@ -21014,9 +21014,9 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/Makefile.in binutil
  eelf_x86_64.c: $(srcdir)/emulparams/elf_x86_64.sh \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  	${GENSCRIPTS} elf_x86_64 "$(tdir_elf_x86_64)"
-+eelf_x86_64_piko.c: $(srcdir)/emulparams/elf_x86_64_piko.sh \
++eelf_x86_64_fhtagn.c: $(srcdir)/emulparams/elf_x86_64_fhtagn.sh \
 +  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-+	${GENSCRIPTS} elf_x86_64_piko "$(tdir_elf_x86_64_piko)"
++	${GENSCRIPTS} elf_x86_64_fhtagn "$(tdir_elf_x86_64_fhtagn)"
  eelf_x86_64_fbsd.c: $(srcdir)/emulparams/elf_x86_64_fbsd.sh \
    $(srcdir)/emulparams/elf_x86_64.sh \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}

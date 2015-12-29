@@ -12,8 +12,8 @@ CPPFLAGS  := $(BASE_CPPFLAGS)  $(MODE_CPPFLAGS)
 LDFLAGS   := $(BASE_LDFLAGS)   $(MODE_LDFLAGS)
 NASMFLAGS := $(BASE_NASMFLAGS) $(MODE_NASMFLAGS)
 
-CC := x86_64-piko-gcc
-LD := x86_64-piko-gcc
+CC := x86_64-fhtagn-gcc
+LD := x86_64-fhtagn-gcc
 AS := nasm
 
 .PHONY: all clean 

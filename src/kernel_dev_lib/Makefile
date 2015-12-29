@@ -1,4 +1,4 @@
-TARGETPATH ?= ../../build/libpikodev/
+TARGETPATH ?= ../../build/libnyarlathotep/
 
 include confbase.mk
 include $(MODE).mk
@@ -14,19 +14,19 @@ CPPFLAGS  := $(BASE_CPPFLAGS)  $(MODE_CPPFLAGS)
 LDFLAGS   := $(BASE_LDFLAGS)   $(MODE_LDFLAGS)
 NASMFLAGS := $(BASE_NASMFLAGS) $(MODE_NASMFLAGS)
 
-CC := x86_64-piko-gcc
-AR := x86_64-piko-ar
+CC := x86_64-fhtagn-gcc
+AR := x86_64-fhtagn-ar
 AS := nasm
 
 .PHONY: all clean 
 
-all: libpikodev.a
+all: libnyarlathotep.a
 
 clean: 
 	-rm -f $(OBJ)
 	-rm -f $(wildcard *.d)
-	-rm ${TARGETPATH}libpikodev.a
-	-rm ${TARGETPATH}libpikod.h
+	-rm ${TARGETPATH}libnyarlathotep.a
+	-rm ${TARGETPATH}nyarlathotep.h
 	
 %.o : %.c 
 	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../kclib/usr/include" -c $<
@@ -35,6 +35,6 @@ clean:
 %_o.o : %.s 
 	$(AS) $(NASMFLAGS) $< -o $@
 	
-libpikodev.a: $(OBJ)
-	cp libpikod.h ${TARGETPATH}libpikod.h -r 
+libnyarlathotep.a: $(OBJ)
+	cp nyarlathotep.h ${TARGETPATH}nyarlathotep.h -r 
 	$(AR) -rcs ${TARGETPATH}$@ $(OBJ)

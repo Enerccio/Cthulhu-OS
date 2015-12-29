@@ -43,26 +43,11 @@
 #include "interrupts/interrupts.h"
 #include "structures/gdt.h"
 
-/**
- * Prints kernel version.
- */
-void print_loader_revision() {
-    kd_cwrite("PIKOKERNEL ", 0, 4);
-    kd_cwrite(KERNEL_MAIN_VERSION, 0, 4);
-    kd_cwrite(".", 0, 4);
-    kd_cwrite(KERNEL_MINOR_VESION, 0, 4);
-    kd_cwrite(", revision ", 0, 4);
-    kd_cwrite(KERNEL_BUILD_VERSION, 0, 4);
-    kd_cwrite(" - ", 0, 4);
-    kd_cwrite(KERNEL_CODENAME, 0, 4);
-    kd_newl();
-}
-
 extern volatile uint64_t clock_ms;
 
 uint64_t kernel_tmp_heap_start;
 
-void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
+void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	kernel_tmp_heap_start = heap_start;
 
 	initialize_temporary_heap(heap_start);
@@ -74,7 +59,6 @@ void kernel_main(struct multiboot* mboot_addr, uint64_t heap_start) {
     initialize_ports();
 
     kd_clear();
-    print_loader_revision();
     init_errors();
 
     log_msg("Paging memory and kernel heap initialized");

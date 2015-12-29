@@ -334,7 +334,7 @@ typedef struct
  * returns total addressable space (might contain special
  * addresses).
  */
-static uint64_t detect_maxram(struct multiboot* mboot_addr) {
+static uint64_t detect_maxram(struct multiboot_info* mboot_addr) {
     uint64_t highest = 0;
     if ((mboot_addr->flags & 0b1) == 1) {
         highest = mboot_addr->mem_lower * 1024;
@@ -385,31 +385,29 @@ bool check_if_used_string(uint64_t test, char* string) {
 	return check_used_range(test, (uint64_t)string, __strlen(string)+1);
 }
 
-
-
-bool check_if_used(struct multiboot* mbheader, uint64_t test) {
+bool check_if_used(struct multiboot_info* mbheader, uint64_t test) {
 	uint64_t kend = kernel_tmp_heap_start - 0xFFFFFFFF80000000 + 0x40000;
 	if (check_used_range(test, 0, kend))
 		return true;
 
-	if (check_used_range(test, (uint64_t)mbheader, sizeof(struct multiboot)))
+	if (check_used_range(test, (uint64_t)mbheader, sizeof(struct multiboot_info)))
 		return true;
 
 	char* cmdline = (char*) (uint64_t) mbheader->cmdline;
 	if (check_if_used_string(test, cmdline))
 		return true;
 
-	size_t mods_size = mbheader->mods_count * sizeof(struct mb_mod_table);
+	size_t mods_size = mbheader->mods_count * sizeof(struct multiboot_mod_list);
 	if (check_used_range(test, mbheader->mods_addr, mods_size))
 		return true;
 
-	struct mb_mod_table* modules = (struct mb_mod_table*) (uint64_t) mbheader->mods_addr;
+	struct multiboot_mod_list* modules = (struct multiboot_mod_list*) (uint64_t) mbheader->mods_addr;
 	for (uint32_t i=0; i<mbheader->mods_count; i++) {
-		struct mb_mod_table* module = &modules[i];
+		struct multiboot_mod_list* module = &modules[i];
 		size_t mod_size = module->mod_end-module->mod_start;
 		if (check_used_range(test, (uint64_t)module->mod_start, mod_size))
 			return true;
-		char* mod_name = (char*)(uint64_t)module->string;
+		char* mod_name = (char*)(uint64_t)module->cmdline;
 		if (check_if_used_string(test, mod_name))
 			return true;
 	}
@@ -426,12 +424,7 @@ bool check_if_used(struct multiboot* mbheader, uint64_t test) {
  * Fills bitmaps for frame_map_usage, phys_map and returns bitmap for frame_map
  * from available ram entries.
  */
-
-
-/////////// TODO: SOMEWHERE HERE IS BUG WITH SECTIONS OVERWRITING OR SOMETHING
-/////////// FIND IT
-
-static void create_frame_pool(struct multiboot* mboot_addr) {
+static void create_frame_pool(struct multiboot_info* mboot_addr) {
 	section_info_t* firstfp = NULL;
 	section_info_t* lastfp = NULL;
 
@@ -638,7 +631,7 @@ bool __mem_mirror_present;
  *  4. initializes memory mirror
  *  5- deallocates old memory (frames are not returned).
  */
-void initialize_physical_memory_allocation(struct multiboot* mboot_addr) {
+void initialize_physical_memory_allocation(struct multiboot_info* mboot_addr) {
 	__mem_mirror_present = false;
     frame_pool = NULL;
     maxram = detect_maxram(mboot_addr);
