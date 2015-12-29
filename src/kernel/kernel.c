@@ -57,6 +57,10 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 
 	mboot_addr = &multiboot_info;
 
+	__initialize_kclib();
+
+	debug_break;
+
 	initialize_grx(mboot_addr);
 
 	cpus = NULL;
@@ -67,8 +71,7 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
     init_errors();
 
     log_msg("Paging memory and kernel heap initialized");
-
-    __initialize_kclib();
+    log_msg("Ports initialized");
     log_msg("KCLib initialized");
 
     init_table_acpi();

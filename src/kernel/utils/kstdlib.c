@@ -26,6 +26,8 @@
  */
 #include "kstdlib.h"
 
+#include "../memory/paging.h"
+
 /**
  * Returns simple random number
  */
@@ -100,3 +102,30 @@ bool int_cmpr_function(void* a, void* b) {
     return a == b ? true : false;
 }
 
+void* get_module(struct multiboot_info* mbheader, const char* name,
+		size_t* size, bool reallocate, bool delete) {
+	struct multiboot_mod_list* modules = (struct multiboot_mod_list*) (uint64_t) mbheader->mods_addr;
+	for (uint32_t i=0; i<mbheader->mods_count; i++) {
+		struct multiboot_mod_list* module =
+				(struct multiboot_mod_list*)physical_to_virtual((uint64_t)&modules[i]);
+		size_t mod_size = module->mod_end-module->mod_start;
+		*size = mod_size;
+		char* mod_name = (char*)physical_to_virtual((uint64_t)module->cmdline);
+		if (strcmp(mod_name, name) == 0){
+			// found the correct module
+			void* module_address = (void*)physical_to_virtual(module->mod_start);
+			if (reallocate){
+				void* mod_na = malloc(mod_size);
+				if (mod_na == NULL)
+					return NULL;
+				memcpy(mod_na, module_address, mod_size);
+				module_address = mod_na;
+			}
+			if (delete){
+				deallocate_starting_address(module->mod_start, mod_size);
+			}
+			return module_address;
+		}
+	}
+	return NULL;
+}

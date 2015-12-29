@@ -221,4 +221,12 @@ void deallocate(uint64_t from, size_t amount);
  */
 bool allocated(uint64_t addr);
 
+/**
+ * Deallocates starting memory.
+ */
 void deallocate_start_memory();
+
+/**
+ * Dealocates starting address at point, used to deallocate modules
+ */
+void deallocate_starting_address(uint64_t address, uint64_t size);

@@ -19,19 +19,21 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * grx.c
+ * font.c
  *  Created on: Dec 29, 2015
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#include "grx.h"
 #include "font.h"
 
-uint8_t mode;
+#include "../utils/rsod.h"
+#include "../utils/kstdlib.h"
 
-void initialize_grx(struct multiboot_info* mb){
-	mode = MODE_TEXT;
-
-	initialize_font(mb);
+void initialize_font(struct multiboot_info* mbinfo) {
+	size_t fnt_size;
+	void* font_data = get_module(mbinfo, "font", &fnt_size, true, true);
+	if (font_data == NULL){
+		error(ERROR_NO_FONT_DETECTED, 0, 0, &initialize_font);
+	}
 }

@@ -458,6 +458,92 @@ bool check_if_used(struct multiboot_info* mbheader, uint64_t test) {
 }
 
 /**
+ * Creates pool from bound adresses
+ */
+section_info_t* make_pool(uint64_t length, uint64_t base_addr, section_info_t* lastfp, section_info_t** firstfp) {
+	// total amount of frames available if we count in metadata
+	uint64_t uframes = (length-sizeof(section_info_t))/(0x1000+(sizeof(stack_element_t)+sizeof(frame_info_t)))-1;
+	// total size of metadata header
+	uint64_t total_size = sizeof(section_info_t) + (uframes * sizeof(stack_element_t)) + (uframes * sizeof(frame_info_t));
+	// address of first effective frame
+	uint64_t after_address = (base_addr + total_size + 0x1000) & ~0xFFF;
+
+	// allocate base_addr and size of metadata header in virt. memory
+	for (uint64_t addr = base_addr; addr < base_addr + total_size; addr += 0x1000) {
+		uint64_t* paddress = get_page(addr, true);
+		page_t page;
+		memset(&page, 0, sizeof(page_t));
+		page.address = addr;
+		page.flaggable.present = 1;
+		page.flaggable.rw = 1;
+		page.flaggable.us = 1;
+		*paddress = page.address;
+	}
+
+	// section starts at base address
+	section_info_t* section = (section_info_t*)base_addr;
+	if (lastfp != NULL) { // link previous section and this one
+		lastfp->next_section = section;
+	} else if (*firstfp == NULL) { // first section will be this one
+		*firstfp = section;
+	}
+
+	// fill up section with information
+	section->start_word = after_address;
+	section->end_word = base_addr + length;
+	section->total_frames = uframes;
+	section->next_section = NULL;
+	section->frame_array = (frame_info_t*) (base_addr + sizeof(section_info_t)); // starts at end of this structure
+	uint64_t stack_el_addr = (base_addr + sizeof(section_info_t) +
+			(sizeof(frame_info_t) * uframes)); // first stack element describing the memory
+	section->head = NULL;
+
+	stack_element_t* prev_se = NULL;
+	for (uint64_t i=0; i<uframes; i++) {
+		// Fill up information for stack element.
+		// Stack element contains frame address of free frame in this memory section
+		stack_element_t* se = (stack_element_t*)stack_el_addr;
+		stack_el_addr += sizeof(stack_element_t);
+		se->frame_address = after_address + (i*0x1000);
+		frame_info_t* fi = &section->frame_array[i];
+
+		if (se->frame_address < 0x200000) {
+			// "already used" stack element
+			// so do not link this stack element at all
+			// link stack elements together
+			// fill up frame info with this stack element and number of times it has been used (0)
+
+			fi->usage_count = 1;
+		} else {
+			// normal stack element
+			// link stack elements together
+			if (prev_se != NULL)
+				prev_se->next = se;
+			else
+				section->head = se;
+			se->next = NULL;
+			se->array_ord = i;
+			prev_se = se;
+
+			// fill up frame info with this stack element and number of times it has been used (0)
+			fi->usage_count = 0;
+		}
+		fi->bound_stack_element = se;
+	}
+
+	return section;
+}
+
+void deallocate_starting_address(uint64_t address, uint64_t size) {
+	if (size < 0x10000)
+		return; // ignore section and just leave it as dead memory
+	section_info_t* se = frame_pool;
+	while (se->next_section != NULL)
+		se = se->next_section;
+	make_pool(size, address, se, NULL);
+}
+
+/**
  * Creates frame map from multiboot structure.
  *
  * Fills bitmaps for frame_map_usage, phys_map and returns bitmap for frame_map
@@ -527,75 +613,7 @@ start_search_again:;
 				length = len;
 
 use_length_found:;
-				// total amount of frames available if we count in metadata
-				uint64_t uframes = (length-sizeof(section_info_t))/(0x1000+(sizeof(stack_element_t)+sizeof(frame_info_t)))-1;
-				// total size of metadata header
-				uint64_t total_size = sizeof(section_info_t) + (uframes * sizeof(stack_element_t)) + (uframes * sizeof(frame_info_t));
-				// address of first effective frame
-				uint64_t after_address = (base_addr + total_size + 0x1000) & ~0xFFF;
-
-				// allocate base_addr and size of metadata header in virt. memory
-				for (uint64_t addr = base_addr; addr < base_addr + total_size; addr += 0x1000) {
-					uint64_t* paddress = get_page(addr, true);
-					page_t page;
-					memset(&page, 0, sizeof(page_t));
-					page.address = addr;
-					page.flaggable.present = 1;
-					page.flaggable.rw = 1;
-					page.flaggable.us = 1;
-					*paddress = page.address;
-				}
-
-				// section starts at base address
-				section_info_t* section = (section_info_t*)base_addr;
-				if (lastfp != NULL) { // link previous section and this one
-					lastfp->next_section = section;
-				} else if (firstfp == NULL) { // first section will be this one
-					firstfp = section;
-				}
-
-				// fill up section with information
-				section->start_word = after_address;
-				section->end_word = base_addr + length;
-				section->total_frames = uframes;
-				section->next_section = NULL;
-				section->frame_array = (frame_info_t*) (base_addr + sizeof(section_info_t)); // starts at end of this structure
-				uint64_t stack_el_addr = (base_addr + sizeof(section_info_t) +
-						(sizeof(frame_info_t) * uframes)); // first stack element describing the memory
-				section->head = NULL;
-
-				stack_element_t* prev_se = NULL;
-				for (uint64_t i=0; i<uframes; i++) {
-					// Fill up information for stack element.
-					// Stack element contains frame address of free frame in this memory section
-					stack_element_t* se = (stack_element_t*)stack_el_addr;
-					stack_el_addr += sizeof(stack_element_t);
-					se->frame_address = after_address + (i*0x1000);
-					frame_info_t* fi = &section->frame_array[i];
-
-					if (se->frame_address < 0x200000) {
-						// "already used" stack element
-						// so do not link this stack element at all
-						// link stack elements together
-						// fill up frame info with this stack element and number of times it has been used (0)
-
-						fi->usage_count = 1;
-					} else {
-						// normal stack element
-						// link stack elements together
-						if (prev_se != NULL)
-							prev_se->next = se;
-						else
-							section->head = se;
-						se->next = NULL;
-						se->array_ord = i;
-						prev_se = se;
-
-						// fill up frame info with this stack element and number of times it has been used (0)
-						fi->usage_count = 0;
-					}
-					fi->bound_stack_element = se;
-				}
+				section_info_t* section = make_pool(length, base_addr, lastfp, &firstfp);
 
 				lastfp = section;
 
