@@ -25,10 +25,35 @@
  *  Contents: minimal kernel logger functionality
  */
 #include "logger.h"
+#include "../utils/collections/array.h"
 
 typedef enum {
     MESSAGE, WARNING, ERROR,
 } log_level_t;
+
+array_t* boot_log;
+
+typedef struct log_entry {
+	log_level_t ll;
+	char message[255];
+} log_entry_t;
+
+extern bool __ports_initialized;
+extern bool __print_initialized;
+extern void write_byte_com(uint8_t com, uint8_t data);
+
+void initialize_logger() {
+	boot_log = create_array();
+}
+
+static inline void print_to_com(char* ch) {
+	char c;
+	while ((c = *ch++) != '\0') {
+		if (c == '\n')
+	        write_byte_com(0, '\r');
+	    write_byte_com(0, c);
+	}
+}
 
 /**
  * Logs simple message with log level.
@@ -36,22 +61,50 @@ typedef enum {
 void log(log_level_t log_level, const char* message) {
 
     // write message that we are in the kernel
+	log_entry_t* le = malloc(sizeof(log_entry_t));
+	le->ll = log_level;
 
     // display log level
     switch (log_level) {
     case WARNING:
-        kd_cwrite("WARNING: ", 0, 6);
+    	if (__ports_initialized) {
+    		print_to_com("WARNING: ");
+    	}
+    	if (__print_initialized) {
+    		kd_cwrite("WARNING: ", 0, 6);
+    	}
         break;
     case ERROR:
-        kd_cwrite("ERROR: ", 0, 4);
+    	if (__ports_initialized) {
+			print_to_com("ERROR: ");
+		}
+		if (__print_initialized) {
+			kd_cwrite("ERROR: ", 0, 4);
+		}
         break;
     default:
-        kd_cwrite("MESSAGE: ", 0, 15);
+    	if (__ports_initialized) {
+			print_to_com("MESSAGE: ");
+		}
+		if (__print_initialized) {
+			kd_cwrite("MESSAGE: ", 0, 15);
+		}
         break;
     }
 
-    kd_write(message);
-    kd_put('\n');
+    if (__ports_initialized) {
+		print_to_com((char*)message);
+		print_to_com("\n");
+	}
+	if (__print_initialized) {
+	    kd_write(message);
+	    kd_put('\n');
+	}
+
+	strncpy(le->message, message, 254);
+	le->message[254] = '\0';
+
+	array_push_data(boot_log, le);
 }
 
 /**
@@ -80,24 +133,11 @@ void log_err(const char* message) {
  * after printf is available).
  */
 void vlog(log_level_t log_level, const char* message, va_list l) {
-
     // write message that we are in the kernel
-
     // display log level
-    switch (log_level) {
-    case WARNING:
-        kd_cwrite("WARNING: ", 0, 6);
-        break;
-    case ERROR:
-        kd_cwrite("ERROR: ", 0, 4);
-        break;
-    default:
-        kd_cwrite("MESSAGE: ", 0, 15);
-        break;
-    }
-
-    vprintf(message, l);
-    printf("\n");
+    char tmpbuf[256];
+    vsnprintf(tmpbuf, 255, message, l);
+    log(log_level, tmpbuf);
 }
 
 /**

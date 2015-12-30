@@ -41,6 +41,8 @@ volatile uint16_t* text_mode_video_memory;
 /** EBDA memory address */
 void*     ebda;
 
+bool __ports_initialized;
+
 #define BDA_IO_COM ((uint16_t*)0x0400)
 #define BDA_IO_LPT ((uint16_t*)0x0408)
 #define BDA_EBDA ((uint32_t*)0x040E)
@@ -82,6 +84,8 @@ void initialize_ports() {
     for (uint8_t i=0; i<lpt_ports_count; i++) {
         lpt_ports_address[i] = *(uint16_t*)physical_to_virtual((uintptr_t)(BDA_IO_LPT + i));
     }
+
+    __ports_initialized = true;
 }
 
 /**

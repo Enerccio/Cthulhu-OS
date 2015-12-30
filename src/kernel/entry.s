@@ -52,7 +52,7 @@ magic_header:
     dd 0
     dd 800
     dd 600
-    dd 32
+    dd 24
 
 section .init
 GDT64:                           ; Global Descriptor Table (64-bit).

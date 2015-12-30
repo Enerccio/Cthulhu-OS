@@ -27,56 +27,40 @@
 
 #include "grx.h"
 #include "font.h"
-#include "image.h"
 
 #include "../utils/kstdlib.h"
 #include "../memory/paging.h"
 #include "../rlyeh/rlyeh.h"
 #include "../utils/collections/array.h"
 
+#define TRUNCATE(v, cbits, dbits) ((uint32_t)(((double)v) * ((double)cbits/(double)dbits)))
+
 #define FB_COLOR_MODE_EGA  0
 #define FB_COLOR_MODE_IDXC 1
 #define FB_COLOR_MODE_RGB  2
 
 uint8_t mode;
-uint8_t fb_color_mode;
-static char* framebuffer;
-static uint32_t w, h, fbpitch;
-static array_t* bootimg_bank;
+bool __print_initialized;
+
+color_t ega[16] = {
+	{0, 0, 0}, {0, 0, 0xAA}, {0, 0xAA, 0}, {0, 0xAA, 0xAA}, {0xAA, 0, 0}, {0xAA, 0, 0xAA},
+	{0xAA, 0x55, 0}, {0xAA, 0xAA, 0xAA}, {0x55, 0x55, 0x55}, {0x55, 0x55, 0xFF},
+	{0x55, 0xFF, 0x55}, {0x55, 0xFF, 0xFF},
+	{0xFF, 0x55, 0x55}, {0xFF, 0x55, 0xFF}, {0xFF, 0xFF, 0x55}, {0xFF, 0xFF, 0xFF}
+};
+image_t* clear_screen_blit;
+
+static uint8_t* framebuffer;
+static uint8_t* local_fb;
+static uint32_t w, h, fbpitch, bpp;
+static color_t gray;
+static uint8_t rmask, bmask, gmask;
+static uint8_t rpos, bpos, gpos;
 
 extern uint16_t* text_mode_video_memory;
+extern void kp_halt();
 
-void initialize_bootimg_bank() {
-	bootimg_bank = create_array();
-	if (bootimg_bank == NULL) {
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &initialize_bootimg_bank);
-	}
-
-	path_element_t* dir = get_path("bootimg");
-	if (dir == NULL || dir->type == PE_FILE) {
-		error(ERROR_INITRD_ERROR, INITRD_ERROR_INVALID_FILE, INITRD_IF_BOOTIMG_NOT_DIR, &dir);
-	}
-
-	for (uint32_t i=0; i<array_get_size(dir->element.dir->path_el_array); i++) {
-		path_element_t* f = array_get_at(dir->element.dir->path_el_array, i);
-		if (f->type == PE_DIR)
-			continue; // skip directories
-
-		char* extension = get_extension(f->name);
-		image_t* image = NULL;
-
-		// TODO add other types
-		if (strcmp(extension, "bmp")==0) {
-			image = load_bmp(get_data(f->element.file), f->element.file->size);
-		}
-
-		if (image != NULL) {
-			array_push_data(bootimg_bank, image);
-		}
-	}
-}
-
-void initialize_grx(struct multiboot_info* mb) {
+void set_graphics_mode(struct multiboot_info* mb) {
 	mode = MODE_TEXT;
 
 	if ((mb->flags & (1<<11)) == 0) {
@@ -91,23 +75,48 @@ void initialize_grx(struct multiboot_info* mb) {
 		return;
 	}
 
-	framebuffer = (char*)physical_to_virtual(mb->framebuffer_addr);
+	framebuffer = (uint8_t*)physical_to_virtual(mb->framebuffer_addr);
 	w = mb->framebuffer_width;
 	h = mb->framebuffer_height;
 	fbpitch = mb->framebuffer_pitch;
+	bpp = mb->framebuffer_bpp;
 
 	if (mb->framebuffer_type == 2) {
 		// EGA text mode, standard MODE_TEXT
-		fb_color_mode = FB_COLOR_MODE_EGA;
 		text_mode_video_memory = (uint16_t*)framebuffer;
 		return;
 	}
 
-	mode = MODE_GRAPHICS;
-	fb_color_mode = mb->framebuffer_type == 0 ? FB_COLOR_MODE_IDXC : FB_COLOR_MODE_RGB;
+	if (mb->framebuffer_type == 0) {
+		log_err("Framebuffer unsupported mode INDEXED");
+		kp_halt();
+	}
 
-	initialize_font(mb);
-	initialize_bootimg_bank();
+	mode = MODE_GRAPHICS;
+	rmask = mb->framebuffer_red_mask_size;
+	gmask = mb->framebuffer_green_mask_size;
+	bmask = mb->framebuffer_blue_mask_size;
+	rpos = mb->framebuffer_red_field_position;
+	gpos = mb->framebuffer_green_field_position;
+	bpos = mb->framebuffer_blue_field_position;
+
+	local_fb = malloc((fbpitch*h)+2);
+	memset(local_fb, 0, (fbpitch*h)+2);
+
+	gray.b = gray.r = gray.g = 127;
+	initialize_font();
+
+	clear_screen_blit = malloc(sizeof(image_t));
+	clear_screen_blit->image_type = IMAGE_MONOCHROMATIC;
+	clear_screen_blit->image_data = malloc(((fbpitch*h)/8)+1);
+	memset(clear_screen_blit->image_data, 0xFF, ((fbpitch*h)/8)+1);
+	clear_screen_blit->h = grx_get_height();
+	clear_screen_blit->w = grx_get_width();
+}
+
+void initialize_grx(struct multiboot_info* mb) {
+	set_graphics_mode(mb);
+	__print_initialized = true;
 }
 
 uint32_t grx_get_height() {
@@ -116,4 +125,65 @@ uint32_t grx_get_height() {
 
 uint32_t grx_get_width() {
 	return w;
+}
+
+void blit(image_t* image, uint32_t x, uint32_t y) {
+	blit_colored(image, x, y, gray);
+}
+
+static void write_color(size_t bitposition, uint8_t masklen, uint32_t color) {
+	size_t byteposition = bitposition / 8;
+	uint8_t bitoffset = bitposition % 8;
+
+	uint16_t fb = (local_fb[byteposition]<<8) + (local_fb[byteposition+1] & 0xFF);
+	uint16_t mask = (~(uint8_t)(1<<masklen)) << (8-bitoffset);
+	uint16_t nmask = ~mask;
+	uint16_t newvalue = (fb & mask) | (color & nmask);
+	local_fb[byteposition] = (newvalue >> 8) & 0xFF;
+	framebuffer[byteposition] = (newvalue >> 8) & 0xFF;
+	if (byteposition+1 < (fbpitch*h)) {
+		local_fb[byteposition+1] = newvalue & 0xFF;
+		framebuffer[byteposition+1] = newvalue & 0xFF;
+	}
+}
+
+void blit_colored(image_t* image, uint32_t x, uint32_t y, color_t recolor) {
+	uint32_t iw = image->w;
+	uint32_t ih = image->h;
+
+	for (uint32_t py = y; py < y+ih; py++) {
+		if (py >= h) continue;
+		for (uint32_t px = x; px < x+iw; px++) {
+			if (px >= w) continue;
+
+			size_t bitposition = ((py*w)+px)*bpp;
+
+			bool drawn = true;
+			if (image->image_type == IMAGE_RGB) {
+				size_t bps = ((py-y)*image->w)+(px-x)*3;
+				recolor.r = image->image_data[bps];
+				recolor.g = image->image_data[bps+1];
+				recolor.b = image->image_data[bps+2];
+			} else if (image->image_type == IMAGE_MONOCHROMATIC) {
+				size_t bsp = ((py-y)*image->w)+(px-x);
+				drawn = BITTEST(image->image_data, bsp);
+			}
+
+			if (drawn) {
+				uint32_t r = recolor.r;
+				uint32_t g = recolor.g;
+				uint32_t b = recolor.b;
+
+				write_color(bitposition+rpos, rmask, r);
+				write_color(bitposition+gpos, gmask, g);
+				write_color(bitposition+bpos, bmask, b);
+			}
+		}
+	}
+
+}
+
+void scroll_up(uint32_t bypx) {
+	memmove(local_fb, local_fb+(bypx*fbpitch), (h-bypx)*fbpitch);
+	memcpy(framebuffer, local_fb, fbpitch*h);
 }

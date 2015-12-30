@@ -28,5 +28,11 @@
 #pragma once
 
 #include "../commons.h"
+#include "image.h"
 
-void initialize_font(struct multiboot_info* mbinfo);
+#define __font_w 8
+#define __font_h 14
+
+void initialize_font();
+
+image_t* get_letter(char letter);

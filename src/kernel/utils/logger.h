@@ -30,6 +30,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 /**
  * Logs simple message with MESSAGE level.
@@ -61,3 +62,5 @@ void vlog_warn(const char* message, ...);
  * Logs advance message with ERROR level.
  */
 void vlog_err(const char* message, ...);
+
+void initialize_logger();

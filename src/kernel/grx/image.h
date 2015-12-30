@@ -27,17 +27,18 @@
 
 #pragma once
 
-#include "../commons.h"
-
-#define IMAGE_TYPE_BLACK_WHITE (0)
-#define IMAGE_TYPE_RGB         (1)
-#define IMAGE_TYPE_RGBA		   (2)
+#define IMAGE_MONOCHROMATIC (0)
+#define IMAGE_RGB			(1)
 
 typedef struct image {
-	char*   image_data;
-	uint8_t image_type;
-	uint32_t image_width;
-	uint32_t image_height;
+	uint8_t* image_data;
+	uint8_t  image_type;
+	uint32_t w;
+	uint32_t h;
 } image_t;
 
-image_t* load_bmp(uint8_t* bmp_file, size_t fsize);
+typedef struct color {
+	uint8_t b;
+	uint8_t r;
+	uint8_t g;
+} color_t;

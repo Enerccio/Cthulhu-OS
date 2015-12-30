@@ -35,9 +35,17 @@
 #define MODE_GRAPHICS   (1)
 
 extern uint8_t mode;
+extern color_t ega[16];
+extern image_t* clear_screen_blit;
 
 void initialize_grx(struct multiboot_info* mb);
 
 uint32_t grx_get_height();
 
 uint32_t grx_get_width();
+
+void blit(image_t* image, uint32_t x, uint32_t y);
+
+void blit_colored(image_t* image, uint32_t x, uint32_t y, color_t recolor);
+
+void scroll_up(uint32_t bypx);

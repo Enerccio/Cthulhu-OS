@@ -26,9 +26,8 @@
  */
 #include "textinput.h"
 
-#ifdef KERNEL_DEBUG_MODE
-#include "../ports/ports.h"
-#endif
+#include "../grx/grx.h"
+#include "../grx/font.h"
 
 extern volatile uint16_t* text_mode_video_memory;
 uint8_t cursor_y = 0;
@@ -73,7 +72,10 @@ static inline void scroll() {
 			cursor_y = grx_get_height();
 		}
 	} else {
-		// TODO
+		if (cursor_y >= (grx_get_height()/__font_h)+1) {
+			scroll_up(__font_h);
+			cursor_y = (grx_get_height()/__font_h);
+		}
 	}
 }
 
@@ -100,13 +102,7 @@ void kd_put(char c) {
  *
  * If KERNEL_DEBUG_MODE is set, outputs same byte into com1.
  */
-void kd_cput(char c, uint8_t backColour, uint8_t foreColour) {
-#ifdef KERNEL_DEBUG_MODE
-    if (c == '\n')
-        write_byte_com(COM1, '\r');
-    write_byte_com(COM1, c);
-#endif
-
+void kd_cput(char c, uint8_t back_color, uint8_t fore_color) {
     if (c == 0x08 && cursor_x) {
         if (cursor_x)
             cursor_x--;
@@ -119,14 +115,15 @@ void kd_cput(char c, uint8_t backColour, uint8_t foreColour) {
         cursor_y++;
     } else if (c >= ' ') {
     	if (mode == MODE_TEXT) {
-			uint8_t attributeByte = (backColour << 4) | (foreColour & 0x0F);
+			uint8_t attributeByte = (back_color << 4) | (fore_color & 0x0F);
 			uint16_t attribute = attributeByte << 8;
 			volatile uint16_t* location;
 			location = text_mode_video_memory + (cursor_y * grx_get_width() + cursor_x);
 			*location = c | attribute;
 			cursor_x++;
     	} else {
-    		// TODO
+    		blit_colored(get_letter(c), cursor_x*__font_w, cursor_y*__font_h, ega[fore_color]);
+    		cursor_x++;
     	}
     }
 
@@ -151,9 +148,9 @@ void kd_clear() {
 /**
  * Clears screen with selected color.
  */
-void kd_cclear(uint8_t backColour) {
+void kd_cclear(uint8_t back_color) {
 	if (mode == MODE_TEXT) {
-		uint8_t attributeByte = (backColour << 4) | (15 & 0x0F);
+		uint8_t attributeByte = (back_color << 4) | (15 & 0x0F);
 		uint16_t blank = 0x20 | (attributeByte << 8);
 
 		unsigned int i;
@@ -165,7 +162,7 @@ void kd_cclear(uint8_t backColour) {
 	    cursor_y = 0;
 	    move_cursor();
 	} else {
-		// TODO
+		blit_colored(clear_screen_blit, 0, 0, ega[back_color]);
 	}
 }
 
@@ -179,11 +176,11 @@ void kd_write(const char* c) {
 /**
  * Writes string on screen with specified colors.
  */
-void kd_cwrite(const char* string, uint8_t backColour, uint8_t foreColour) {
+void kd_cwrite(const char* string, uint8_t back_color, uint8_t fore_color) {
     char c;
     char* it = (char*) string;
     while ((c = *it++)) {
-        kd_cput(c, backColour, foreColour);
+        kd_cput(c, back_color, fore_color);
     }
 }
 

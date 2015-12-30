@@ -49,33 +49,37 @@ extern struct multiboot_info multiboot_info;
 
 uint64_t kernel_tmp_heap_start;
 
+extern bool __ports_initialized;
+extern bool __print_initialized;
+
 void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
+	__ports_initialized = false;
+	__print_initialized = false;
+
 	kernel_tmp_heap_start = heap_start;
 
 	initialize_temporary_heap(heap_start);
 	initialize_physical_memory_allocation(mboot_addr);
 	initialize_standard_heap();
 
+	initialize_logger();
+	log_msg("Paging memory and kernel heap initialized");
+	log_msg("Logger initialized");
+
+	initialize_ports();
+	log_msg("Ports initialized");
+
 	mboot_addr = &multiboot_info;
-
 	__initialize_kclib();
-
-	debug_break;
-
-	init_initramfs(mboot_addr);
+	log_msg("KCLib initialized");
 
 	initialize_grx(mboot_addr);
+	log_msg("Graphical mode initialized");
 
 	cpus = NULL;
-
-    initialize_ports();
-
-    kd_clear();
+    kd_cclear(0);
     init_errors();
-
-    log_msg("Paging memory and kernel heap initialized");
-    log_msg("Ports initialized");
-    log_msg("KCLib initialized");
+    log_msg("Errors initialized");
 
     init_table_acpi();
     vlog_msg("ACPI Initialized, local apic: %xh", (uint64_t)apicaddr);
@@ -107,6 +111,14 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
     deallocate_start_memory();
     vlog_msg("Bootup memory removed.");
 
+    init_initramfs(mboot_addr);
+    log_warn("Initramfs loaded");
+
     initialize_system_calls();
-    log_msg("System calls initialized");
+    vlog_err("System calls initialized %x", 12);
+
+    //debug_break;
+    for (int i=0; i<64; i++) {
+    	log_err("XXXXXXXXXXXXXXXXXXXXXXXXX");
+    }
 }

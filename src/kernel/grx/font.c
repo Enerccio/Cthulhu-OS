@@ -30,10 +30,30 @@
 #include "../utils/rsod.h"
 #include "../utils/kstdlib.h"
 
+#include "font_source.h"
+
+static image_t __letters[256];
+
+uint8_t reverse(uint8_t b) {
+   b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+   b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+   b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+   return b;
+}
+
 void initialize_font(struct multiboot_info* mbinfo) {
-	size_t fnt_size;
-	void* font_data = get_module(mbinfo, "font", &fnt_size, true, true);
-	if (font_data == NULL){
-		error(ERROR_NO_FONT_DETECTED, 0, 0, &initialize_font);
+	for (size_t i=0; i<255*__font_h; i++)
+		__font[i] = reverse(__font[i]);
+
+	for (uint8_t i=0; i<255; i++) {
+		image_t* image = &__letters[i];
+		image->image_data = &__font[i*__font_h];
+		image->image_type = IMAGE_MONOCHROMATIC;
+		image->w = __font_w;
+		image->h = __font_h;
 	}
+}
+
+image_t* get_letter(char letter) {
+	return &__letters[(uint8_t)letter];
 }

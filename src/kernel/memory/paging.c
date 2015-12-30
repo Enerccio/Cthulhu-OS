@@ -43,6 +43,8 @@ uint64_t maxram;
 
 section_info_t* frame_pool;
 
+bool __mem_mirror_present;
+
 extern uint64_t detect_maxphyaddr();
 extern uint64_t get_active_page();
 extern void set_active_page(uint64_t address);
@@ -154,6 +156,10 @@ uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
  * Returns address + physical identity map offset
  */
 uint64_t physical_to_virtual(uint64_t vaddress) {
+	if (!__mem_mirror_present)
+		return vaddress;
+	if (vaddress == 0)
+		return 0;
     return vaddress + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
 }
 
@@ -170,15 +176,16 @@ static uint64_t get_free_frame() {
 		return ((uint64_t)malign(0x1000, 0x1000)-0xFFFFFFFF80000000);
 	} else {
 		// TODO add synchronization
-		section_info_t* section = frame_pool;
+		section_info_t* section = (section_info_t*)physical_to_virtual((uint64_t)frame_pool);
 		while (section != NULL) {
 			if (section->head != NULL) {
-				stack_element_t* se = section->head;
+				stack_element_t* se = (stack_element_t*) physical_to_virtual((uint64_t)section->head);
 				section->head = se->next;
-				section->frame_array[se->array_ord].usage_count = 0;
+				((frame_info_t*)physical_to_virtual((uint64_t)section->frame_array))
+						[se->array_ord].usage_count = 0;
 				return se->frame_address;
 			}
-			section = section->next_section;
+			section = (section_info_t*)physical_to_virtual((uint64_t)section->next_section);
 		}
 
 		// TODO handle crap here
@@ -193,18 +200,21 @@ static uint64_t get_free_frame() {
 static void free_frame(uint64_t frame_address) {
     uint64_t fa = ALIGN(frame_address);
 	// TODO add synchronization
-	section_info_t* section = frame_pool;
+	section_info_t* section = (section_info_t*)physical_to_virtual((uint64_t)frame_pool);
 	while (section != NULL) {
 		if (section->start_word >= fa && section->end_word < fa) {
 			uint32_t idx = (fa-section->start_word) / 0x1000;
-			--section->frame_array[idx].usage_count;
-			if (section->frame_array[idx].usage_count == 0) {
-				section->frame_array[idx].bound_stack_element->next = section->head;
-				section->head = section->frame_array[idx].bound_stack_element;
-				memset((void*)physical_to_virtual(section->head->frame_address), 0xDE, 0x1000);
+			frame_info_t* fi = (frame_info_t*)physical_to_virtual((uint64_t)section->frame_array);
+			--fi[idx].usage_count;
+			if (fi[idx].usage_count == 0) {
+				fi[idx].bound_stack_element->next = section->head;
+				section->head = fi[idx].bound_stack_element;
+				memset((void*)physical_to_virtual(
+						((stack_element_t*)physical_to_virtual((uint64_t)section->head))->frame_address),
+						0xDE, 0x1000);
 			}
 		} else {
-			section = section->next_section;
+			section = (section_info_t*)physical_to_virtual((uint64_t)section->next_section);
 		}
 	}
 
@@ -685,8 +695,6 @@ void initialize_memory_mirror() {
 
     }
 }
-
-bool __mem_mirror_present;
 
 /**
  * Initializes correct paging.
