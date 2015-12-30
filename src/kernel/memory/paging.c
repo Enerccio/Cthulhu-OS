@@ -451,6 +451,16 @@ bool check_if_used(struct multiboot_info* mbheader, uint64_t test) {
 			return true;
 	}
 
+	if ((mbheader->flags & (1<<11)) != 0 && (mbheader->flags & (1<12)) != 0) {
+		if (check_used_range(test, mbheader->framebuffer_addr,
+				mbheader->framebuffer_bpp * mbheader->framebuffer_width * mbheader->framebuffer_height))
+			return true;
+		if (mbheader->framebuffer_type == 0)
+			if (check_used_range(test, mbheader->framebuffer_palette_addr,
+					mbheader->framebuffer_palette_num_colors * 3))
+				return true;
+	}
+
 	if (check_used_range(test, mbheader->mmap_addr, mbheader->mmap_length))
 		return true;
 

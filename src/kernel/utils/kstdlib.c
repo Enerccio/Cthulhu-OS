@@ -129,3 +129,17 @@ void* get_module(struct multiboot_info* mbheader, const char* name,
 	}
 	return NULL;
 }
+
+
+char* get_extension(char* fname) {
+	if (fname == NULL)
+		return NULL;
+
+	char* ext;
+	do {
+		ext = fname;
+		fname = fname+strcspn(fname, ".")+1;
+	} while (*(fname-1) != '\0');
+
+	return ext;
+}

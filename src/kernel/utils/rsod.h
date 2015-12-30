@@ -54,6 +54,7 @@
 #define ERROR_MINIMAL_MEMORY_FAILURE			 23
 #define ERROR_KERNEL_IPI_EXCEPTION				 24
 #define ERROR_NO_FONT_DETECTED					 25
+#define ERROR_INITRD_ERROR						 26
 
 /**
  * Initializes error subsystem.

@@ -61,16 +61,16 @@ static inline void scroll() {
 		uint8_t attributeByte = (0 /*black*/<< 4) | (15 /*white*/& 0x0F);
 		uint16_t blank = 0x20 | (attributeByte << 8);
 
-		if (cursor_y >= 25) {
-			int i;
-			for (i = 0 * 80; i < 24 * 80; i++) {
-				text_mode_video_memory[i] = text_mode_video_memory[i + 80];
+		if (cursor_y >= grx_get_height()+1) {
+			unsigned int i;
+			for (i = 0 * grx_get_width(); i < grx_get_height() * grx_get_width(); i++) {
+				text_mode_video_memory[i] = text_mode_video_memory[i + grx_get_width()];
 			}
 
-			for (i = 24 * 80; i < 25 * 80; i++) {
+			for (i = grx_get_height() * grx_get_width(); i < (grx_get_height()+1) * grx_get_width(); i++) {
 				text_mode_video_memory[i] = blank;
 			}
-			cursor_y = 24;
+			cursor_y = grx_get_height();
 		}
 	} else {
 		// TODO
@@ -81,7 +81,7 @@ static inline void scroll() {
  * Moves cursor to position stored by cursor_y and cursor_x.
  */
 static inline void move_cursor() {
-    uint16_t cursorLocation = cursor_y * 80 + cursor_x;
+    uint16_t cursorLocation = cursor_y * grx_get_width() + cursor_x;
     outb(0x3D4, 14);
     outb(0x3D5, cursorLocation >> 8);
     outb(0x3D4, 15);
@@ -122,7 +122,7 @@ void kd_cput(char c, uint8_t backColour, uint8_t foreColour) {
 			uint8_t attributeByte = (backColour << 4) | (foreColour & 0x0F);
 			uint16_t attribute = attributeByte << 8;
 			volatile uint16_t* location;
-			location = text_mode_video_memory + (cursor_y * 80 + cursor_x);
+			location = text_mode_video_memory + (cursor_y * grx_get_width() + cursor_x);
 			*location = c | attribute;
 			cursor_x++;
     	} else {
@@ -156,8 +156,8 @@ void kd_cclear(uint8_t backColour) {
 		uint8_t attributeByte = (backColour << 4) | (15 & 0x0F);
 		uint16_t blank = 0x20 | (attributeByte << 8);
 
-		int i;
-		for (i = 0; i < 80 * 25; i++) {
+		unsigned int i;
+		for (i = 0; i < grx_get_width() * grx_get_height(); i++) {
 			text_mode_video_memory[i] = blank;
 		}
 

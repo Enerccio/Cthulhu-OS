@@ -19,28 +19,53 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * nyarlathotep.h
- *  Created on: Dec 27, 2015
+ * rlyeh.h
+ *  Created on: Dec 30, 2015
  *      Author: Peter Vanusanik
- *  Contents: developer needed static library functions for processes such as init, daemons, daemon loaders etc
- *  	Should only be used to create those.
+ *  Contents: 
  */
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "../commons.h"
+#include "../utils/collections/array.h"
+#include "../../kernel_dev_lib/ny_initramfs.h"
 
-extern uint64_t dev_sys_0arg(uint64_t syscallnum);
-extern uint64_t dev_sys_1arg(uint64_t syscallnum, void* arg1);
-extern uint64_t dev_sys_2arg(uint64_t syscallnum, void* arg1, void* arg2);
-extern uint64_t dev_sys_3arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3);
-extern uint64_t dev_sys_4arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4);
-extern uint64_t dev_sys_5arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4, void* arg5);
+#define INITRD_ERROR_NO_INITRD		(1)
+#define INITRD_ERROR_WRONG_HEADER	(2)
+#define INITRD_ERROR_NOMEM			(3)
+#define INITRD_ERROR_INVALID_FILE	(4)
 
-#include "ny_initramfs.h"
+#define INITRD_IF_DIR_AS_FILE		(0)
+#define INITRD_IF_BOOTIMG_NOT_DIR	(1)
 
-#ifdef __cplusplus
-}
-#endif
+#define PE_DIR  (0)
+#define PE_FILE (1)
+
+typedef struct dir_entry {
+	array_t* path_el_array;
+} dir_entry_t;
+
+typedef struct file_entry {
+	size_t size;
+	size_t offset;
+} file_entry_t;
+
+typedef struct path_element {
+	char* name;
+	uint8_t type;
+	union {
+		dir_entry_t* dir;
+		file_entry_t* file;
+	} element;
+} path_element_t;
+
+void init_initramfs(struct multiboot_info* info);
+
+path_element_t* get_root();
+
+path_element_t* get_path(const char* path);
+
+uint8_t* get_data(file_entry_t* file);
+
+void free_initramfs();

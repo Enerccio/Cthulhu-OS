@@ -29,9 +29,15 @@
 
 #include "../commons.h"
 
+#include "image.h"
+
 #define MODE_TEXT       (0)
 #define MODE_GRAPHICS   (1)
 
 extern uint8_t mode;
 
 void initialize_grx(struct multiboot_info* mb);
+
+uint32_t grx_get_height();
+
+uint32_t grx_get_width();

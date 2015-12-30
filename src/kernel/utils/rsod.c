@@ -84,6 +84,7 @@ void init_errors() {
     error_codes[ERROR_MINIMAL_MEMORY_FAILURE] = "ERROR_MINIMAL_MEMORY_FAILURE";
     error_codes[ERROR_KERNEL_IPI_EXCEPTION] = "ERROR_KERNEL_IPI_EXCEPTION";
     error_codes[ERROR_NO_FONT_DETECTED] = "ERROR_NO_FONT_DETECTED";
+    error_codes[ERROR_INITRD_ERROR] = "ERROR_INITRD_ERROR";
 
     lock = 0;
 }

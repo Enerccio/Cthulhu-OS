@@ -19,28 +19,25 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * nyarlathotep.h
- *  Created on: Dec 27, 2015
+ * image.h
+ *  Created on: Dec 30, 2015
  *      Author: Peter Vanusanik
- *  Contents: developer needed static library functions for processes such as init, daemons, daemon loaders etc
- *  	Should only be used to create those.
+ *  Contents: 
  */
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "../commons.h"
 
-extern uint64_t dev_sys_0arg(uint64_t syscallnum);
-extern uint64_t dev_sys_1arg(uint64_t syscallnum, void* arg1);
-extern uint64_t dev_sys_2arg(uint64_t syscallnum, void* arg1, void* arg2);
-extern uint64_t dev_sys_3arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3);
-extern uint64_t dev_sys_4arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4);
-extern uint64_t dev_sys_5arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4, void* arg5);
+#define IMAGE_TYPE_BLACK_WHITE (0)
+#define IMAGE_TYPE_RGB         (1)
+#define IMAGE_TYPE_RGBA		   (2)
 
-#include "ny_initramfs.h"
+typedef struct image {
+	char*   image_data;
+	uint8_t image_type;
+	uint32_t image_width;
+	uint32_t image_height;
+} image_t;
 
-#ifdef __cplusplus
-}
-#endif
+image_t* load_bmp(uint8_t* bmp_file, size_t fsize);

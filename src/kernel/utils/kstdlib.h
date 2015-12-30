@@ -60,3 +60,8 @@ bool int_cmpr_function(void* a, void* b);
  */
 void* get_module(struct multiboot_info* mbheader, const char* name,
 		size_t* size, bool reallocate, bool delete);
+
+/**
+ * Returns extension of the filename (last part after .) if any, or whole string
+ */
+char* get_extension(char* fname);

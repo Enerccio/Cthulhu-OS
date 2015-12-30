@@ -27,11 +27,93 @@
 
 #include "grx.h"
 #include "font.h"
+#include "image.h"
+
+#include "../utils/kstdlib.h"
+#include "../memory/paging.h"
+#include "../rlyeh/rlyeh.h"
+#include "../utils/collections/array.h"
+
+#define FB_COLOR_MODE_EGA  0
+#define FB_COLOR_MODE_IDXC 1
+#define FB_COLOR_MODE_RGB  2
 
 uint8_t mode;
+uint8_t fb_color_mode;
+static char* framebuffer;
+static uint32_t w, h, fbpitch;
+static array_t* bootimg_bank;
 
-void initialize_grx(struct multiboot_info* mb){
+extern uint16_t* text_mode_video_memory;
+
+void initialize_bootimg_bank() {
+	bootimg_bank = create_array();
+	if (bootimg_bank == NULL) {
+		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &initialize_bootimg_bank);
+	}
+
+	path_element_t* dir = get_path("bootimg");
+	if (dir == NULL || dir->type == PE_FILE) {
+		error(ERROR_INITRD_ERROR, INITRD_ERROR_INVALID_FILE, INITRD_IF_BOOTIMG_NOT_DIR, &dir);
+	}
+
+	for (uint32_t i=0; i<array_get_size(dir->element.dir->path_el_array); i++) {
+		path_element_t* f = array_get_at(dir->element.dir->path_el_array, i);
+		if (f->type == PE_DIR)
+			continue; // skip directories
+
+		char* extension = get_extension(f->name);
+		image_t* image = NULL;
+
+		// TODO add other types
+		if (strcmp(extension, "bmp")==0) {
+			image = load_bmp(get_data(f->element.file), f->element.file->size);
+		}
+
+		if (image != NULL) {
+			array_push_data(bootimg_bank, image);
+		}
+	}
+}
+
+void initialize_grx(struct multiboot_info* mb) {
 	mode = MODE_TEXT;
 
+	if ((mb->flags & (1<<11)) == 0) {
+		w = 80;
+		h = 24;
+		return;
+	}
+
+	if ((mb->flags & (1<12)) == 0) {
+		w = 80;
+		h = 24;
+		return;
+	}
+
+	framebuffer = (char*)physical_to_virtual(mb->framebuffer_addr);
+	w = mb->framebuffer_width;
+	h = mb->framebuffer_height;
+	fbpitch = mb->framebuffer_pitch;
+
+	if (mb->framebuffer_type == 2) {
+		// EGA text mode, standard MODE_TEXT
+		fb_color_mode = FB_COLOR_MODE_EGA;
+		text_mode_video_memory = (uint16_t*)framebuffer;
+		return;
+	}
+
+	mode = MODE_GRAPHICS;
+	fb_color_mode = mb->framebuffer_type == 0 ? FB_COLOR_MODE_IDXC : FB_COLOR_MODE_RGB;
+
 	initialize_font(mb);
+	initialize_bootimg_bank();
+}
+
+uint32_t grx_get_height() {
+	return h;
+}
+
+uint32_t grx_get_width() {
+	return w;
 }

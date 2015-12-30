@@ -42,6 +42,7 @@
 #include "interrupts/idt.h"
 #include "interrupts/interrupts.h"
 #include "structures/gdt.h"
+#include "rlyeh/rlyeh.h"
 
 extern volatile uint64_t clock_ms;
 extern struct multiboot_info multiboot_info;
@@ -60,6 +61,8 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	__initialize_kclib();
 
 	debug_break;
+
+	init_initramfs(mboot_addr);
 
 	initialize_grx(mboot_addr);
 
