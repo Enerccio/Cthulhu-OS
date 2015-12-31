@@ -109,16 +109,11 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	log_msg("Inter-processor interrupts initialized");
 
     deallocate_start_memory();
-    vlog_msg("Bootup memory removed.");
+    log_msg("Bootup memory removed.");
 
     init_initramfs(mboot_addr);
-    log_warn("Initramfs loaded");
+    log_msg("Initramfs loaded");
 
     initialize_system_calls();
-    vlog_err("System calls initialized %x", 12);
-
-    //debug_break;
-    for (int i=0; i<64; i++) {
-    	log_err("XXXXXXXXXXXXXXXXXXXXXXXXX");
-    }
+    log_msg("System calls initialized");
 }

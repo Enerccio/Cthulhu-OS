@@ -33,11 +33,16 @@
 #include "../rlyeh/rlyeh.h"
 #include "../utils/collections/array.h"
 
-#define TRUNCATE(v, cbits, dbits) ((uint32_t)(((double)v) * ((double)cbits/(double)dbits)))
-
 #define FB_COLOR_MODE_EGA  0
 #define FB_COLOR_MODE_IDXC 1
 #define FB_COLOR_MODE_RGB  2
+
+#define BITMASK(b) (1 << ((b) % CHAR_BIT))
+#define BITSLOT(b) ((b) / CHAR_BIT)
+#define BITSET(a, b) ((a)[BITSLOT(b)] |= BITMASK(b))
+#define BITCLEAR(a, b) ((a)[BITSLOT(b)] &= ~BITMASK(b))
+#define BITTEST(a, b) ((a)[BITSLOT(b)] & BITMASK(b))
+#define BITNSLOTS(nb) ((nb + CHAR_BIT - 1) / CHAR_BIT)
 
 uint8_t mode;
 bool __print_initialized;
@@ -51,7 +56,8 @@ color_t ega[16] = {
 image_t* clear_screen_blit;
 
 static uint8_t* framebuffer;
-static uint8_t* local_fb;
+static uint32_t* local_fb;
+static uint8_t* local_fb_changes;
 static uint32_t w, h, fbpitch, bpp;
 static color_t gray;
 static uint8_t rmask, bmask, gmask;
@@ -100,8 +106,11 @@ void set_graphics_mode(struct multiboot_info* mb) {
 	gpos = mb->framebuffer_green_field_position;
 	bpos = mb->framebuffer_blue_field_position;
 
-	local_fb = malloc((fbpitch*h)+2);
-	memset(local_fb, 0, (fbpitch*h)+2);
+	local_fb = malloc(w*h*32);
+	memset(local_fb, 0, w*h*32);
+
+	local_fb_changes = malloc(BITNSLOTS(w*h));
+	memset(local_fb_changes, 0, BITNSLOTS(w*h));
 
 	gray.b = gray.r = gray.g = 127;
 	initialize_font();
@@ -131,22 +140,6 @@ void blit(image_t* image, uint32_t x, uint32_t y) {
 	blit_colored(image, x, y, gray);
 }
 
-static void write_color(size_t bitposition, uint8_t masklen, uint32_t color) {
-	size_t byteposition = bitposition / 8;
-	uint8_t bitoffset = bitposition % 8;
-
-	uint16_t fb = (local_fb[byteposition]<<8) + (local_fb[byteposition+1] & 0xFF);
-	uint16_t mask = (~(uint8_t)(1<<masklen)) << (8-bitoffset);
-	uint16_t nmask = ~mask;
-	uint16_t newvalue = (fb & mask) | (color & nmask);
-	local_fb[byteposition] = (newvalue >> 8) & 0xFF;
-	framebuffer[byteposition] = (newvalue >> 8) & 0xFF;
-	if (byteposition+1 < (fbpitch*h)) {
-		local_fb[byteposition+1] = newvalue & 0xFF;
-		framebuffer[byteposition+1] = newvalue & 0xFF;
-	}
-}
-
 void blit_colored(image_t* image, uint32_t x, uint32_t y, color_t recolor) {
 	uint32_t iw = image->w;
 	uint32_t ih = image->h;
@@ -156,7 +149,7 @@ void blit_colored(image_t* image, uint32_t x, uint32_t y, color_t recolor) {
 		for (uint32_t px = x; px < x+iw; px++) {
 			if (px >= w) continue;
 
-			size_t bitposition = ((py*w)+px)*bpp;
+			size_t pixelpos = ((py*w)+px);
 
 			bool drawn = true;
 			if (image->image_type == IMAGE_RGB) {
@@ -170,13 +163,9 @@ void blit_colored(image_t* image, uint32_t x, uint32_t y, color_t recolor) {
 			}
 
 			if (drawn) {
-				uint32_t r = recolor.r;
-				uint32_t g = recolor.g;
-				uint32_t b = recolor.b;
-
-				write_color(bitposition+rpos, rmask, r);
-				write_color(bitposition+gpos, gmask, g);
-				write_color(bitposition+bpos, bmask, b);
+				uint32_t color = recolor.b << 16 | recolor.g << 8 | recolor.r;
+				local_fb[pixelpos] = color;
+				BITSET(local_fb_changes, pixelpos);
 			}
 		}
 	}
@@ -184,6 +173,32 @@ void blit_colored(image_t* image, uint32_t x, uint32_t y, color_t recolor) {
 }
 
 void scroll_up(uint32_t bypx) {
-	memmove(local_fb, local_fb+(bypx*fbpitch), (h-bypx)*fbpitch);
-	memcpy(framebuffer, local_fb, fbpitch*h);
+	memmove(local_fb, local_fb+(bypx*w), (h-bypx)*w*4);
+	memset(local_fb+((h-bypx)*w), 0, bypx*w*4);
+	memset(local_fb_changes, 0xFF, BITNSLOTS(w*h));
+	flush_buffer();
+}
+
+void flush_buffer() {
+	size_t ppx = 0;
+	for (size_t i=0; i<w*h; i++) {
+		if (BITTEST(local_fb_changes, i)) {
+			BITCLEAR(local_fb_changes, i);
+			uint32_t color = local_fb[i];
+			if (bpp == 32) {
+				memcpy(&local_fb_changes[i], &framebuffer[ppx], 4);
+			} else if (bpp == 24) {
+				uint8_t red =  (color & 0xFF);
+				uint8_t green =  ((color>>8) & 0xFF);
+				uint8_t blue =  ((color>>16) & 0xFF);
+				framebuffer[ppx] = blue;
+				framebuffer[ppx+1] = green;
+				framebuffer[ppx+2] = red;
+			}
+		}
+		if (bpp == 32)
+			ppx += 4;
+		if (bpp == 24)
+			ppx += 3;
+	}
 }

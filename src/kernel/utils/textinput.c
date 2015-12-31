@@ -109,10 +109,12 @@ void kd_cput(char c, uint8_t back_color, uint8_t fore_color) {
     } else if (c == 0x09) {
         cursor_x = (cursor_x + 8) & ~(8 - 1);
     } else if (c == '\r') {
+    	flush_buffer();
         cursor_x = 0;
     } else if (c == '\n') {
         cursor_x = 0;
         cursor_y++;
+        flush_buffer();
     } else if (c >= ' ') {
     	if (mode == MODE_TEXT) {
 			uint8_t attributeByte = (back_color << 4) | (fore_color & 0x0F);
@@ -163,6 +165,7 @@ void kd_cclear(uint8_t back_color) {
 	    move_cursor();
 	} else {
 		blit_colored(clear_screen_blit, 0, 0, ega[back_color]);
+		flush_buffer();
 	}
 }
 
