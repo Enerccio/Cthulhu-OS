@@ -82,7 +82,7 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
     log_msg("Errors initialized");
 
     init_table_acpi();
-    vlog_msg("ACPI Initialized, local apic: %xh", (uint64_t)apicaddr);
+    vlog_msg("ACPI Initialized, local apic: %lxh", (uint64_t)apicaddr);
 
     initialize_cpus();
     log_msg("CPU status queried.");

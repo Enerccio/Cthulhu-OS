@@ -42,23 +42,12 @@ void* __kclib_heap_start() {
 void*     __kclib_allocate(size_t aamount) {
     uint64_t ha = heap_start_address;
     allocate(heap_start_address, aamount, true, false);
-    heap_start_address += aamount; // fix deallocation
+    heap_start_address += ALIGN_UP(aamount); // fix deallocation
     return (void*)ha;
 }
 
 void      __kclib_deallocate(uintptr_t afrom, size_t aamount) {
     deallocate(afrom, aamount);
-}
-
-uint8_t    __kclib_isreclaimed(uintptr_t afrom, size_t aamount) {
-    bool reclaimed = true;
-    for (uint64_t addr = afrom; addr < afrom + aamount; addr += 0x1000) {
-        bool creclaimed = allocated(addr);
-        if (creclaimed == false) {
-            reclaimed = false;
-        }
-    }
-    return reclaimed;
 }
 
 void*     __kclib_open_std_stream(uint8_t request_mode) {

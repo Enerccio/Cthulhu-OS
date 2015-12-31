@@ -28,10 +28,6 @@
 #include "heap.h"
 #include "../cpus/ipi.h"
 
-/** aligns the address to 0x1000 down */
-#define ALIGN(addr) (((uint64_t)addr) & 0xFFFFFFFFFFFFF000)
-/** aligns the address to 0x1000 up */
-#define ALIGN_UP(v) ((v) % 0x1000 == 0 ? (v) : ALIGN((v) + 0x1000))
 /** aligns the address to 0x1000 and then casts it to type */
 #define PALIGN(type, addr) ((type)ALIGN(addr))
 
@@ -768,6 +764,7 @@ static void deallocate_frame(uint64_t* paddress, uint64_t va) {
  * Repeatedly calls allocate_frame for every frame.
  */
 void allocate(uint64_t from, size_t amount, bool kernel, bool readonly) {
+	amount = ALIGN_UP(amount);
     for (uint64_t addr = from; addr < from + amount; addr += 0x1000) {
         allocate_frame(get_page(addr, true), kernel, readonly);
     }
@@ -780,6 +777,7 @@ void allocate(uint64_t from, size_t amount, bool kernel, bool readonly) {
  * deallocates them all.
  */
 void deallocate(uint64_t from, size_t amount) {
+	amount = ALIGN_UP(amount);
     uint64_t aligned = from;
     if ((from % 0x1000) != 0) {
         aligned = ALIGN(from) + 0x1000;
