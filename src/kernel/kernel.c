@@ -57,11 +57,12 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	__print_initialized = false;
 	cpus = NULL;
 	kernel_tmp_heap_start = heap_start;
-	mboot_addr = &multiboot_info;
 
 	initialize_temporary_heap(heap_start);
 	initialize_physical_memory_allocation(mboot_addr);
 	initialize_standard_heap();
+
+	mboot_addr = &multiboot_info;
 
 	initialize_logger();
 	log_msg("Paging memory and kernel heap initialized");
@@ -118,4 +119,6 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 
     initialize_system_calls();
     log_msg("System calls initialized");
+
+    initialize_userspace();
 }
