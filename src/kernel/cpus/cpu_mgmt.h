@@ -32,10 +32,10 @@
 #include "../memory/paging.h"
 #include "../utils/collections/array.h"
 #include "../structures/acpi.h"
-#include "../tasks/task.h"
-
 #include <stdlib.h>
 #include <string.h>
+
+#include "../processes/process.h"
 
 typedef struct cpu {
 	void*	 stack;
