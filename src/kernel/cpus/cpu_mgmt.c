@@ -296,7 +296,7 @@ void initialize_cpus() {
 		array_push_data(cpus, make_cpu_default());
 	} else {
 		apicaddr = madt->address;
-		vlog_msg("Local apic address %#x, local cpu apic %x.", apicaddr, get_local_apic_id());
+		vlog_msg("Local APIC (LAPIC) address: %xh, bootstrap processors apic id: %xh", apicaddr, get_local_apic_id());
 
 		size_t bytes = madt->header.Length;
 		bytes -= sizeof(MADT_HEADER);

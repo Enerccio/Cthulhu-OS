@@ -130,27 +130,16 @@ _gpInitial_PML4:   ; Page Map Level 4
     times 509 dq 0
     dq   _gpInitial_PML4 + 3  ; recursive mapping "trick"
     dq   _gpInitial_PDP + 3   ; Also Map to 0xFFFF8000 00000000
-
 _gpInitial_PDP:      ; Page Directory Pointer Table
     dq _gpInitial_PD + 3
     times 509 dq 0
     dq _gpInitial_PD + 3
     dq 0
-
 _gpInitial_PD:      ; Page Directory
     dq _gpInitial_PT1 + 3
-    dq _gpInitial_PT2 + 3
-    times 510 dq 0
-
+    times 511 dq 0
 _gpInitial_PT1:      ; Page Table 1
     %assign i 0
-    %rep 512
-    dq   i*4096+3
-    %assign i i+1
-    %endrep
-
-_gpInitial_PT2:      ; Page Table 2
-    %assign i 512
     %rep 512
     dq   i*4096+3
     %assign i i+1

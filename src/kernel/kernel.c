@@ -55,8 +55,9 @@ extern bool __print_initialized;
 void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	__ports_initialized = false;
 	__print_initialized = false;
-
+	cpus = NULL;
 	kernel_tmp_heap_start = heap_start;
+	mboot_addr = &multiboot_info;
 
 	initialize_temporary_heap(heap_start);
 	initialize_physical_memory_allocation(mboot_addr);
@@ -69,20 +70,21 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	initialize_ports();
 	log_msg("Ports initialized");
 
-	mboot_addr = &multiboot_info;
 	__initialize_kclib();
 	log_msg("KCLib initialized");
 
 	initialize_grx(mboot_addr);
-	log_msg("Graphical mode initialized");
 
-	cpus = NULL;
     kd_cclear(0);
+    kd_cwrite("Azathoth kernel bootup sequence initiated\n", 0, 5);
+
     init_errors();
+
+    log_msg("Graphical mode initialized");
     log_msg("Errors initialized");
 
     init_table_acpi();
-    vlog_msg("ACPI Initialized, local apic: %lxh", (uint64_t)apicaddr);
+    vlog_msg("ACPI tables queried and ready to use (if found).");
 
     initialize_cpus();
     log_msg("CPU status queried.");

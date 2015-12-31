@@ -129,9 +129,12 @@ void kd_cput(char c, uint8_t back_color, uint8_t fore_color) {
     	}
     }
 
-    if (cursor_x >= 80) {
+    if (cursor_x >= 80 && mode == MODE_TEXT) {
         cursor_x = 0;
         cursor_y++;
+    } else if (cursor_x >= grx_get_width()/__font_w) {
+    	cursor_x = 0;
+    	cursor_y++;
     }
 
     scroll();
