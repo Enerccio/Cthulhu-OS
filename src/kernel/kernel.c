@@ -124,8 +124,6 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
     initialize_scheduler();
     log_msg("Scheduler initialized");
 
-    debug_break;
-
     broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_SCHEDULER_INIT_WAIT, 0);
 
     initialize_userspace();

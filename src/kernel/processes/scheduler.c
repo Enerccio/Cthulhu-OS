@@ -71,6 +71,7 @@ void schedule(registers_t* r) {
 			// we have winner
 			break;
 		}
+		csel += selection->tickets;
 	}
 
 	thread_t* old_head = cpu->threads;
@@ -90,8 +91,8 @@ void schedule(registers_t* r) {
 			old_head->last_rdx = r->rdx;
 			old_head->last_rdi = r->rdi;
 			old_head->last_rsi = r->rsi;
-			old_head->last_r8 = r->r8;
-			old_head->last_r9 = r->r9;
+			old_head->last_r8  = r->r8;
+			old_head->last_r9  = r->r9;
 			old_head->last_r10 = r->r10;
 			old_head->last_r11 = r->r11;
 			old_head->last_rbp = r->rbp;
