@@ -230,7 +230,7 @@ void initialize_mp(unsigned int localcpu) {
 }
 
 #define KERNEL_INIT_STACK_SIZE 		   (0x2000)
-#define KERNEL_HANDLER_STACK_SIZE      (0x4000)
+#define KERNEL_HANDLER_STACK_SIZE      (0x8000)
 #define KERNEL_PF_STACK_SIZE   		   (0x3000)
 #define KERNEL_DF_STACK_SIZE           (0x2000)
 #define KERNEL_IPI_STACK_SIZE          (0x3000)

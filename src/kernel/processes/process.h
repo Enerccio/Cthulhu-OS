@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include <sys/types.h>
+
 #include "../commons.h"
 #include "../utils/collections/array.h"
 
@@ -64,7 +66,7 @@ typedef struct proc {
 } proc_t;
 
 struct thread {
-	uint32_t tId;
+	tid_t tId;
 	proc_t*  parent_process;
 	uint64_t last_rip;
 	uint64_t last_rsp;

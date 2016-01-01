@@ -29,8 +29,8 @@ clean:
 	-rm ${TARGETPATH}*.h
 	
 %.o : %.c 
-	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../kclib/usr/include" -c $<
-	$(CC) $(CFLAGS) $(CPPFLAGS) -I"../kclib/usr/include" -c $< -o $@
+	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/usr/include" -c $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/usr/include" -c $< -o $@
 
 %_o.o : %.s 
 	$(AS) $(NASMFLAGS) $< -o $@
