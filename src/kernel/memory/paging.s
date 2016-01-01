@@ -61,7 +61,7 @@ is_1GB_paging_supported:
 [GLOBAL get_active_page]
 ; Returns active page from cr3
 ;
-; void* get_active_page()
+; extern void* get_active_page()
 get_active_page:
     xor rax, rax
     mov rax, cr3

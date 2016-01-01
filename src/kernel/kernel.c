@@ -43,6 +43,7 @@
 #include "interrupts/interrupts.h"
 #include "structures/gdt.h"
 #include "rlyeh/rlyeh.h"
+#include "processes/scheduler.h"
 
 extern volatile uint64_t clock_ms;
 extern struct multiboot_info multiboot_info;
@@ -106,8 +107,6 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	}
     vlog_msg("CPU queried and initialized. Number of logical cpus %u", array_get_size(cpus));
 
-	debug_break;
-
     initialize_ipi_subsystem();
 	initialize_lapic();
 	multiprocessing_ready = true;
@@ -121,6 +120,13 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 
     initialize_system_calls();
     log_msg("System calls initialized");
+
+    initialize_scheduler();
+    log_msg("Scheduler initialized");
+
+    debug_break;
+
+    broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_SCHEDULER_INIT_WAIT, 0);
 
     initialize_userspace();
 }

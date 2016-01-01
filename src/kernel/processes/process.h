@@ -68,11 +68,18 @@ typedef struct proc {
 struct thread {
 	tid_t tId;
 	proc_t*  parent_process;
-	uint64_t last_rip;
-	uint64_t last_rsp;
+	thread_t* next_thread;
+	thread_t* prev_thread;
+	uint16_t tickets;
 
+	/* Userspace information */
+	uint64_t last_rip, last_rsp, last_rax, last_rdi, last_rsi, last_rdx, last_rcx;
+	uint64_t last_r8, last_r9, last_r10, last_r11;
+	uint64_t last_rbx, last_rbp, last_r12, last_r13, last_r14, last_r15;
 	uint64_t stack_top_address;
 	uint64_t stack_bottom_address;
+	bool  first_call;
+	void* initial_thread_data;
 };
 
 extern array_t processes;

@@ -24,7 +24,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="osroot/usr/include"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src/kclib"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src/kernel"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src/kernel_dev_lib"/>
 					</sourceEntries>

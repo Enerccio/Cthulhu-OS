@@ -118,6 +118,10 @@ uint64_t get_unix_time() {
 	return (uint64_t)clock_s;
 }
 
+uint64_t get_unix_time_ms() {
+	return (uint64_t)clock_ms;
+}
+
 /**
  * Initializes ticker.
  *

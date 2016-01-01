@@ -28,6 +28,7 @@
 #pragma once
 
 #include "../../commons.h"
+#include "../random.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -104,3 +105,8 @@ void* array_find_by_pred(array_t* array, array_search_predicate_t predicate, voi
 // defined as inline
 /** Cleans the array, returning number of elements to 0. Keeps the buffer active */
 #define array_clean(array) array->size = 0
+
+/*
+ * Gets random element from array
+ */
+void* array_get_random(array_t* array, rg_t* rg);

@@ -41,9 +41,9 @@ rg_t rg_create_random_generator(uint64_t seed);
 /**
  * Returns next uint from random generator.
  */
-uint64_t rg_next_uint(rg_t rg);
+uint64_t rg_next_uint(rg_t* rg);
 
 /**
  * Returns next uint from 0 to limit.
  */
-uint64_t rg_next_uint_l(rg_t rg, uint64_t limit);
+uint64_t rg_next_uint_l(rg_t* rg, uint64_t limit);

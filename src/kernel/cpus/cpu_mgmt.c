@@ -32,6 +32,7 @@
 #include "../interrupts/clock.h"
 #include "../interrupts/idt.h"
 #include "../ports/ports.h"
+#include "../processes/scheduler.h"
 
 extern volatile uintmax_t clock_ms;
 extern volatile uintmax_t clock_s;
@@ -41,6 +42,7 @@ extern void* Gdt32;
 extern void wait_until_activated(uint64_t wait_code);
 extern void load_gdt(gdt_ptr_t* gdt, uint16_t tssid);
 extern gdt_ptr_t gdt;
+extern void kp_halt();
 
 #define AP_INIT_LOAD_ADDRESS (2)
 #define INIT_IPI_FLAGS (5<<8)
@@ -138,8 +140,9 @@ void ap_main(uint64_t proc_id) {
 	initialize_lapic();
 
 	wait_until_activated(WAIT_SCHEDULER_INIT_WAIT);
+	schedule(NULL);
 
-	while (true) ;
+	kp_halt();
 }
 
 /**
@@ -255,18 +258,17 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
 	}
 
 	cpu->insert_id = insertid;
-	cpu->processes = create_array();
 	cpu->__cpu_lock = 0;
 	cpu->__cpu_sched_lock = 0;
 	cpu->__message_clear_lock = 0;
 	cpu->apic_message_handled = 0;
+	cpu->total_tickets = 0;
 	cpu->stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_INIT_STACK_SIZE));
 	cpu->handler_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_HANDLER_STACK_SIZE));
 	cpu->pf_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_PF_STACK_SIZE));
 	cpu->df_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_DF_STACK_SIZE));
 	cpu->ipi_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_IPI_STACK_SIZE));
-	if (cpu->processes == NULL)
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &make_cpu);
+	cpu->threads = NULL;
 	return cpu;
 }
 

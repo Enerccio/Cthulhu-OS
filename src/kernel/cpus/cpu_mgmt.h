@@ -55,10 +55,13 @@ typedef struct cpu {
 	volatile bool apic_message_handled;
 	volatile uint8_t apic_message_type;
 
+	/* scheduler info */
 	volatile uint64_t __cpu_sched_lock;
+	uint64_t total_tickets;
+	thread_t* threads; // head thread is being executed
+
 
 	volatile bool started;
-	array_t* processes;
 } cpu_t;
 
 #define WAIT_NO_WAIT			  (0)

@@ -171,3 +171,10 @@ void* array_find_by_pred(array_t* array, array_search_predicate_t predicate, voi
 
 	return 0;
 }
+
+void* array_get_random(array_t* array, rg_t* rg) {
+	if (array->size == 0)
+		return NULL;
+	uint64_t idx = rg_next_uint_l(rg, array->size);
+	return array->data[idx];
+}

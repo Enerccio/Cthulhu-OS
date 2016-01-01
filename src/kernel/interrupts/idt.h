@@ -140,8 +140,9 @@ extern void isr255();
 #define PIC_EOI_ALL (PIC_EOI_SLAVE +1)
 
 typedef struct registers{
-    uint64_t r15, r14, r13, r12, r11, r10, r9, r8, rbp, rcx, rbx, rax;
+    uint64_t r15, r14, r13, r12, r11, r10, r9, r8, rbp, rcx, rbx;
     uint64_t rdx, rsi, rdi;
+    uint64_t es, ds, fs, gs, rax;
     uint64_t type, ecode;
     uint64_t rip, cs, rflags, uesp, ss;
 } registers_t ;

@@ -19,28 +19,20 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * clock.h
- *  Created on: Dec 23, 2015
+ * scheduler.h
+ *  Created on: Jan 1, 2016
  *      Author: Peter Vanusanik
- *  Contents:  ticker implementation
+ *  Contents: 
  */
 
 #pragma once
 
 #include "../commons.h"
-#include "../interrupts/idt.h"
-#include "../interrupts/interrupts.h"
+#include "../utils/random.h"
+#include "../utils/collections/array.h"
+#include "../interrupts/clock.h"
+#include "process.h"
 
-/**
- * Initializes clock subsystem.
- */
-void initialize_clock();
-/**
- * Returns unix time since 1970.
- */
-uint64_t get_unix_time();
-uint64_t get_unix_time_ms();
-/**
- * Busy waits for milis time in milis.
- */
-void busy_wait_milis(size_t milis);
+void schedule(registers_t* r);
+
+void initialize_scheduler();

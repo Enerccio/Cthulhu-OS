@@ -1,18 +1,18 @@
 [BITS 64]
 
 %macro ISR_NOERRCODE 1  ; define a macro, taking one parameter
-  [GLOBAL isr%1]        ; %1 accesses the first parameter.
-  isr%1:
-    push 0
-    push %1
-    jmp isr_common_stub
+    [GLOBAL isr%1]        ; %1 accesses the first parameter.
+    isr%1:
+        push 0
+        push %1
+        jmp isr_common_stub
 %endmacro
 
 %macro ISR_ERRCODE 1
-  [GLOBAL isr%1]
-  isr%1:
-    push %1
-    jmp isr_common_stub
+    [GLOBAL isr%1]
+    isr%1:
+        push %1
+        jmp isr_common_stub
 %endmacro
 
 ISR_NOERRCODE 0
@@ -70,21 +70,34 @@ ISR_NOERRCODE 255
 [EXTERN isr_handler]
 
 isr_common_stub:
+    push rax
+    xor rax, rax
+    mov ax, gs
+    push rax
+    xor rax, rax
+    mov ax, fs
+    push rax
+    xor rax, rax
+    mov ax, es
+    push rax
+    xor rax, rax
+    mov ax, ds
+    push rax ; 5
+
     push rdi
     push rsi
     push rdx
-    push rax
     push rbx
-    push rcx
+    push rcx ;10
     push rbp
     push r8
     push r9
     push r10
-    push r11
+    push r11 ;15
     push r12
     push r13
     push r14
-    push r15
+    push r15 ; 19
     mov rdi, rsp                ; move "pointer" from rsp to rdi (first parameter)
     mov rbx, rsp
     and rsp, 0xFFFFFFFFFFFFFFF0 ; align stack
@@ -94,17 +107,25 @@ isr_common_stub:
     pop r14
     pop r13
     pop r12
-    pop r11
+    pop r11 ;5
     pop r10
     pop r9
     pop r8
     pop rbp
-    pop rcx
+    pop rcx ;10
     pop rbx
-    pop rax
     pop rdx
     pop rsi
     pop rdi
+    pop rax ;15
+    mov ds, ax
+    pop rax
+    mov es, ax
+    pop rax
+    mov fs, ax
+    pop rax
+    mov gs, ax
+    pop rax ;19
     add rsp, 16
     iretq
 
