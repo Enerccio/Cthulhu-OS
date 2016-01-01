@@ -72,3 +72,7 @@ struct thread {
 	uint64_t stack_top_address;
 	uint64_t stack_bottom_address;
 };
+
+extern array_t processes;
+
+void initialize_userspace();

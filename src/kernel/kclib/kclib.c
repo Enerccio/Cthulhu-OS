@@ -25,11 +25,14 @@
  *  Contents: implementing external definitions for kclib
  */
 #include <sys/external.h>
+#include <sys/types.h>
 
 #include "../utils/rsod.h"
 #include "../memory/paging.h"
 #include "../memory/heap.h"
 #include "../utils/textinput.h"
+#include "../cpus/ipi.h"
+#include "../cpus/cpu_mgmt.h"
 
 __noreturn __kclib_assert_failure_k(uint32_t lineno, const char* file, const char* func) {
     error(ERROR_INTERNAL_LIBC, 0, lineno, 0);
@@ -66,4 +69,34 @@ ptrdiff_t  __kclib_send_data(void* stream, uint8_t* array, size_t buffer_size) {
 
 ptrdiff_t  __kclib_read_data(void* stream, uint8_t* buffer, size_t read_amount) {
     return 0;
+}
+
+extern uint64_t get_unix_time();
+clock_t __kclib_clock() {
+	return get_unix_time() * CLOCKS_PER_SEC;
+}
+
+mtx_id_t __kclib_get_mutex_global_identifier() {
+	return 0; // all mutexes in kernel have same identifier
+}
+
+extern bool multiprocessing_ready;
+
+extern uint8_t get_local_apic_id();
+tid_t __kclib_get_tid() {
+	if (multiprocessing_ready)
+		return get_local_apic_id();
+	return 0;
+}
+
+extern void wait_until_activated();
+void __kclib_halt(mtx_id_t __asked_mutex) {
+	if (multiprocessing_ready)
+		wait_until_activated(WAIT_KERNEL_MUTEX);
+}
+
+extern void broadcast_ipi_message(bool self, uint8_t message_type, uint64_t message, uint64_t message2);
+void __kclib_mutex_unlocked(mtx_id_t __asked_mutex) {
+	if (multiprocessing_ready)
+		broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_KERNEL_MUTEX, 0);
 }

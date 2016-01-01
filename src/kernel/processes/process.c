@@ -26,3 +26,9 @@
  */
 
 #include "process.h"
+
+array_t processes;
+
+void initialize_userspace() {
+
+}

@@ -163,7 +163,7 @@ void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress
     if (cpus == NULL)
     	kp_halt();
     else {
-    	broadcast_ipi_message(IPI_HALT_IMMEDIATELLY, ecode+1, 0);
+    	broadcast_ipi_message(true, IPI_HALT_IMMEDIATELLY, ecode+1, 0);
     }
 
     while (true) ;

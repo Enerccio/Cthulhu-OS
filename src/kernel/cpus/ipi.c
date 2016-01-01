@@ -99,7 +99,7 @@ void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, uint64_t messag
 	proc_spinlock_unlock(&cpu->__cpu_lock);
 }
 
-void broadcast_ipi_message(uint8_t message_type, uint64_t message, uint64_t message2) {
+void broadcast_ipi_message(bool self, uint8_t message_type, uint64_t message, uint64_t message2) {
 	uint8_t self_apic = get_local_apic_id();
 	for (unsigned int i=0; i<array_get_size(cpus); i++) {
 		cpu_t* cpu = array_get_at(cpus, i);
@@ -107,7 +107,8 @@ void broadcast_ipi_message(uint8_t message_type, uint64_t message, uint64_t mess
 			send_ipi_message(cpu->apic_id, message_type, message, message2);
 		}
 	}
-	send_ipi_message(self_apic, message_type, message, message2);
+	if (self)
+		send_ipi_message(self_apic, message_type, message, message2);
 }
 
 void initialize_ipi_subsystem() {

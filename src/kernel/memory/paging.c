@@ -322,7 +322,7 @@ void free_page_structure(uint64_t vaddress) {
 
 void deallocate_start_memory() {
 	MMU_PML4(0)[MMU_PML4_INDEX(0)] = 0;
-	broadcast_ipi_message(IPI_INVALIDATE_PAGE, 0, 0x200000);
+	broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, 0, 0x200000);
 }
 
 /**

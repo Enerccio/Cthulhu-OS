@@ -51,6 +51,7 @@ uint64_t kernel_tmp_heap_start;
 
 extern bool __ports_initialized;
 extern bool __print_initialized;
+extern bool multiprocessing_ready;
 
 void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	__ports_initialized = false;
@@ -61,8 +62,6 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	initialize_temporary_heap(heap_start);
 	initialize_physical_memory_allocation(mboot_addr);
 	initialize_standard_heap();
-
-	mboot_addr = &multiboot_info;
 
 	initialize_logger();
 	log_msg("Paging memory and kernel heap initialized");
@@ -107,14 +106,17 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 	}
     vlog_msg("CPU queried and initialized. Number of logical cpus %u", array_get_size(cpus));
 
+	debug_break;
+
     initialize_ipi_subsystem();
 	initialize_lapic();
+	multiprocessing_ready = true;
 	log_msg("Inter-processor interrupts initialized");
 
     deallocate_start_memory();
     log_msg("Bootup memory removed.");
 
-    init_initramfs(mboot_addr);
+    init_initramfs(&multiboot_info);
     log_msg("Initramfs loaded");
 
     initialize_system_calls();

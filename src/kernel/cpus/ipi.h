@@ -34,5 +34,5 @@
 #define IPI_INVALIDATE_PAGE   (2)
 
 void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, uint64_t message, uint64_t message2);
-void broadcast_ipi_message(uint8_t message_type, uint64_t message, uint64_t message2);
+void broadcast_ipi_message(bool self, uint8_t message_type, uint64_t message, uint64_t message2);
 void initialize_ipi_subsystem();

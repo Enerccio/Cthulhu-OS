@@ -1,15 +1,15 @@
 [BITS 64]
 
 [GLOBAL wait_until_activated]
-; waits until rax changes to non zero
+; waits until rax changes to wait code
 ;
-; extern void wait_until_activated()
+; extern void wait_until_activated(uint64_t wait_code)
 wait_until_activated:
     mov rax, 0
 .test:
     hlt
-    cmp rax, 0
-    je .test
+    cmp rax, rdi
+    jne .test
     ret
 
 

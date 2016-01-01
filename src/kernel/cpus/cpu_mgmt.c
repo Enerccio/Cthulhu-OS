@@ -38,7 +38,7 @@ extern volatile uintmax_t clock_s;
 extern void idt_flush(void* addr);
 extern idt_ptr_t idt_ptr;
 extern void* Gdt32;
-extern void wait_until_activated();
+extern void wait_until_activated(uint64_t wait_code);
 extern void load_gdt(gdt_ptr_t* gdt, uint16_t tssid);
 extern gdt_ptr_t gdt;
 
@@ -52,6 +52,8 @@ array_t* cpus;
 uint32_t cpuid_to_cputord[256];
 /** Contains LAPIC address from ACPI */
 uint32_t apicaddr;
+
+bool multiprocessing_ready = false;
 
 #define APIC_DESTINATION_FORM_FLAT 0xFFFFFFF
 
@@ -112,6 +114,8 @@ uint8_t get_local_processor_id() {
  * Returns local apic_id from MADT, bound local for every cpu
  */
 uint8_t get_local_apic_id() {
+	if (apicaddr == 0)
+		return 0;
 	return (*((uint32_t*)physical_to_virtual(apicaddr + 0x020))) >> 24;
 }
 
@@ -133,7 +137,7 @@ void ap_main(uint64_t proc_id) {
 	ENABLE_INTERRUPTS();
 	initialize_lapic();
 
-	wait_until_activated();
+	wait_until_activated(WAIT_SCHEDULER_INIT_WAIT);
 
 	while (true) ;
 }

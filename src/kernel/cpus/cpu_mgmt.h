@@ -61,6 +61,12 @@ typedef struct cpu {
 	array_t* processes;
 } cpu_t;
 
+#define WAIT_NO_WAIT			  (0)
+#define WAIT_GENERAL_WAIT         (1)
+#define WAIT_SCHEDULER_INIT_WAIT  (2)
+#define WAIT_SCHEDULER_QUEUE_CHNG (3)
+#define WAIT_KERNEL_MUTEX		  (4)
+
 extern array_t* cpus;
 extern uint32_t apicaddr;
 
