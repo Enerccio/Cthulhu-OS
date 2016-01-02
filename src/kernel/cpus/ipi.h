@@ -28,12 +28,18 @@
 #pragma once
 
 #include "../commons.h"
+#include "../interrupts/idt.h"
 
 #define IPI_HALT_IMMEDIATELLY (0)
 #define IPI_WAKE_UP_FROM_WUA  (1)
 #define IPI_INVALIDATE_PAGE   (2)
 #define IPI_INVLD_PML         (3)
+#define IPI_RUN_SCHEDULER     (4)
 
-void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message, ruint_t message2);
-void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t message, ruint_t message2);
+void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message, ruint_t message2,
+		registers_t* internalcall);
+void send_ipi_nowait(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message, ruint_t message2,
+		registers_t* internalcall);
+void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t message, ruint_t message2,
+		registers_t* internalcall);
 void initialize_ipi_subsystem();

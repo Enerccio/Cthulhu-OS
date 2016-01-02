@@ -49,6 +49,7 @@ typedef struct cpu {
 	uint8_t   apic_id;
 
 	volatile ruint_t __cpu_lock;
+	volatile ruint_t __ipi_lock;
 	volatile ruint_t __message_clear_lock;
 	volatile ruint_t apic_message;
 	volatile ruint_t apic_message2;

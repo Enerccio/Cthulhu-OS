@@ -259,6 +259,7 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
 
 	cpu->insert_id = insertid;
 	cpu->__cpu_lock = 0;
+	cpu->__ipi_lock = 0;
 	cpu->__cpu_sched_lock = 0;
 	cpu->__message_clear_lock = 0;
 	cpu->apic_message_handled = 0;

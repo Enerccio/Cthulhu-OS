@@ -33,6 +33,7 @@
 #include "../interrupts/clock.h"
 #include "process.h"
 
+void attemp_to_run_scheduler(registers_t* r);
 void schedule(registers_t* r);
 
 void initialize_scheduler();

@@ -26,6 +26,7 @@
  */
 
 #include "../interrupts/clock.h"
+#include "../processes/scheduler.h"
 
 #define CURRENT_YEAR        2015                            // Change this each year!
 int century_register = 0x00;                                // Set by ACPI table parsing code if possible
@@ -35,6 +36,12 @@ unsigned char hour;
 unsigned char day;
 unsigned char month;
 unsigned int year;
+/** Stores clock seconds in unix time */
+volatile uintmax_t clock_s;
+/** Stores ms of current ticker */
+volatile uintmax_t clock_ms;
+
+extern bool scheduler_enabled;
 
 enum {
 	cmos_address = 0x70,
@@ -69,11 +76,6 @@ intmax_t days_from_civil(int32_t y, uint8_t m, uint8_t d) {
 	return era * 146097 + ((int)doe) - 719468;
 }
 
-/** Stores clock seconds in unix time */
-volatile uintmax_t clock_s;
-/** Stores ms of current ticker */
-volatile uintmax_t clock_ms;
-
 /**
  * Ticker callback for ISR.
  */
@@ -82,6 +84,9 @@ void timer_tick(ruint_t error_code, registers_t* r) {
 	if (clock_ms >= 1000) {
 		++clock_s;
 		clock_ms -= 1000;
+	}
+	if (scheduler_enabled && clock_ms % 2 == 0) {
+		attemp_to_run_scheduler(r);
 	}
 }
 

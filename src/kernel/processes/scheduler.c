@@ -27,6 +27,7 @@
 
 #include "scheduler.h"
 #include "../cpus/cpu_mgmt.h"
+#include "../cpus/ipi.h"
 
 #include <stdnoreturn.h>
 
@@ -41,6 +42,17 @@ extern void set_active_page(void* page);
 
 ruint_t __process_modifier;
 ruint_t __thread_modifier;
+bool    scheduler_enabled = false;
+
+void attemp_to_run_scheduler(registers_t* r) {
+	rg_t rd = rg_create_random_generator(get_unix_time());
+
+	do {
+		cpu_t* cpu = array_get_random(cpus, &rd);
+		if (cpu->threads != NULL)
+			send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, r);
+	} while (true);
+}
 
 // TODO add switching threads
 // TODO add borrowing/returning stacks

@@ -53,6 +53,7 @@ ruint_t kernel_tmp_heap_start;
 extern bool __ports_initialized;
 extern bool __print_initialized;
 extern bool multiprocessing_ready;
+extern bool scheduler_enabled;
 
 void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
 	__ports_initialized = false;
@@ -124,10 +125,10 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     initialize_scheduler();
     log_msg("Scheduler initialized");
 
-    broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_SCHEDULER_INIT_WAIT, 0);
-
-    debug_break;
-    clone_paging_structures();
+    broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_SCHEDULER_INIT_WAIT, 0, NULL);
+    scheduler_enabled = true;
 
     proc_t* initp = load_init();
+
+    schedule(NULL);
 }

@@ -27,6 +27,7 @@
 
 #include "ipi.h"
 
+#include "../processes/scheduler.h"
 #include "../interrupts/idt.h"
 #include "../interrupts/interrupts.h"
 #include "cpu_mgmt.h"
@@ -59,6 +60,9 @@ void ipi_received(ruint_t ecode, registers_t* registers) {
 		}
 		break;
 	}
+	case IPI_RUN_SCHEDULER:
+		schedule(registers);
+		break;
 	}
 
 	proc_spinlock_lock(&cpu->__message_clear_lock);
@@ -66,27 +70,28 @@ void ipi_received(ruint_t ecode, registers_t* registers) {
 	proc_spinlock_unlock(&cpu->__message_clear_lock);
 }
 
-void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message, ruint_t message2) {
+void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message, ruint_t message2,
+		registers_t* internalcall) {
 	cpu_t* cpu = array_find_by_pred(cpus, search_for_cpu_by_apic, (void*)(uintptr_t)cpu_apic_id);
 
 	if (cpu == NULL)
 		return;
 
 	if (cpu_apic_id == get_local_apic_id()) {
-		proc_spinlock_lock(&cpu->__cpu_lock);
+		proc_spinlock_lock(&cpu->__ipi_lock);
 		cpu->apic_message_handled = 1;
 		cpu->apic_message_type = message_type;
 		cpu->apic_message = message;
 		cpu->apic_message2 = message2;
-		ipi_received(0, NULL);
-		proc_spinlock_unlock(&cpu->__cpu_lock);
+		ipi_received(0, internalcall);
+		proc_spinlock_unlock(&cpu->__ipi_lock);
 		return;
 	}
 
 	if (!cpu->started)
 		return; // stopped cpu requires no interrupts
 
-	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&cpu->__ipi_lock);
 
 	proc_spinlock_lock(&cpu->__message_clear_lock);
 	cpu->apic_message_handled = 1;
@@ -105,19 +110,51 @@ void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message
 		proc_spinlock_unlock(&cpu->__message_clear_lock);
 	} while (clear == 1);
 
-	proc_spinlock_unlock(&cpu->__cpu_lock);
+	proc_spinlock_unlock(&cpu->__ipi_lock);
 }
 
-void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t message, ruint_t message2) {
+void send_ipi_nowait(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message, ruint_t message2,
+		registers_t* internalcall) {
+	cpu_t* cpu = array_find_by_pred(cpus, search_for_cpu_by_apic, (void*)(uintptr_t)cpu_apic_id);
+
+	if (cpu == NULL)
+		return;
+
+	if (cpu_apic_id == get_local_apic_id()) {
+		proc_spinlock_lock(&cpu->__ipi_lock);
+		cpu->apic_message_handled = 1;
+		cpu->apic_message_type = message_type;
+		cpu->apic_message = message;
+		cpu->apic_message2 = message2;
+		ipi_received(0, internalcall);
+		return;
+	}
+
+	if (!cpu->started)
+		return; // stopped cpu requires no interrupts
+
+	proc_spinlock_lock(&cpu->__ipi_lock);
+
+	cpu->apic_message_type = message_type;
+	cpu->apic_message = message;
+	cpu->apic_message2 = message2;
+
+	send_ipi_to(cpu->apic_id, 0xFF, 0, false);
+
+	proc_spinlock_unlock(&cpu->__ipi_lock);
+}
+
+void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t message, ruint_t message2,
+		registers_t* internalcall) {
 	uint8_t self_apic = get_local_apic_id();
 	for (unsigned int i=0; i<array_get_size(cpus); i++) {
 		cpu_t* cpu = array_get_at(cpus, i);
 		if (cpu->apic_id != self_apic) {
-			send_ipi_message(cpu->apic_id, message_type, message, message2);
+			send_ipi_message(cpu->apic_id, message_type, message, message2, NULL);
 		}
 	}
 	if (self)
-		send_ipi_message(self_apic, message_type, message, message2);
+		send_ipi_message(self_apic, message_type, message, message2, internalcall);
 }
 
 void initialize_ipi_subsystem() {
