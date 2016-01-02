@@ -41,7 +41,7 @@ extern void kp_halt();
 #define BACKGROUND_COLOR 0
 #define FOREGROUND_COLOR fgc(&fg)
 
-static uint64_t lock;
+static ruint_t lock;
 extern void proc_spinlock_lock(void* address);
 extern void proc_spinlock_unlock(void* address);
 
@@ -108,7 +108,7 @@ static volatile bool error_displaying = 0;
  *
  * If two concurrent attempts to display error code, only displays first and then halt
  */
-void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress) {
+void error(uint16_t ecode, ruint_t speccode, ruint_t speccode2, void* eaddress) {
 
 	proc_spinlock_lock(&lock);
 	if (error_displaying != 0) {
@@ -147,7 +147,7 @@ void error(uint16_t ecode, uint64_t speccode, uint64_t speccode2, void* eaddress
 
     kd_setxy(16, 10);
     kd_cwrite("Address:            ", BACKGROUND_COLOR, FOREGROUND_COLOR);
-    kd_cwrite_hex64((uint64_t) eaddress, BACKGROUND_COLOR, FOREGROUND_COLOR);
+    kd_cwrite_hex64((ruint_t) eaddress, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
     if (cpus != NULL) {
 		kd_setxy(16, 12);

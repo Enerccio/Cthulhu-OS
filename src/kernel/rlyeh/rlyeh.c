@@ -79,7 +79,7 @@ void delete_file_entry(file_entry_t* fe) {
 
 void free_initramfs() {
 	delete_entry(root);
-	deallocate_starting_address((uint64_t)initrd_module, initrd_size);
+	deallocate_starting_address((uintptr_t)initrd_module, initrd_size);
 	root = NULL;
 }
 
@@ -87,7 +87,7 @@ void mk_dir(path_element_t** pe_ptr, char* name) {
 	path_element_t* pe;
 	pe = malloc(sizeof(path_element_t));
 	if (pe == NULL) {
-		error(ERROR_INITRD_ERROR, INITRD_ERROR_NOMEM, (uint64_t)pe_ptr, &mk_dir);
+		error(ERROR_INITRD_ERROR, INITRD_ERROR_NOMEM, (ruint_t)pe_ptr, &mk_dir);
 	}
 
 	size_t len = strlen(name);
@@ -99,13 +99,13 @@ void mk_dir(path_element_t** pe_ptr, char* name) {
 	pe->element.dir = malloc(sizeof(dir_entry_t));
 	if (pe->element.dir == NULL) {
 		free(pe);
-		error(ERROR_INITRD_ERROR, INITRD_ERROR_NOMEM, (uint64_t)pe_ptr, &mk_dir);
+		error(ERROR_INITRD_ERROR, INITRD_ERROR_NOMEM, (ruint_t)pe_ptr, &mk_dir);
 	}
 
 	pe->element.dir->path_el_array = create_array();
 	if (pe->element.dir->path_el_array == NULL) {
 		free(pe);
-		error(ERROR_INITRD_ERROR, INITRD_ERROR_NOMEM, (uint64_t)pe_ptr, &mk_dir);
+		error(ERROR_INITRD_ERROR, INITRD_ERROR_NOMEM, (ruint_t)pe_ptr, &mk_dir);
 	}
 
 	*pe_ptr = pe;
@@ -115,7 +115,7 @@ void mk_file(path_element_t** pe_ptr, char* name, size_t fsize, size_t offset) {
 	path_element_t* pe;
 	pe = malloc(sizeof(path_element_t));
 	if (pe == NULL) {
-		error(ERROR_INITRD_ERROR, INITRD_ERROR_NOMEM, (uint64_t)pe_ptr, &mk_dir);
+		error(ERROR_INITRD_ERROR, INITRD_ERROR_NOMEM, (ruint_t)pe_ptr, &mk_dir);
 	}
 
 	size_t len = strlen(name);
@@ -127,7 +127,7 @@ void mk_file(path_element_t** pe_ptr, char* name, size_t fsize, size_t offset) {
 	pe->element.file = malloc(sizeof(file_entry_t));
 	if (pe->element.file == NULL) {
 		free(pe);
-		error(ERROR_INITRD_ERROR, INITRD_ERROR_NOMEM, (uint64_t)pe_ptr, &mk_dir);
+		error(ERROR_INITRD_ERROR, INITRD_ERROR_NOMEM, (ruint_t)pe_ptr, &mk_dir);
 	}
 
 	pe->element.file->size = fsize;
@@ -208,5 +208,5 @@ path_element_t* get_path(const char* path) {
 }
 
 uint8_t* get_data(file_entry_t* file) {
-	return (uint8_t*) (file->offset + (uint64_t)initrd_module);
+	return (uint8_t*) (file->offset + (uintptr_t)initrd_module);
 }

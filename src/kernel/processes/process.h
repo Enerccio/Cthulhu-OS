@@ -42,8 +42,8 @@ typedef enum mmap_area_type {
 } ma_type_t;
 
 typedef struct mmap_area {
-	uint64_t  vastart;
-	uint64_t  vaend;
+	uintptr_t  vastart;
+	uintptr_t  vaend;
 	ma_type_t mtype;
 
 	struct mmap_area_t* next;
@@ -53,7 +53,7 @@ typedef struct thread thread_t;
 
 typedef struct proc {
 	uint64_t     proc_id;
-	uint64_t     pml4;
+	uintptr_t    pml4;
 
 	char**       environ;
 	char**       argc;
@@ -73,11 +73,11 @@ struct thread {
 	uint16_t tickets;
 
 	/* Userspace information */
-	uint64_t last_rip, last_rsp, last_rax, last_rdi, last_rsi, last_rdx, last_rcx;
-	uint64_t last_r8, last_r9, last_r10, last_r11;
-	uint64_t last_rbx, last_rbp, last_r12, last_r13, last_r14, last_r15;
-	uint64_t stack_top_address;
-	uint64_t stack_bottom_address;
+	ruint_t last_rip, last_rsp, last_rax, last_rdi, last_rsi, last_rdx, last_rcx;
+	ruint_t last_r8, last_r9, last_r10, last_r11;
+	ruint_t last_rbx, last_rbp, last_r12, last_r13, last_r14, last_r15;
+	uintptr_t stack_top_address;
+	uintptr_t stack_bottom_address;
 	bool  first_call;
 	void* initial_thread_data;
 };

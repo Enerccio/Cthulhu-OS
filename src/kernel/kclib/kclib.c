@@ -43,7 +43,7 @@ void* __kclib_heap_start() {
 }
 
 void*     __kclib_allocate(size_t aamount) {
-    uint64_t ha = heap_start_address;
+	uintptr_t ha = heap_start_address;
     allocate(heap_start_address, aamount, true, false);
     heap_start_address += ALIGN_UP(aamount); // fix deallocation
     return (void*)ha;
@@ -95,7 +95,7 @@ void __kclib_halt(mtx_id_t __asked_mutex) {
 		wait_until_activated(WAIT_KERNEL_MUTEX);
 }
 
-extern void broadcast_ipi_message(bool self, uint8_t message_type, uint64_t message, uint64_t message2);
+extern void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t message, ruint_t message2);
 void __kclib_mutex_unlocked(mtx_id_t __asked_mutex) {
 	if (multiprocessing_ready)
 		broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_KERNEL_MUTEX, 0);

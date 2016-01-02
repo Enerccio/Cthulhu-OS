@@ -33,14 +33,14 @@
 #include <stdlib.h>
 
 /** aligns the address to 0x1000 down */
-#define ALIGN(addr) (((uint64_t)addr) & 0xFFFFFFFFFFFFF000)
+#define ALIGN(addr) (((uintptr_t)addr) & (~0xFFF))
 /** aligns the address to 0x1000 up */
 #define ALIGN_UP(v) ((v) % 0x1000 == 0 ? (v) : ALIGN((v) + 0x1000))
 
 /**
  * Initializes temporary heap with provided address
  */
-void initialize_temporary_heap(uint64_t temp_heap_start);
+void initialize_temporary_heap(puint_t temp_heap_start);
 /**
  * Initializes standard heap
  */
@@ -53,4 +53,4 @@ void* malign(size_t amount, uint16_t align);
 /**
  * Start of the heap address
  */
-extern uint64_t heap_start_address;
+extern uintptr_t heap_start_address;

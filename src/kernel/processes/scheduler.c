@@ -30,17 +30,17 @@
 
 #include <stdnoreturn.h>
 
-extern void wait_until_activated(uint64_t wait_code);
+extern void wait_until_activated(ruint_t wait_code);
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
-extern noreturn void switch_to_usermode(uint64_t rdat, uint64_t rip, uint64_t rsp, uint64_t flags);
+extern noreturn void switch_to_usermode(ruint_t rdat, ruint_t rip, ruint_t rsp, ruint_t flags);
 extern void* get_active_page();
 extern void set_active_page(void* page);
 
 #define INTERRUPT_FLAG (1<<9)
 
-uint64_t __process_modifier;
-uint64_t __thread_modifier;
+ruint_t __process_modifier;
+ruint_t __thread_modifier;
 
 // TODO add switching threads
 // TODO add borrowing/returning stacks
@@ -105,11 +105,11 @@ void schedule(registers_t* r) {
 	}
 
 	// TODO: add flags for io
-	uint64_t flags = INTERRUPT_FLAG;
+	ruint_t flags = INTERRUPT_FLAG;
 
 	if (r != NULL) {
 		if (cpu->threads->first_call) {
-			r->rdi = (uint64_t)cpu->threads->initial_thread_data;
+			r->rdi = (ruint_t)cpu->threads->initial_thread_data;
 		}
 		r->cs = 24; // user space code
 		r->ss = 32; // user space data
@@ -137,7 +137,7 @@ void schedule(registers_t* r) {
 		r->r15 = cpu->threads->last_r15;
 	}
 
-	uint64_t pml4 = (uint64_t)get_active_page();
+	uintptr_t pml4 = (uintptr_t)get_active_page();
 	if (cpu->threads->parent_process->pml4 != pml4) {
 		set_active_page((void*)cpu->threads->parent_process->pml4);
 	}
@@ -147,7 +147,7 @@ void schedule(registers_t* r) {
 	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 
 	if (r == NULL) {
-		switch_to_usermode((uint64_t)cpu->threads->initial_thread_data,
+		switch_to_usermode((ruint_t)cpu->threads->initial_thread_data,
 				cpu->threads->last_rip, cpu->threads->last_rsp, flags);
 	}
 }

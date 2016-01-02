@@ -39,7 +39,7 @@ extern volatile uintmax_t clock_s;
 extern void idt_flush(void* addr);
 extern idt_ptr_t idt_ptr;
 extern void* Gdt32;
-extern void wait_until_activated(uint64_t wait_code);
+extern void wait_until_activated(ruint_t wait_code);
 extern void load_gdt(gdt_ptr_t* gdt, uint16_t tssid);
 extern gdt_ptr_t gdt;
 extern void kp_halt();
@@ -129,7 +129,7 @@ uint8_t get_local_apic_id() {
  * loads shared idt table, enabling the interrupts
  * afterwards.
  */
-void ap_main(uint64_t proc_id) {
+void ap_main(ruint_t proc_id) {
 	cpu_t* cpu = (cpu_t*)array_get_at(cpus, cpuid_to_cputord[proc_id]);
 	cpu->started = true;
 
@@ -286,7 +286,7 @@ cpu_t* make_cpu_default() {
  * all AP processors.
  */
 void initialize_cpus() {
-	memcpy((void*)physical_to_virtual(0x1000), (void*)physical_to_virtual((uint64_t)&Gdt32), 0x2000);
+	memcpy((void*)physical_to_virtual(0x1000), (void*)physical_to_virtual((uintptr_t)&Gdt32), 0x2000);
 	memset(cpuid_to_cputord, 0, sizeof(cpuid_to_cputord));
 
 	apicaddr = 0xFEE00000;
@@ -306,7 +306,7 @@ void initialize_cpus() {
 
 		size_t bytes = madt->header.Length;
 		bytes -= sizeof(MADT_HEADER);
-		uint64_t addr = ((uint64_t)madt)+sizeof(MADT_HEADER);
+		uintptr_t addr = ((uintptr_t)madt)+sizeof(MADT_HEADER);
 		while (bytes > 0) {
 			ACPI_SUBTABLE_HEADER* h = (ACPI_SUBTABLE_HEADER*)addr;
 			bytes -= h->length;

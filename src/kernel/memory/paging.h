@@ -235,25 +235,25 @@ void initialize_physical_memory_allocation(struct multiboot_info* mb);
  * Translates virtual address to physical. valid pointer will
  * contain true if address is translated to valid one.
  */
-uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid);
+puint_t virtual_to_physical(uint64_t vaddress, uint8_t* valid);
 /**
  * Translates physical address to virtual using memory identity map.
  */
-uint64_t physical_to_virtual(uint64_t vaddress);
+uint64_t physical_to_virtual(puint_t paddress);
 
 /**
  * Allocates memory from specified address and amount, using
  * kernel and readonly as source flags.
  */
-void allocate(uint64_t from, size_t amount, bool kernel, bool readonly);
+void allocate(uintptr_t from, size_t amount, bool kernel, bool readonly);
 /**
  * Deallocates memory from specified address and amount.
  */
-void deallocate(uint64_t from, size_t amount);
+void deallocate(uintptr_t from, size_t amount);
 /**
  * Returns whether specific virtual address is allocated or not.
  */
-bool allocated(uint64_t addr);
+bool allocated(uintptr_t addr);
 
 /**
  * Deallocates starting memory.
@@ -263,8 +263,8 @@ void deallocate_start_memory();
 /**
  * Dealocates starting address at point, used to deallocate modules
  */
-void deallocate_starting_address(uint64_t address, uint64_t size);
+void deallocate_starting_address(uintptr_t address, size_t size);
 
-uint64_t clone_paging_structures();
+puint_t clone_paging_structures();
 
-bool page_fault(uint64_t address, uint64_t errcode);
+bool page_fault(uintptr_t address, ruint_t errcode);

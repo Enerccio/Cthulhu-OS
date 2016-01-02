@@ -77,7 +77,7 @@ volatile uintmax_t clock_ms;
 /**
  * Ticker callback for ISR.
  */
-void timer_tick(uint64_t error_code, registers_t* r) {
+void timer_tick(ruint_t error_code, registers_t* r) {
 	clock_ms += 1;
 	if (clock_ms >= 1000) {
 		++clock_s;

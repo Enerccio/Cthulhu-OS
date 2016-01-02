@@ -87,7 +87,7 @@ void* findFACP(void* RootSDT) {
     int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
 
     for (int i=0; i<entries; i++) {
-        ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&rsdt->PointerToOtherSDT)[i]);
+        ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&rsdt->PointerToOtherSDT)[i]);
         if (!strncmp(h->Signature, "FACP", 4))
             return (void*)h;
     }
@@ -106,7 +106,7 @@ void* findFACP_XSDT(void* RootSDT) {
     int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
 
     for (int i=0; i<entries; i++) {
-        ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&rsdt->PointerToOtherSDT)[i]);
+        ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&rsdt->PointerToOtherSDT)[i]);
         if (!strncmp(h->Signature, "FACP", 4))
             return (void*)h;
     }
@@ -126,7 +126,7 @@ void* find_madt() {
 			return NULL;
 		int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
 		for (int i=0; i<entries; i++) {
-			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&rsdt->PointerToOtherSDT)[i]);
+			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&rsdt->PointerToOtherSDT)[i]);
 			if (!strncmp(h->Signature, "APIC", 4)) {
 				return h;
 			}
@@ -136,7 +136,7 @@ void* find_madt() {
 			return NULL;
 		int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
 		for (int i=0; i<entries; i++) {
-			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uint64_t)(&xsdt->PointerToOtherSDT)[i]);
+			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&xsdt->PointerToOtherSDT)[i]);
 			if (!strncmp(h->Signature, "APIC", 4)) {
 				return h;
 			}
@@ -175,8 +175,8 @@ bool valid_rsdp(struct RSDPDescriptor* rsdp) {
  */
 struct RSDPDescriptor* find_rsdp() {
 	struct RSDPDescriptor* desc;
-	uint64_t test_addr = (uint64_t)ebda;
-	for (uint64_t addr = test_addr; addr < test_addr+0x1000; addr += 16) {
+	uintptr_t test_addr = (uintptr_t)ebda;
+	for (uintptr_t addr = test_addr; addr < test_addr+0x1000; addr += 16) {
 		char* test_address = (char*)addr;
 		if (strncmp(test_address, "RSD PTR ", 8)==0) {
 			desc = (struct RSDPDescriptor*)test_address;
@@ -185,7 +185,7 @@ struct RSDPDescriptor* find_rsdp() {
 		}
 	}
 	test_addr = 0x000E0000;
-	for (uint64_t addr = test_addr; addr < 0x000FFFFF; addr += 16) {
+	for (uintptr_t addr = test_addr; addr < 0x000FFFFF; addr += 16) {
 		char* test_address = (char*)addr;
 		if (strncmp(test_address, "RSD PTR ", 8)==0) {
 			desc = (struct RSDPDescriptor*)test_address;
@@ -228,7 +228,7 @@ void init_table_acpi() {
 	}
 
 	if (acpi_version == 1) {
-		RSDT* rsdtp = (RSDT*)physical_to_virtual((uint64_t)rsdp_descriptor->RsdtAddress);
+		RSDT* rsdtp = (RSDT*)physical_to_virtual((uintptr_t)rsdp_descriptor->RsdtAddress);
 		if (valid_rsdt(rsdtp)) {
 			rsdt = rsdtp;
 		} else {

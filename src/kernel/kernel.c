@@ -48,13 +48,13 @@
 extern volatile uint64_t clock_ms;
 extern struct multiboot_info multiboot_info;
 
-uint64_t kernel_tmp_heap_start;
+ruint_t kernel_tmp_heap_start;
 
 extern bool __ports_initialized;
 extern bool __print_initialized;
 extern bool multiprocessing_ready;
 
-void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
+void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
 	__ports_initialized = false;
 	__print_initialized = false;
 	cpus = NULL;
@@ -91,7 +91,7 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
     log_msg("CPU status queried.");
 
     reinitialize_gdt();
-    vlog_msg("GDT reinitialized to %xh", (uint64_t)&gdt);
+    vlog_msg("GDT reinitialized to %xh", (uintptr_t)&gdt);
 
     initialize_interrupts();
     log_msg("Interrupt table initialized");

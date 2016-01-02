@@ -34,11 +34,11 @@
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
 extern void kp_halt();
-extern void invalidate_address(uint64_t address);
-extern uint64_t get_active_page();
-extern void set_active_page(uint64_t address);
+extern void invalidate_address(uintptr_t address);
+extern uintptr_t get_active_page();
+extern void set_active_page(uintptr_t address);
 
-void ipi_received(uint64_t ecode, registers_t* registers) {
+void ipi_received(ruint_t ecode, registers_t* registers) {
 	// WATCH OUT: registers might be null if it is local interrupt
 	cpu_t* cpu = get_current_cput();
 	switch (cpu->apic_message_type) {
@@ -49,11 +49,11 @@ void ipi_received(uint64_t ecode, registers_t* registers) {
 		registers->rax = cpu->apic_message; // unlocking from wait_until_activation if message was nonzero
 		break;
 	case IPI_INVALIDATE_PAGE:
-		for (uint64_t i=cpu->apic_message; i<cpu->apic_message2; i+=0x1000)
+		for (uintptr_t i=cpu->apic_message; i<cpu->apic_message2; i+=0x1000)
 			invalidate_address(i);
 		break;
 	case IPI_INVLD_PML: {
-		uint64_t active_page = get_active_page();
+		uintptr_t active_page = get_active_page();
 		if (active_page == cpu->apic_message) {
 			set_active_page(active_page);
 		}
@@ -66,7 +66,7 @@ void ipi_received(uint64_t ecode, registers_t* registers) {
 	proc_spinlock_unlock(&cpu->__message_clear_lock);
 }
 
-void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, uint64_t message, uint64_t message2) {
+void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message, ruint_t message2) {
 	cpu_t* cpu = array_find_by_pred(cpus, search_for_cpu_by_apic, (void*)(uintptr_t)cpu_apic_id);
 
 	if (cpu == NULL)
@@ -108,7 +108,7 @@ void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, uint64_t messag
 	proc_spinlock_unlock(&cpu->__cpu_lock);
 }
 
-void broadcast_ipi_message(bool self, uint8_t message_type, uint64_t message, uint64_t message2) {
+void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t message, ruint_t message2) {
 	uint8_t self_apic = get_local_apic_id();
 	for (unsigned int i=0; i<array_get_size(cpus); i++) {
 		cpu_t* cpu = array_get_at(cpus, i);

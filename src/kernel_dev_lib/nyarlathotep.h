@@ -32,12 +32,12 @@
 extern "C" {
 #endif
 
-extern uint64_t dev_sys_0arg(uint64_t syscallnum);
-extern uint64_t dev_sys_1arg(uint64_t syscallnum, void* arg1);
-extern uint64_t dev_sys_2arg(uint64_t syscallnum, void* arg1, void* arg2);
-extern uint64_t dev_sys_3arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3);
-extern uint64_t dev_sys_4arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4);
-extern uint64_t dev_sys_5arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4, void* arg5);
+extern ruint_t dev_sys_0arg(ruint_t syscallnum);
+extern ruint_t dev_sys_1arg(ruint_t syscallnum, void* arg1);
+extern ruint_t dev_sys_2arg(ruint_t syscallnum, void* arg1, void* arg2);
+extern ruint_t dev_sys_3arg(ruint_t syscallnum, void* arg1, void* arg2, void* arg3);
+extern ruint_t dev_sys_4arg(ruint_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4);
+extern ruint_t dev_sys_5arg(ruint_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4, void* arg5);
 
 #include "ny_initramfs.h"
 

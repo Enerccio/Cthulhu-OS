@@ -39,9 +39,9 @@ rg_t rg_create_random_generator(uint64_t seed) {
 /**
  * Returns next uint from random generator.
  */
-uint64_t rg_next_uint(rg_t* rg) {
-	uint64_t x = rg->state[0];
-	uint64_t const y = rg->state[1];
+ruint_t rg_next_uint(rg_t* rg) {
+	ruint_t x = rg->state[0];
+	ruint_t const y = rg->state[1];
 	rg->state[0] = y;
 	x ^= x << 23; // a
 	rg->state[1] = x ^ y ^ (x >> 17) ^ (y >> 26); // b, c
@@ -51,6 +51,6 @@ uint64_t rg_next_uint(rg_t* rg) {
 /**
  * Returns next uint from 0 to limit.
  */
-uint64_t rg_next_uint_l(rg_t* rg, uint64_t limit) {
+ruint_t rg_next_uint_l(rg_t* rg, ruint_t limit) {
 	return rg_next_uint(rg) % limit;
 }

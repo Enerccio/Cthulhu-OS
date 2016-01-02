@@ -44,22 +44,21 @@ typedef struct cpu {
 	void*    df_stack;
 	void*    ipi_stack;
 
-	size_t   insert_id;
-	uint64_t processor_id;
-	uint8_t  apic_id;
+	size_t    insert_id;
+	ruint_t   processor_id;
+	uint8_t   apic_id;
 
-	volatile uint64_t __cpu_lock;
-	volatile uint64_t __message_clear_lock;
-	volatile uint64_t apic_message;
-	volatile uint64_t apic_message2;
+	volatile ruint_t __cpu_lock;
+	volatile ruint_t __message_clear_lock;
+	volatile ruint_t apic_message;
+	volatile ruint_t apic_message2;
 	volatile bool apic_message_handled;
 	volatile uint8_t apic_message_type;
 
 	/* scheduler info */
-	volatile uint64_t __cpu_sched_lock;
+	volatile ruint_t __cpu_sched_lock;
 	uint64_t total_tickets;
 	thread_t* threads; // head thread is being executed
-
 
 	volatile bool started;
 } cpu_t;

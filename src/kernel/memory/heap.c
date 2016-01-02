@@ -30,15 +30,15 @@
  * temporary heap address is stored here, used initially to create memory structures
  * so standard allocation can happen
  */
-int64_t tmp_heap;
+puint_t tmp_heap;
 /**
  * Start of the heap address
  */
-uint64_t heap_start_address;
+uintptr_t heap_start_address;
 /**
  * End of the heap address
  */
-uint64_t heap_end_address;
+uintptr_t heap_end_address;
 
 /**
  * Allocates the memory amount increased by align count, then aligns it and
@@ -49,22 +49,22 @@ aligned_ptr_t malign(size_t amount, uint16_t align) {
         if (tmp_heap % align != 0) {
             tmp_heap = tmp_heap + (align - (tmp_heap % align));
         }
-        uint64_t head = tmp_heap;
+        puint_t head = tmp_heap;
         tmp_heap += amount;
-        return (void*)head;
+        return (void*)(uintptr_t)head;
     }
 
-    uint64_t unaligned = (uint64_t) malloc(amount+align+sizeof(uint64_t));
-    uint64_t aligned = unaligned + sizeof(uint64_t);
+    uintptr_t unaligned = (uintptr_t) malloc(amount+align+sizeof(uintptr_t));
+    uintptr_t aligned = unaligned + sizeof(uintptr_t);
     if (!(aligned % align == 0)) {
         aligned = aligned + (align - (aligned % align));
     }
-    uint64_t* ptr = (uint64_t*) aligned;
+    uintptr_t* ptr = (uintptr_t*) aligned;
     *(ptr-1) = unaligned;
     return (void*)aligned;
 }
 
-void initialize_temporary_heap(uint64_t temp_heap_start) {
+void initialize_temporary_heap(puint_t temp_heap_start) {
     tmp_heap = temp_heap_start;
 }
 

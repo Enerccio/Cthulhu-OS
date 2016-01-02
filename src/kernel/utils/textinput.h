@@ -30,6 +30,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifndef REGISTER_UINT_TYPE
+#define REGISTER_UINT_TYPE uint64_t
+#endif
+typedef REGISTER_UINT_TYPE ruint_t;
+
+#ifndef PHYSICAL_UINT_TYPE
+#define PHYSICAL_UINT_TYPE uintptr_t
+#endif
+typedef PHYSICAL_UINT_TYPE puint_t;
+
 #include "../grx/grx.h"
 
 extern void outb(uint16_t port, uint8_t value);
@@ -81,7 +91,7 @@ void kd_write_hex(uint32_t number);
 /**
  * Writes 64bit hex number with gray color and black background.
  */
-void kd_write_hex64(uint64_t number);
+void kd_write_hex64(ruint_t number);
 
 /**
  * Writes 32 bit hex number.
@@ -91,7 +101,7 @@ void kd_cwrite_hex(uint32_t number, uint8_t bg_color, uint8_t fg_color);
 /**
  * Writes 64 bit hex number.
  */
-void kd_cwrite_hex64(uint64_t number, uint8_t bgcolor, uint8_t fgcolor);
+void kd_cwrite_hex64(ruint_t number, uint8_t bgcolor, uint8_t fgcolor);
 
 /**
  * Emits new line.

@@ -41,16 +41,16 @@ section_info_t* frame_pool;
 
 bool __mem_mirror_present;
 struct multiboot_info multiboot_info;
-uint64_t __frame_lock;
+ruint_t __frame_lock;
 
 extern uint64_t detect_maxphyaddr();
 extern uint64_t get_active_page();
-extern void set_active_page(uint64_t address);
-extern uint64_t is_1GB_paging_supported();
+extern void set_active_page(puint_t address);
+extern ruint_t is_1GB_paging_supported();
 extern void invalidate_address(void* addr);
 extern uint16_t* text_mode_video_memory;
 extern void*     ebda;
-extern uint64_t kernel_tmp_heap_start;
+extern puint_t kernel_tmp_heap_start;
 extern unsigned char _frame_block[0];
 extern void proc_spinlock_lock(void* address);
 extern void proc_spinlock_unlock(void* address);
@@ -114,7 +114,7 @@ typedef struct v_address1GB {
  * 1GB page sector (ram identity map) behaves slightly different, because it
  * needs different v_address_t type.
  */
-uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
+ruint_t virtual_to_physical(uintptr_t vaddress, uint8_t* valid) {
     *valid = 1;
     v_address_t virtual_address = *((v_address_t*) &vaddress);
 
@@ -148,43 +148,40 @@ uint64_t virtual_to_physical(uint64_t vaddress, uint8_t* valid) {
         return 0;
     }
 
-    uint64_t physadd = MMU_PT(vaddress)[MMU_PT_INDEX(vaddress)];
+    ruint_t physadd = MMU_PT(vaddress)[MMU_PT_INDEX(vaddress)];
     return ALIGN(physadd) + virtual_address.offset;
 }
 
 /**
  * Returns address + physical identity map offset
  */
-uint64_t physical_to_virtual(uint64_t vaddress) {
+uintptr_t physical_to_virtual(ruint_t paddress) {
 	if (!__mem_mirror_present)
-		return vaddress;
-	if (vaddress == 0)
+		return paddress;
+	if (paddress == 0)
 		return 0;
-    return vaddress + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
+    return paddress + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
 }
-
-/** contains last found free frame, so algorithm can continue from that point when searching for next */
-uint32_t last_searched_location;
 
 /**
  * Always returns free frame
  * TODO: add paging to swap
  */
 extern void kp_halt();
-static uint64_t get_free_frame() {
+static puint_t get_free_frame() {
 	if (frame_pool == NULL) {
-		return ((uint64_t)malign(0x1000, 0x1000)-0xFFFFFFFF80000000);
+		return ((puint_t)malign(0x1000, 0x1000)-0xFFFFFFFF80000000);
 	} else {
-		section_info_t* section = (section_info_t*)physical_to_virtual((uint64_t)frame_pool);
+		section_info_t* section = (section_info_t*)physical_to_virtual((puint_t)frame_pool);
 		while (section != NULL) {
 			if (section->head != NULL) {
-				stack_element_t* se = (stack_element_t*) physical_to_virtual((uint64_t)section->head);
+				stack_element_t* se = (stack_element_t*) physical_to_virtual((puint_t)section->head);
 				section->head = se->next;
-				((frame_info_t*)physical_to_virtual((uint64_t)section->frame_array))
+				((frame_info_t*)physical_to_virtual((puint_t)section->frame_array))
 						[se->array_ord].usage_count = 1;
 				return se->frame_address;
 			}
-			section = (section_info_t*)physical_to_virtual((uint64_t)section->next_section);
+			section = (section_info_t*)physical_to_virtual((puint_t)section->next_section);
 		}
 
 		proc_spinlock_unlock(&__frame_lock);
@@ -197,14 +194,14 @@ static uint64_t get_free_frame() {
 /**
  * Deallocates frame from frame_map.
  */
-static void free_frame(uint64_t frame_address) {
-    uint64_t fa = ALIGN(frame_address);
+static void free_frame(puint_t frame_address) {
+	puint_t fa = ALIGN(frame_address);
 
-	section_info_t* section = (section_info_t*)physical_to_virtual((uint64_t)frame_pool);
+	section_info_t* section = (section_info_t*)physical_to_virtual((puint_t)frame_pool);
 	while (section != NULL) {
 		if (section->start_word >= fa && section->end_word < fa) {
 			uint32_t idx = (fa-section->start_word) / 0x1000;
-			frame_info_t* fi = (frame_info_t*)physical_to_virtual((uint64_t)section->frame_array);
+			frame_info_t* fi = (frame_info_t*)physical_to_virtual((puint_t)section->frame_array);
 			--fi[idx].usage_count;
 			if (fi[idx].cow_count > 0)
 				--fi[idx].cow_count;
@@ -212,28 +209,28 @@ static void free_frame(uint64_t frame_address) {
 				fi[idx].bound_stack_element->next = section->head;
 				section->head = fi[idx].bound_stack_element;
 				memset((void*)physical_to_virtual(
-						((stack_element_t*)physical_to_virtual((uint64_t)section->head))->frame_address),
+						((stack_element_t*)physical_to_virtual((puint_t)section->head))->frame_address),
 						0xDE, 0x1000);
 				return;
 			}
 		} else {
-			section = (section_info_t*)physical_to_virtual((uint64_t)section->next_section);
+			section = (section_info_t*)physical_to_virtual((puint_t)section->next_section);
 		}
 	}
 	// unmapped address not in a pool, most likely <2MB.
 }
 
-static frame_info_t* get_frame_info(uint64_t fa) {
+static frame_info_t* get_frame_info(puint_t fa) {
 
-	section_info_t* section = (section_info_t*)physical_to_virtual((uint64_t)frame_pool);
+	section_info_t* section = (section_info_t*)physical_to_virtual((puint_t)frame_pool);
 	while (section != NULL) {
 		if (section->start_word >= fa && section->end_word < fa) {
 			uint32_t idx = (fa-section->start_word) / 0x1000;
-			frame_info_t* fi = (frame_info_t*)physical_to_virtual((uint64_t)section->frame_array);
+			frame_info_t* fi = (frame_info_t*)physical_to_virtual((puint_t)section->frame_array);
 			proc_spinlock_unlock(&__frame_lock);
 			return &fi[idx];
 		} else {
-			section = (section_info_t*)physical_to_virtual((uint64_t)section->next_section);
+			section = (section_info_t*)physical_to_virtual((puint_t)section->next_section);
 		}
 	}
 
@@ -248,8 +245,8 @@ static frame_info_t* get_frame_info(uint64_t fa) {
  * on the way to the virtual address. Returned pointer points to page in page
  * table.
  */
-static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
-    uint64_t* pdpt_addr = (uint64_t*) MMU_PML4(vaddress)[MMU_PML4_INDEX(
+static puint_t* get_page(uintptr_t vaddress, bool allocate_new) {
+	puint_t* pdpt_addr = (uint64_t*) MMU_PML4(vaddress)[MMU_PML4_INDEX(
             vaddress)];
 
     if (!PRESENT(pdpt_addr)) {
@@ -260,7 +257,7 @@ static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
         pdpt.number = get_free_frame();
         pdpt.flaggable.present = 1;
         MMU_PML4(vaddress)[MMU_PML4_INDEX(vaddress)] = pdpt.number;
-        memset(MMU_PDPT(vaddress), 0, sizeof(uint64_t)*512);
+        memset(MMU_PDPT(vaddress), 0, sizeof(uintptr_t)*512);
     }
 
     uint64_t* pdir_addr = (uint64_t*) MMU_PDPT(vaddress)[MMU_PDPT_INDEX(
@@ -274,7 +271,7 @@ static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
         dir.number = get_free_frame();
         dir.flaggable.present = 1;
         MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)] = dir.number;
-        memset(MMU_PD(vaddress), 0, sizeof(uint64_t)*512);
+        memset(MMU_PD(vaddress), 0, sizeof(uintptr_t)*512);
     }
 
     uint64_t* pt_addr = (uint64_t*) MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)];
@@ -287,13 +284,13 @@ static uint64_t* get_page(uint64_t vaddress, bool allocate_new) {
         pt.number = get_free_frame();
         pt.flaggable.present = 1;
         MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)] = pt.number;
-        memset(MMU_PT(vaddress), 0, sizeof(uint64_t)*512);
+        memset(MMU_PT(vaddress), 0, sizeof(uintptr_t)*512);
     }
 
-    return &MMU_PT(vaddress)[MMU_PT_INDEX(vaddress)];
+    return (puint_t*)&MMU_PT(vaddress)[MMU_PT_INDEX(vaddress)];
 }
 
-void free_page_structure(uint64_t vaddress) {
+void free_page_structure(uintptr_t vaddress) {
 	uint64_t* pdpt_addr = (uint64_t*) MMU_PML4(vaddress)[MMU_PML4_INDEX(
 	            vaddress)];
 
@@ -396,12 +393,12 @@ static uint64_t detect_maxram(struct multiboot_info* mboot_addr) {
     return highest;
 }
 
-static void* remap(uint64_t phys_address) {
+static void* remap(puint_t phys_address) {
 	if (phys_address < 0x200000)
 		return (void*)phys_address;
 
-	uint64_t map_address = (uint64_t)_frame_block;
-	uint64_t* paddress = get_page(map_address, false);
+	uintptr_t map_address = (uintptr_t)_frame_block;
+	puint_t* paddress = get_page(map_address, false);
 
 	page_t page;
 	memset(&page, 0, sizeof(page_t));
@@ -429,7 +426,7 @@ size_t __strlen(char* c) {
 	size_t len = 0;
 	do {
 		if (len % 0x1000 == 0){
-			c = (char*)remap((uint64_t)c);
+			c = (char*)remap((puint_t)c);
 		}
 		if (*c++ == '\0')
 			break;
@@ -439,29 +436,29 @@ size_t __strlen(char* c) {
 	return len;
 }
 
-bool check_used_range(uint64_t test, uint64_t fa, size_t sa) {
-	uint64_t from = ALIGN(fa);
+bool check_used_range(puint_t test, puint_t fa, size_t sa) {
+	ruint_t from = ALIGN(fa);
 	sa += fa - from;
-	uint64_t size = ALIGN_UP(sa);
+	ruint_t size = ALIGN_UP(sa);
 	if (from <= test && test < from + size) {
 		return true;
 	}
 	return false;
 }
 
-bool check_if_used_string(uint64_t test, char* string) {
-	return check_used_range(test, (uint64_t)string, __strlen(string)+1);
+bool check_if_used_string(puint_t test, char* string) {
+	return check_used_range(test, (puint_t)string, __strlen(string)+1);
 }
 
-bool check_if_used(struct multiboot_info* mbheader, uint64_t test) {
-	uint64_t kend = kernel_tmp_heap_start - 0xFFFFFFFF80000000 + 0x40000;
+bool check_if_used(struct multiboot_info* mbheader, puint_t test) {
+	puint_t kend = kernel_tmp_heap_start - 0xFFFFFFFF80000000 + 0x40000;
 	if (check_used_range(test, 0, kend))
 		return true;
 
-	if (check_used_range(test, (uint64_t)mbheader, sizeof(struct multiboot_info)))
+	if (check_used_range(test, (puint_t)mbheader, sizeof(struct multiboot_info)))
 		return true;
 
-	char* cmdline = (char*)(uint64_t)mbheader->cmdline;
+	char* cmdline = (char*)(puint_t)mbheader->cmdline;
 	if (check_if_used_string(test, cmdline))
 		return true;
 
@@ -469,13 +466,13 @@ bool check_if_used(struct multiboot_info* mbheader, uint64_t test) {
 	if (check_used_range(test, mbheader->mods_addr, mods_size))
 		return true;
 
-	struct multiboot_mod_list* modules = (struct multiboot_mod_list*) (uint64_t) mbheader->mods_addr;
+	struct multiboot_mod_list* modules = (struct multiboot_mod_list*) (puint_t) mbheader->mods_addr;
 	for (uint32_t i=0; i<mbheader->mods_count; i++) {
-		struct multiboot_mod_list* module = (struct multiboot_mod_list*)remap((uint64_t)&modules[i]);
+		struct multiboot_mod_list* module = (struct multiboot_mod_list*)remap((puint_t)&modules[i]);
 		size_t mod_size = module->mod_end-module->mod_start;
-		if (check_used_range(test, (uint64_t)module->mod_start, mod_size))
+		if (check_used_range(test, (puint_t)module->mod_start, mod_size))
 			return true;
-		char* mod_name = (char*)(uint64_t)module->cmdline;
+		char* mod_name = (char*)(puint_t)module->cmdline;
 		if (check_if_used_string(test, mod_name))
 			return true;
 	}
@@ -499,17 +496,17 @@ bool check_if_used(struct multiboot_info* mbheader, uint64_t test) {
 /**
  * Creates pool from bound adresses
  */
-section_info_t* make_pool(uint64_t length, uint64_t base_addr, section_info_t* lastfp, section_info_t** firstfp) {
+section_info_t* make_pool(size_t length, puint_t base_addr, section_info_t* lastfp, section_info_t** firstfp) {
 	// total amount of frames available if we count in metadata
-	uint64_t uframes = (length-sizeof(section_info_t))/(0x1000+(sizeof(stack_element_t)+sizeof(frame_info_t)))-1;
+	size_t uframes = (length-sizeof(section_info_t))/(0x1000+(sizeof(stack_element_t)+sizeof(frame_info_t)))-1;
 	// total size of metadata header
-	uint64_t total_size = sizeof(section_info_t) + (uframes * sizeof(stack_element_t)) + (uframes * sizeof(frame_info_t));
+	size_t total_size = sizeof(section_info_t) + (uframes * sizeof(stack_element_t)) + (uframes * sizeof(frame_info_t));
 	// address of first effective frame
-	uint64_t after_address = (base_addr + total_size + 0x1000) & ~0xFFF;
+	puint_t after_address = (base_addr + total_size + 0x1000) & ~0xFFF;
 
 	// allocate base_addr and size of metadata header in virt. memory
-	for (uint64_t addr = base_addr; addr < base_addr + total_size; addr += 0x1000) {
-		uint64_t* paddress = get_page(addr, true);
+	for (puint_t addr = base_addr; addr < base_addr + total_size; addr += 0x1000) {
+		puint_t* paddress = get_page(addr, true);
 		page_t page;
 		memset(&page, 0, sizeof(page_t));
 		page.address = addr;
@@ -533,12 +530,12 @@ section_info_t* make_pool(uint64_t length, uint64_t base_addr, section_info_t* l
 	section->total_frames = uframes;
 	section->next_section = NULL;
 	section->frame_array = (frame_info_t*) (base_addr + sizeof(section_info_t)); // starts at end of this structure
-	uint64_t stack_el_addr = (base_addr + sizeof(section_info_t) +
+	puint_t stack_el_addr = (base_addr + sizeof(section_info_t) +
 			(sizeof(frame_info_t) * uframes)); // first stack element describing the memory
 	section->head = NULL;
 
 	stack_element_t* prev_se = NULL;
-	for (uint64_t i=0; i<uframes; i++) {
+	for (size_t i=0; i<uframes; i++) {
 		// Fill up information for stack element.
 		// Stack element contains frame address of free frame in this memory section
 		stack_element_t* se = (stack_element_t*)stack_el_addr;
@@ -574,7 +571,7 @@ section_info_t* make_pool(uint64_t length, uint64_t base_addr, section_info_t* l
 	return section;
 }
 
-void deallocate_starting_address(uint64_t address, uint64_t size) {
+void deallocate_starting_address(puint_t address, size_t size) {
 	if (size < 0x10000)
 		return; // ignore section and just leave it as dead memory
 	section_info_t* se = frame_pool;
@@ -600,16 +597,16 @@ static void create_frame_pool(struct multiboot_info* mboot_addr) {
 			uint32_t size = *((uint32_t*) (uint64_t) (mem - 4));
 			mem += size + 4;
 
-			uint64_t ba = data.address;
-			uint64_t len = data.size;
+			puint_t ba = data.address;
+			size_t len = data.size;
 
 			if (data.type != 1) // not a ram
 				continue;
 			if (len < 0x10000)
 				continue; // waste of a section
 
-			uint64_t base_addr = ba;
-			uint64_t length = len;
+			puint_t base_addr = ba;
+			size_t length = len;
 
 			while (true) {
 				// if we fail to find any useful starting address but there is more to search
@@ -619,7 +616,7 @@ start_search_again:;
 				// search from current base_addr up to maximum in the block
 				if (base_addr >= len+ba)
 					break; // end of search
-				for (uint64_t test = base_addr; test<len; test+=0x1000) {
+				for (puint_t test = base_addr; test<len; test+=0x1000) {
 					if (check_if_used(mboot_addr, test)) {
 						// memory address is used by some internal structure
 						// write up how much size we have for this pool and then
@@ -679,9 +676,9 @@ finish_this_section:;
  */
 void initialize_memory_mirror() {
     if (is_1GB_paging_supported() != 0) {
-        for (uint64_t start=0; start < maxram; start+=1<<30) {
-            uint64_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
-            uint64_t* pdpt_addr = (uint64_t*) MMU_PML4(vaddress)[MMU_PML4_INDEX(
+        for (puint_t start=0; start < maxram; start+=1<<30) {
+        	puint_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
+        	puint_t* pdpt_addr = (puint_t*) MMU_PML4(vaddress)[MMU_PML4_INDEX(
                         vaddress)];
 
             if (!PRESENT(pdpt_addr)) {
@@ -701,9 +698,9 @@ void initialize_memory_mirror() {
             MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)] = dir.number;
         }
     } else {
-        for (uint64_t start=0; start < maxram; start+=0x1000) {
-            uint64_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
-            uint64_t* paddress = get_page(vaddress, true);
+        for (puint_t start=0; start < maxram; start+=0x1000) {
+        	puint_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
+        	puint_t* paddress = get_page(vaddress, true);
             page_t page;
             memset(&page, 0, sizeof(page_t));
             page.address = start;
@@ -752,7 +749,7 @@ void initialize_physical_memory_allocation(struct multiboot_info* mboot_addr) {
  *
  * If page is present, it does nothing.
  */
-static void allocate_frame(uint64_t* paddress, bool kernel, bool readonly) {
+static void allocate_frame(puint_t* paddress, bool kernel, bool readonly) {
     if (!PRESENT(*paddress)) {
         page_t page;
         memset(&page, 0, sizeof(page_t));
@@ -773,14 +770,14 @@ static void allocate_frame(uint64_t* paddress, bool kernel, bool readonly) {
  *
  * If paddress is NULL or is already free, does nothing.
  */
-static void deallocate_frame(uint64_t* paddress, uint64_t va) {
+static void deallocate_frame(puint_t* paddress, uintptr_t va) {
     if (paddress == 0)
         return; // no upper memory structures, we are done
     if (!PRESENT(*paddress))
         return; // already cleared
     page_t page;
     page.address = *paddress;
-    uint64_t address = ALIGN(page.address);
+    puint_t address = ALIGN(page.address);
     proc_spinlock_lock(&__frame_lock);
     free_frame(address);
     *paddress = 0;
@@ -794,9 +791,9 @@ static void deallocate_frame(uint64_t* paddress, uint64_t va) {
  *
  * Repeatedly calls allocate_frame for every frame.
  */
-void allocate(uint64_t from, size_t amount, bool kernel, bool readonly) {
+void allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
 	amount = ALIGN_UP(amount);
-    for (uint64_t addr = from; addr < from + amount; addr += 0x1000) {
+    for (uintptr_t addr = from; addr < from + amount; addr += 0x1000) {
         allocate_frame(get_page(addr, true), kernel, readonly);
     }
 }
@@ -807,19 +804,19 @@ void allocate(uint64_t from, size_t amount, bool kernel, bool readonly) {
  * Aligns the addresses to page boundaries and then
  * deallocates them all.
  */
-void deallocate(uint64_t from, size_t amount) {
+void deallocate(uintptr_t from, size_t amount) {
 	amount = ALIGN_UP(amount);
-    uint64_t aligned = from;
+    uintptr_t aligned = from;
     if ((from % 0x1000) != 0) {
         aligned = ALIGN(from) + 0x1000;
     }
-    uint64_t end_addr = aligned + amount;
+    uintptr_t end_addr = aligned + amount;
     if ((end_addr % 0x1000) != 0) {
         end_addr = ALIGN(end_addr);
     }
 
     if (aligned < end_addr) {
-        for (uint64_t addr = aligned; addr < end_addr; addr += 0x1000) {
+        for (uintptr_t addr = aligned; addr < end_addr; addr += 0x1000) {
             deallocate_frame(get_page(addr, false), addr);
             invalidate_address((void*)addr);
         }
@@ -831,8 +828,8 @@ void deallocate(uint64_t from, size_t amount) {
  *
  * Uses get_page to determine the address status.
  */
-bool allocated(uint64_t addr) {
-    uint64_t* page = get_page(addr, false);
+bool allocated(uintptr_t addr) {
+	puint_t* page = get_page(addr, false);
     if (page == NULL)
         return false;
     if (!PRESENT(*page))
@@ -840,7 +837,7 @@ bool allocated(uint64_t addr) {
     return true;
 }
 
-uint64_t clone_ptable(uint64_t source_ptable, uint64_t target_ptable) {
+puint_t clone_ptable(puint_t source_ptable, puint_t target_ptable) {
 	page_table_t sptable;
 	page_table_t tptable;
 
@@ -858,7 +855,7 @@ uint64_t clone_ptable(uint64_t source_ptable, uint64_t target_ptable) {
 			page.address = vsptable[i];
 
 			if (page.flaggable.rw == 1) {
-				uint64_t frame = ALIGN(page.address);
+				puint_t frame = ALIGN(page.address);
 				proc_spinlock_lock(&__frame_lock);
 				frame_info_t* frame_info = get_frame_info(frame);
 
@@ -885,7 +882,7 @@ uint64_t clone_ptable(uint64_t source_ptable, uint64_t target_ptable) {
 	return tptable.number;
 }
 
-uint64_t clone_pdir(uint64_t source_pdir, uint64_t target_pdir) {
+puint_t clone_pdir(puint_t source_pdir, puint_t target_pdir) {
 	page_directory_t spdir;
 	page_directory_t tpdir;
 
@@ -909,7 +906,7 @@ uint64_t clone_pdir(uint64_t source_pdir, uint64_t target_pdir) {
 }
 
 
-uint64_t clone_pdpt(uint64_t source_pdpt, uint64_t target_pdpt) {
+puint_t clone_pdpt(puint_t source_pdpt, puint_t target_pdpt) {
 	pdpt_t spdpt;
 	pdpt_t tpdpt;
 
@@ -931,7 +928,7 @@ uint64_t clone_pdpt(uint64_t source_pdpt, uint64_t target_pdpt) {
 	return tpdpt.number;
 }
 
-uint64_t clone_pml(uint64_t source_pml, uint64_t target_pml) {
+puint_t clone_pml(puint_t source_pml, puint_t target_pml) {
 	pml4_t spml;
 	pml4_t tpml;
 
@@ -954,9 +951,9 @@ uint64_t clone_pml(uint64_t source_pml, uint64_t target_pml) {
 	return tpml.number;
 }
 
-uint64_t clone_paging_structures() {
-	uint64_t active_page = get_active_page();
-	uint64_t target_page = get_free_frame();
+puint_t clone_paging_structures() {
+	puint_t active_page = get_active_page();
+	puint_t target_page = get_free_frame();
 
 	cr3_page_entry_t apentry;
 	cr3_page_entry_t tentry;
@@ -987,12 +984,12 @@ uint64_t clone_paging_structures() {
 }
 
 // TODO: add swap?
-bool page_fault(uint64_t address, uint64_t errcode) {
+bool page_fault(uintptr_t address, ruint_t errcode) {
 	if ((errcode & (1<<1)) != 0) {
 		// write error
 		uint64_t* page = get_page(address, false);
 		if (page != NULL) {
-			uint64_t frame = ALIGN(*page);
+			ruint_t frame = ALIGN(*page);
 
 			proc_spinlock_lock(&__frame_lock);
 			frame_info_t* frame_info = get_frame_info(frame);
@@ -1020,7 +1017,7 @@ bool page_fault(uint64_t address, uint64_t errcode) {
 				return true;
 			}
 
-			uint64_t nframe = get_free_frame();
+			puint_t nframe = get_free_frame();
 			memcpy((void*)physical_to_virtual(nframe), (void*)physical_to_virtual(frame), 0x1000);
 
 			page_t porig;

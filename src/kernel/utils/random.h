@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include "../commons.h"
 
 typedef struct random_generator {
 	uint64_t state[2];

@@ -50,7 +50,7 @@ typedef struct idt_gate idt_gate_t;
 
 struct idt_ptr {
     uint16_t limit;
-    uint64_t base;
+    uintptr_t base;
 }__attribute__((packed));
 typedef struct idt_ptr idt_ptr_t;
 
@@ -140,15 +140,15 @@ extern void isr255();
 #define PIC_EOI_ALL (PIC_EOI_SLAVE +1)
 
 typedef struct registers{
-    uint64_t r15, r14, r13, r12, r11, r10, r9, r8, rbp, rcx, rbx;
-    uint64_t rdx, rsi, rdi;
-    uint64_t es, ds, fs, gs, rax;
-    uint64_t type, ecode;
-    uint64_t rip, cs, rflags, uesp, ss;
+	ruint_t r15, r14, r13, r12, r11, r10, r9, r8, rbp, rcx, rbx;
+	ruint_t rdx, rsi, rdi;
+	ruint_t es, ds, fs, gs, rax;
+	ruint_t type, ecode;
+	ruint_t rip, cs, rflags, uesp, ss;
 } registers_t ;
 
 /** Register callback function */
-typedef void (*isr_t)(uint64_t error_code, registers_t*);
+typedef void (*isr_t)(uintptr_t error_code, registers_t*);
 
 /**
  * Registers ISR function for interrupt.

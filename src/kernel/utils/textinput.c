@@ -216,7 +216,7 @@ void kd_write_hex(uint32_t number) {
 /**
  * Writes 64bit hex number with gray color and black background.
  */
-void kd_write_hex64(uint64_t number) {
+void kd_write_hex64(ruint_t number) {
     kd_cwrite_hex(number, 0, 7);
 }
 
@@ -271,13 +271,15 @@ void kd_cwrite_hex(uint32_t number, uint8_t bgcolor, uint8_t fgcolor) {
 /**
  * Writes 64 bit hex number.
  */
-void kd_cwrite_hex64(uint64_t number, uint8_t bgcolor, uint8_t fgcolor) {
+void kd_cwrite_hex64(ruint_t number, uint8_t bgcolor, uint8_t fgcolor) {
     kd_cwrite("0x", bgcolor, fgcolor);
 
-    __write_hex_c(number / (1ULL << 56), bgcolor, fgcolor);
-    __write_hex_c(number / (1ULL << 48), bgcolor, fgcolor);
-    __write_hex_c(number / (1ULL << 40), bgcolor, fgcolor);
-    __write_hex_c(number / (1ULL << 32), bgcolor, fgcolor);
+    if (sizeof(ruint_t) == 8) {
+		__write_hex_c(number / (1ULL << 56), bgcolor, fgcolor);
+		__write_hex_c(number / (1ULL << 48), bgcolor, fgcolor);
+		__write_hex_c(number / (1ULL << 40), bgcolor, fgcolor);
+		__write_hex_c(number / (1ULL << 32), bgcolor, fgcolor);
+    }
 
     __write_hex_c(number / (1 << 24), bgcolor, fgcolor);
     __write_hex_c(number / (1 << 16), bgcolor, fgcolor);

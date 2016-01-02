@@ -19,30 +19,28 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * tss.h
- *  Created on: Dec 28, 2015
+ * ny_commons.h
+ *  Created on: Jan 2, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
 #pragma once
 
-#include "../commons.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-typedef struct __attribute__((packed)) tss {
-	uint32_t reserved;
-	uintptr_t rsp0;
-	uintptr_t rsp1;
-	uintptr_t rsp2;
-	uint64_t r0;
-	uintptr_t ist1;
-	uintptr_t ist2;
-	uintptr_t ist3;
-	uintptr_t ist4;
-	uintptr_t ist5;
-	uintptr_t ist6;
-	uintptr_t ist7;
-	uint64_t r1;
-	uint16_t r2;
-	uint16_t io_map_base_address;
-} tss_t;
+#ifndef REGISTER_UINT_TYPE
+#define REGISTER_UINT_TYPE uint64_t
+#endif
+typedef REGISTER_UINT_TYPE ruint_t;
+
+#ifndef PHYSICAL_UINT_TYPE
+#define PHYSICAL_UINT_TYPE uintptr_t
+#endif
+typedef PHYSICAL_UINT_TYPE puint_t;
+
+#ifdef __cplusplus
+}
+#endif

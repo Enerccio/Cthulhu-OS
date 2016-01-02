@@ -76,13 +76,13 @@ void reinitialize_gdt() {
 		tss_t* tss = malloc(sizeof(tss_t));
 		memset(tss, 0, sizeof(tss_t));
 
-		tss->rsp0 = (uint64_t)cpu->stack;
-		tss->ist1 = (uint64_t)cpu->handler_stack;
-		tss->ist2 = (uint64_t)cpu->pf_stack;
-		tss->ist3 = (uint64_t)cpu->df_stack;
-		tss->ist4 = (uint64_t)cpu->ipi_stack;
+		tss->rsp0 = (uintptr_t)cpu->stack;
+		tss->ist1 = (uintptr_t)cpu->handler_stack;
+		tss->ist2 = (uintptr_t)cpu->pf_stack;
+		tss->ist3 = (uintptr_t)cpu->df_stack;
+		tss->ist4 = (uintptr_t)cpu->ipi_stack;
 
-		uint64_t tss_point = (uintptr_t)tss;
+		uintptr_t tss_point = (uintptr_t)tss;
 		tsd->descriptor.base0015 = tss_point & 0xFFFF;
 		tsd->descriptor.base2316 = (tss_point >> 16) & 0xFF;
 		tsd->descriptor.base3124 = (tss_point >> 24) & 0xFF;
