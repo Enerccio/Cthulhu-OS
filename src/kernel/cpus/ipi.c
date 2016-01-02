@@ -65,6 +65,9 @@ void ipi_received(ruint_t ecode, registers_t* registers) {
 		break;
 	}
 
+	//printf("IPI received: this cpu %u, message %x, m1 %lx, m2 %lx\n", cpu->apic_id, cpu->apic_message_type,
+	//		cpu->apic_message, cpu->apic_message2);
+
 	proc_spinlock_lock(&cpu->__message_clear_lock);
 	cpu->apic_message_handled = 0;
 	proc_spinlock_unlock(&cpu->__message_clear_lock);

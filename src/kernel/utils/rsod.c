@@ -160,6 +160,8 @@ void error(uint16_t ecode, ruint_t speccode, ruint_t speccode2, void* eaddress) 
     kd_setxy(10, 20);
     kd_cwrite(bottom_message_2, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
+    flush_buffer();
+
     if (cpus == NULL)
     	kp_halt();
     else {
