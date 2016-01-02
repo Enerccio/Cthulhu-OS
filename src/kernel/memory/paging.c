@@ -40,6 +40,8 @@ uint64_t maxram;
 section_info_t* frame_pool;
 
 bool __mem_mirror_present;
+struct multiboot_info multiboot_info;
+uint64_t __frame_lock;
 
 extern uint64_t detect_maxphyaddr();
 extern uint64_t get_active_page();
@@ -50,7 +52,9 @@ extern uint16_t* text_mode_video_memory;
 extern void*     ebda;
 extern uint64_t kernel_tmp_heap_start;
 extern unsigned char _frame_block[0];
-struct multiboot_info multiboot_info;
+extern void proc_spinlock_lock(void* address);
+extern void proc_spinlock_unlock(void* address);
+extern void kp_halt();
 
 /**
  * Virtual address structure for standard paging.
@@ -171,19 +175,19 @@ static uint64_t get_free_frame() {
 	if (frame_pool == NULL) {
 		return ((uint64_t)malign(0x1000, 0x1000)-0xFFFFFFFF80000000);
 	} else {
-		// TODO add synchronization
 		section_info_t* section = (section_info_t*)physical_to_virtual((uint64_t)frame_pool);
 		while (section != NULL) {
 			if (section->head != NULL) {
 				stack_element_t* se = (stack_element_t*) physical_to_virtual((uint64_t)section->head);
 				section->head = se->next;
 				((frame_info_t*)physical_to_virtual((uint64_t)section->frame_array))
-						[se->array_ord].usage_count = 0;
+						[se->array_ord].usage_count = 1;
 				return se->frame_address;
 			}
 			section = (section_info_t*)physical_to_virtual((uint64_t)section->next_section);
 		}
 
+		proc_spinlock_unlock(&__frame_lock);
 		// TODO handle crap here
 		kp_halt();
 		return 0;
@@ -195,26 +199,45 @@ static uint64_t get_free_frame() {
  */
 static void free_frame(uint64_t frame_address) {
     uint64_t fa = ALIGN(frame_address);
-	// TODO add synchronization
+
 	section_info_t* section = (section_info_t*)physical_to_virtual((uint64_t)frame_pool);
 	while (section != NULL) {
 		if (section->start_word >= fa && section->end_word < fa) {
 			uint32_t idx = (fa-section->start_word) / 0x1000;
 			frame_info_t* fi = (frame_info_t*)physical_to_virtual((uint64_t)section->frame_array);
 			--fi[idx].usage_count;
+			if (fi[idx].cow_count > 0)
+				--fi[idx].cow_count;
 			if (fi[idx].usage_count == 0) {
 				fi[idx].bound_stack_element->next = section->head;
 				section->head = fi[idx].bound_stack_element;
 				memset((void*)physical_to_virtual(
 						((stack_element_t*)physical_to_virtual((uint64_t)section->head))->frame_address),
 						0xDE, 0x1000);
+				return;
 			}
 		} else {
 			section = (section_info_t*)physical_to_virtual((uint64_t)section->next_section);
 		}
 	}
+	// unmapped address not in a pool, most likely <2MB.
+}
 
-	// unmapped address not in a pool, most likely <4MB.
+static frame_info_t* get_frame_info(uint64_t fa) {
+
+	section_info_t* section = (section_info_t*)physical_to_virtual((uint64_t)frame_pool);
+	while (section != NULL) {
+		if (section->start_word >= fa && section->end_word < fa) {
+			uint32_t idx = (fa-section->start_word) / 0x1000;
+			frame_info_t* fi = (frame_info_t*)physical_to_virtual((uint64_t)section->frame_array);
+			proc_spinlock_unlock(&__frame_lock);
+			return &fi[idx];
+		} else {
+			section = (section_info_t*)physical_to_virtual((uint64_t)section->next_section);
+		}
+	}
+
+	return NULL;
 }
 
 /**
@@ -543,6 +566,7 @@ section_info_t* make_pool(uint64_t length, uint64_t base_addr, section_info_t* l
 
 			// fill up frame info with this stack element and number of times it has been used (0)
 			fi->usage_count = 0;
+			fi->cow_count = 0;
 		}
 		fi->bound_stack_element = se;
 	}
@@ -704,6 +728,8 @@ void initialize_memory_mirror() {
  *  5- deallocates old memory (frames are not returned).
  */
 void initialize_physical_memory_allocation(struct multiboot_info* mboot_addr) {
+	__frame_lock = 0;
+
 	struct multiboot_info* msource = (struct multiboot_info*)remap((uint64_t)mboot_addr);
 	memcpy(&multiboot_info, msource, sizeof(struct multiboot_info));
 
@@ -730,7 +756,9 @@ static void allocate_frame(uint64_t* paddress, bool kernel, bool readonly) {
     if (!PRESENT(*paddress)) {
         page_t page;
         memset(&page, 0, sizeof(page_t));
+        proc_spinlock_lock(&__frame_lock);
         page.address = get_free_frame();
+        proc_spinlock_unlock(&__frame_lock);
         page.flaggable.present = 1;
         page.flaggable.rw = readonly ? 0 : 1;
         page.flaggable.us = kernel ? 0 : 1;
@@ -753,7 +781,10 @@ static void deallocate_frame(uint64_t* paddress, uint64_t va) {
     page_t page;
     page.address = *paddress;
     uint64_t address = ALIGN(page.address);
+    proc_spinlock_lock(&__frame_lock);
     free_frame(address);
+    *paddress = 0;
+    proc_spinlock_unlock(&__frame_lock);
     free_page_structure(va);
 }
 
@@ -807,4 +838,210 @@ bool allocated(uint64_t addr) {
     if (!PRESENT(*page))
         return false;
     return true;
+}
+
+uint64_t clone_ptable(uint64_t source_ptable, uint64_t target_ptable) {
+	page_table_t sptable;
+	page_table_t tptable;
+
+	sptable.number = source_ptable;
+	tptable.number = target_ptable;
+
+	uint64_t* vsptable = (uint64_t*)physical_to_virtual(ALIGN(source_ptable));
+	uint64_t* vtptable = (uint64_t*)physical_to_virtual(target_ptable);
+	memset(vtptable, 0, 0x1000);
+
+	for (uint16_t i=0; i<512; i++) {
+		if (vsptable[i] != 0) {
+
+			page_t page;
+			page.address = vsptable[i];
+
+			if (page.flaggable.rw == 1) {
+				uint64_t frame = ALIGN(page.address);
+				proc_spinlock_lock(&__frame_lock);
+				frame_info_t* frame_info = get_frame_info(frame);
+
+				++frame_info->usage_count;
+				if (frame_info->cow_count == 0)
+					++frame_info->cow_count;
+				++frame_info->cow_count;
+
+				page_t page;
+				page.address = vsptable[i];
+				page.flaggable.rw = 0;
+				vsptable[i] = page.address;
+
+				proc_spinlock_unlock(&__frame_lock);
+			}
+
+			vtptable[i] = page.address;
+		}
+	}
+
+	tptable.copyinfo.copy = sptable.copyinfo.copy;
+	tptable.copyinfo.copy2 = sptable.copyinfo.copy2;
+
+	return tptable.number;
+}
+
+uint64_t clone_pdir(uint64_t source_pdir, uint64_t target_pdir) {
+	page_directory_t spdir;
+	page_directory_t tpdir;
+
+	spdir.number = source_pdir;
+	tpdir.number = target_pdir;
+
+	uint64_t* vspdir = (uint64_t*)physical_to_virtual(ALIGN(source_pdir));
+	uint64_t* vtpdir = (uint64_t*)physical_to_virtual(target_pdir);
+	memset(vtpdir, 0, 0x1000);
+
+	for (uint16_t i=0; i<512; i++) {
+		if (vspdir[i] != 0) {
+			vtpdir[i] = clone_ptable(vspdir[i], get_free_frame());
+		}
+	}
+
+	tpdir.copyinfo.copy = spdir.copyinfo.copy;
+	tpdir.copyinfo.copy2 = spdir.copyinfo.copy2;
+
+	return tpdir.number;
+}
+
+
+uint64_t clone_pdpt(uint64_t source_pdpt, uint64_t target_pdpt) {
+	pdpt_t spdpt;
+	pdpt_t tpdpt;
+
+	spdpt.number = source_pdpt;
+	tpdpt.number = target_pdpt;
+
+	uint64_t* vspdpt = (uint64_t*)physical_to_virtual(ALIGN(source_pdpt));
+	uint64_t* vtpdpt = (uint64_t*)physical_to_virtual(target_pdpt);
+	memset(vtpdpt, 0, 0x1000);
+
+	for (uint16_t i=0; i<512; i++) {
+		if (vspdpt[i] != 0) {
+			vtpdpt[i] = clone_pdir(vspdpt[i], get_free_frame());
+		}
+	}
+
+	tpdpt.copyinfo.copy = spdpt.copyinfo.copy;
+
+	return tpdpt.number;
+}
+
+uint64_t clone_pml(uint64_t source_pml, uint64_t target_pml) {
+	pml4_t spml;
+	pml4_t tpml;
+
+	spml.number = source_pml;
+	tpml.number = target_pml;
+
+	uint64_t* vspml = (uint64_t*)physical_to_virtual(ALIGN(source_pml));
+	uint64_t* vtpml = (uint64_t*)physical_to_virtual(target_pml);
+	memset(vtpml, 0, 0x1000);
+
+	for (uint16_t i=0; i<512; i++) {
+		if (vspml[i] != 0) {
+			vtpml[i] = clone_pdpt(vspml[i], get_free_frame());
+		}
+	}
+
+	tpml.copyinfo.copy = spml.copyinfo.copy;
+	tpml.copyinfo.copy2 = spml.copyinfo.copy2;
+
+	return tpml.number;
+}
+
+uint64_t clone_paging_structures() {
+	uint64_t active_page = get_active_page();
+	uint64_t target_page = get_free_frame();
+
+	cr3_page_entry_t apentry;
+	cr3_page_entry_t tentry;
+
+	apentry.number = active_page;
+	tentry.pml = target_page;
+	tentry.copyinfo.copy = apentry.copyinfo.copy;
+
+	uint64_t* sent = (uint64_t*) physical_to_virtual(ALIGN(active_page));
+	uint64_t* tent = (uint64_t*) physical_to_virtual(target_page);
+	memset(tent, 0, 0x1000);
+
+	for (uint16_t i=0; i<512; i++) {
+		if (i < 256) {
+			// user pages
+			if (sent[i] != 0) {
+				tent[i] = clone_pml(sent[i], tent[i]);
+			}
+		} else {
+			// kernel pages
+			sent[i] = tent[i];
+		}
+	}
+
+	// flush TLB to propagate any rw changes
+	broadcast_ipi_message(true, IPI_INVLD_PML, active_page, 0);
+	return tentry.number;
+}
+
+// TODO: add swap?
+bool page_fault(uint64_t address, uint64_t errcode) {
+	if ((errcode & (1<<1)) != 0) {
+		// write error
+		uint64_t* page = get_page(address, false);
+		if (page != NULL) {
+			uint64_t frame = ALIGN(*page);
+
+			proc_spinlock_lock(&__frame_lock);
+			frame_info_t* frame_info = get_frame_info(frame);
+
+			if (frame_info == NULL) {
+				// invalid address
+				return false;
+			}
+
+			if (frame_info->cow_count == 0) {
+				proc_spinlock_unlock(&__frame_lock);
+				return false;
+			}
+
+			if (frame_info->cow_count == 1) {
+				page_t porig;
+				porig.address = *page;
+
+				porig.flaggable.rw = 0;
+				--frame_info->cow_count;
+
+				*page = porig.address;
+
+				proc_spinlock_unlock(&__frame_lock);
+				return true;
+			}
+
+			uint64_t nframe = get_free_frame();
+			memcpy((void*)physical_to_virtual(nframe), (void*)physical_to_virtual(frame), 0x1000);
+
+			page_t porig;
+			page_t pnew;
+
+			porig.address = *page;
+			pnew.address = nframe;
+
+			pnew.copyinfo.copy = porig.copyinfo.copy;
+			pnew.copyinfo.copy2 = porig.copyinfo.copy2;
+
+			pnew.flaggable.rw = 1;
+
+			*page = pnew.address;
+
+			--frame_info->cow_count;
+
+			proc_spinlock_unlock(&__frame_lock);
+			return true;
+		}
+	}
+
+	return false;
 }

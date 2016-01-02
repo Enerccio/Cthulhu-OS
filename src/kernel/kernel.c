@@ -126,5 +126,8 @@ void kernel_main(struct multiboot_info* mboot_addr, uint64_t heap_start) {
 
     broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_SCHEDULER_INIT_WAIT, 0);
 
-    initialize_userspace();
+    debug_break;
+    clone_paging_structures();
+
+    proc_t* initp = load_init();
 }

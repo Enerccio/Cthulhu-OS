@@ -35,6 +35,8 @@ extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
 extern void kp_halt();
 extern void invalidate_address(uint64_t address);
+extern uint64_t get_active_page();
+extern void set_active_page(uint64_t address);
 
 void ipi_received(uint64_t ecode, registers_t* registers) {
 	// WATCH OUT: registers might be null if it is local interrupt
@@ -50,6 +52,13 @@ void ipi_received(uint64_t ecode, registers_t* registers) {
 		for (uint64_t i=cpu->apic_message; i<cpu->apic_message2; i+=0x1000)
 			invalidate_address(i);
 		break;
+	case IPI_INVLD_PML: {
+		uint64_t active_page = get_active_page();
+		if (active_page == cpu->apic_message) {
+			set_active_page(active_page);
+		}
+		break;
+	}
 	}
 
 	proc_spinlock_lock(&cpu->__message_clear_lock);

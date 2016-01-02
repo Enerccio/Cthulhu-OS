@@ -20,6 +20,6 @@ load_gdt:
 
     mov rax, rsp
     jmp far qword [rax]
-.jmpt
+.jmpt:
     add rsp, 8
     ret

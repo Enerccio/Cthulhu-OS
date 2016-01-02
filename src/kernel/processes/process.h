@@ -84,4 +84,4 @@ struct thread {
 
 extern array_t processes;
 
-void initialize_userspace();
+proc_t* load_init();

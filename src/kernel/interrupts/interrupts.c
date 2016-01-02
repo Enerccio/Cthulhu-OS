@@ -29,8 +29,10 @@
 
 #include <stdio.h>
 #include "../interrupts/interrupts.h"
+#include "../memory/paging.h"
 
 extern void* get_faulting_address();
+extern void kp_halt();
 
 void de_exception(uint64_t ecode, registers_t* registers) {
     error(ERROR_KERNEL_DIVISION_BY_ZERO, registers->rip, registers->cs, registers);
@@ -86,7 +88,16 @@ void gp_exception(uint64_t ecode, registers_t* registers) {
 
 void pf_exception(uint64_t ecode, registers_t* registers) {
     void* fa = get_faulting_address();
-    error(ERROR_KERNEL_PAGE_FAULT_IN_NONPAGED_AREA, (uint64_t)fa, ecode, (void*)registers->rip);
+    if (registers->cs == 0x8) {
+    	// kernel page fault
+    	// TODO: add swap
+    	error(ERROR_KERNEL_PAGE_FAULT_IN_NONPAGED_AREA, (uint64_t)fa, ecode, (void*)registers->rip);
+    } else {
+    	if (!page_fault((uint64_t)fa, registers->ecode)) {
+    		// TODO: add abort
+    		kp_halt();
+    	}
+    }
 }
 
 void mf_exception(uint64_t ecode, registers_t* registers) {

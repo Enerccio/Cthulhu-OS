@@ -33,7 +33,7 @@
 extern void wait_until_activated(uint64_t wait_code);
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
-extern noreturn switch_to_usermode(uint64_t rdat, uint64_t rip, uint64_t rsp, uint64_t flags);
+extern noreturn void switch_to_usermode(uint64_t rdat, uint64_t rip, uint64_t rsp, uint64_t flags);
 extern void* get_active_page();
 extern void set_active_page(void* page);
 
