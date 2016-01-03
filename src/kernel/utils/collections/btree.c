@@ -23,7 +23,7 @@
  *  Created on: Jan 3, 2016
  *      Author: Peter Vanusanik
  *  Contents: content copied and modified from
- *  	http://web.mit.edu/~emin/Desktop/ref_to_emin/www.old/source_code/red_black_tree/index.html
+ *      http://web.mit.edu/~emin/Desktop/ref_to_emin/www.old/source_code/red_black_tree/index.html
  */
 
 #include "btree.h"
@@ -49,8 +49,8 @@
 /***********************************************************************/
 
 rb_tree_t* rb_create_tree(cmp_func_t CompFunc,
-			      key_deallocator_func_t DestFunc,
-			      value_deallocator_func_t InfoDestFunc) {
+                  key_deallocator_func_t DestFunc,
+                  value_deallocator_func_t InfoDestFunc) {
   rb_tree_t* newTree;
   rb_node_t* temp;
 
@@ -250,34 +250,34 @@ rb_node_t * rb_insert(rb_tree_t* tree, void* key, void* info) {
     if (x->parent == x->parent->parent->left) {
       y=x->parent->parent->right;
       if (y->red) {
-	x->parent->red=0;
-	y->red=0;
-	x->parent->parent->red=1;
-	x=x->parent->parent;
+    x->parent->red=0;
+    y->red=0;
+    x->parent->parent->red=1;
+    x=x->parent->parent;
       } else {
-	if (x == x->parent->right) {
-	  x=x->parent;
-	  LeftRotate(tree,x);
-	}
-	x->parent->red=0;
-	x->parent->parent->red=1;
-	RightRotate(tree,x->parent->parent);
+    if (x == x->parent->right) {
+      x=x->parent;
+      LeftRotate(tree,x);
+    }
+    x->parent->red=0;
+    x->parent->parent->red=1;
+    RightRotate(tree,x->parent->parent);
       }
     } else { /* case for x->parent == x->parent->parent->right */
       y=x->parent->parent->left;
       if (y->red) {
-	x->parent->red=0;
-	y->red=0;
-	x->parent->parent->red=1;
-	x=x->parent->parent;
+    x->parent->red=0;
+    y->red=0;
+    x->parent->parent->red=1;
+    x=x->parent->parent;
       } else {
-	if (x == x->parent->left) {
-	  x=x->parent;
-	  RightRotate(tree,x);
-	}
-	x->parent->red=0;
-	x->parent->parent->red=1;
-	LeftRotate(tree,x->parent->parent);
+    if (x == x->parent->left) {
+      x=x->parent;
+      RightRotate(tree,x);
+    }
+    x->parent->red=0;
+    x->parent->parent->red=1;
+    LeftRotate(tree,x->parent->parent);
       }
     }
   }
@@ -461,50 +461,50 @@ void RBDeleteFixUp(rb_tree_t* tree, rb_node_t* x) {
     if (x == x->parent->left) {
       w=x->parent->right;
       if (w->red) {
-	w->red=0;
-	x->parent->red=1;
-	LeftRotate(tree,x->parent);
-	w=x->parent->right;
+    w->red=0;
+    x->parent->red=1;
+    LeftRotate(tree,x->parent);
+    w=x->parent->right;
       }
       if ( (!w->right->red) && (!w->left->red) ) {
-	w->red=1;
-	x=x->parent;
+    w->red=1;
+    x=x->parent;
       } else {
-	if (!w->right->red) {
-	  w->left->red=0;
-	  w->red=1;
-	  RightRotate(tree,w);
-	  w=x->parent->right;
-	}
-	w->red=x->parent->red;
-	x->parent->red=0;
-	w->right->red=0;
-	LeftRotate(tree,x->parent);
-	x=root; /* this is to exit while loop */
+    if (!w->right->red) {
+      w->left->red=0;
+      w->red=1;
+      RightRotate(tree,w);
+      w=x->parent->right;
+    }
+    w->red=x->parent->red;
+    x->parent->red=0;
+    w->right->red=0;
+    LeftRotate(tree,x->parent);
+    x=root; /* this is to exit while loop */
       }
     } else { /* the code below is has left and right switched from above */
       w=x->parent->left;
       if (w->red) {
-	w->red=0;
-	x->parent->red=1;
-	RightRotate(tree,x->parent);
-	w=x->parent->left;
+    w->red=0;
+    x->parent->red=1;
+    RightRotate(tree,x->parent);
+    w=x->parent->left;
       }
       if ( (!w->right->red) && (!w->left->red) ) {
-	w->red=1;
-	x=x->parent;
+    w->red=1;
+    x=x->parent;
       } else {
-	if (!w->left->red) {
-	  w->right->red=0;
-	  w->red=1;
-	  LeftRotate(tree,w);
-	  w=x->parent->left;
-	}
-	w->red=x->parent->red;
-	x->parent->red=0;
-	w->left->red=0;
-	RightRotate(tree,x->parent);
-	x=root; /* this is to exit while loop */
+    if (!w->left->red) {
+      w->right->red=0;
+      w->red=1;
+      LeftRotate(tree,w);
+      w=x->parent->left;
+    }
+    w->red=x->parent->red;
+    x->parent->red=0;
+    w->left->red=0;
+    RightRotate(tree,x->parent);
+    x=root; /* this is to exit while loop */
       }
     }
   }
@@ -528,7 +528,7 @@ void RBDeleteFixUp(rb_tree_t* tree, rb_node_t* x) {
 /*    The algorithm from this function is from _Introduction_To_Algorithms_ */
 /***********************************************************************/
 
-void rb_delete(rb_tree_t* tree, rb_node_t* z){
+void rb_delete(rb_tree_t* tree, rb_node_t* z) {
   rb_node_t* y;
   rb_node_t* x;
   rb_node_t* nil=tree->nil;

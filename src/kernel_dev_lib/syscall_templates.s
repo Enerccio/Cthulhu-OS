@@ -96,3 +96,4 @@ dev_sys_5arg:
     mov rcx, r8
     mov r8, r9
     int 0x81
+    ret
