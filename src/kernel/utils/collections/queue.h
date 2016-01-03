@@ -28,6 +28,7 @@
 #pragma once
 
 #include "../../commons.h"
+#include "funcops.h"
 
 typedef struct queue_element queue_element_t;
 
@@ -51,8 +52,6 @@ typedef struct queue {
     queue_pool_t queue_pool;
 } queue_t;
 
-typedef bool (*find_func_t) (void* data, void* element);
-
 queue_t* create_queue();
 
 void* queue_pop(queue_t* queue);
@@ -71,4 +70,4 @@ queue_t* create_queue_static(uint32_t queue_max_size);
 
 void queue_remove(void* element, queue_t* queue);
 
-void* queue_find_by_func(void* data, find_func_t func, queue_t* queue);
+void* queue_find_by_predicate(void* data, search_predicate_t func, queue_t* queue);

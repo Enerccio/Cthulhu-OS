@@ -19,27 +19,28 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * nyarlathotep.h
- *  Created on: Dec 27, 2015
+ * funcops.h
+ *  Created on: Jan 3, 2016
  *      Author: Peter Vanusanik
- *  Contents: developer needed static library functions for processes such as init, daemons, daemon loaders etc
- *      Should only be used to create those.
+ *  Contents: 
  */
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "../../commons.h"
 
-#include <stddef.h>
-#include <limits.h>
-#include <sys/types.h>
-#include <stdint.h>
-#include "ny_commons.h"
+typedef bool (*search_predicate_t)(void* element, void* passed_data);
+typedef int  (*cmp_func_t)(const void* a, const void* b);
+typedef void (*key_deallocator_func_t)(void* a);
+typedef void (*value_deallocator_func_t)(void* a);
 
-#include "ny_initramfs.h"
+typedef uint32_t (* hash_function_t) (void*);
+typedef bool (* eq_function_t) (void*, void*);
 
-#ifdef __cplusplus
-}
-#endif
+/* Concrete func definitions */
+uint32_t uint32_hash_function(void* integer);
+bool uint32_eq_function(void* a, void* b);
+uint32_t uint64_hash_function(void* integer);
+bool uint64_eq_function(void* a, void* b);
+uint32_t string_hash_function(void* string);
+bool string_eq_function(void* a, void* b);

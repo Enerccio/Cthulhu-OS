@@ -41,6 +41,18 @@ typedef REGISTER_UINT_TYPE ruint_t;
 #endif
 typedef PHYSICAL_UINT_TYPE puint_t;
 
+extern ruint_t dev_sys_0arg(ruint_t syscallnum);
+extern ruint_t dev_sys_0arg_e(ruint_t syscallnum, ruint_t* err);
+extern ruint_t dev_sys_1arg(ruint_t syscallnum, void* arg1);
+extern ruint_t dev_sys_1arg_e(ruint_t syscallnum, void* arg1, ruint_t* err);
+extern ruint_t dev_sys_2arg(ruint_t syscallnum, void* arg1, void* arg2);
+extern ruint_t dev_sys_2arg_e(ruint_t syscallnum, void* arg1, void* arg2, ruint_t* err);
+extern ruint_t dev_sys_3arg(ruint_t syscallnum, void* arg1, void* arg2, void* arg3);
+extern ruint_t dev_sys_3arg_e(ruint_t syscallnum, void* arg1, void* arg2, void* arg3, ruint_t* err);
+extern ruint_t dev_sys_4arg(ruint_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4);
+extern ruint_t dev_sys_4arg_e(ruint_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4, ruint_t* err);
+// 5arg has no error report natively
+extern ruint_t dev_sys_5arg(ruint_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4, void* arg5);
 #ifdef __cplusplus
 }
 #endif

@@ -47,4 +47,6 @@ typedef struct syscall {
     } syscall;
 } syscall_t;
 
+void register_syscall(bool system, uint16_t syscall_id, syscall_t syscall);
+
 void initialize_system_calls();

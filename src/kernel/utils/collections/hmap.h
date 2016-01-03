@@ -28,6 +28,7 @@
 #pragma once
 
 #include "../../commons.h"
+#include "funcops.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -42,20 +43,17 @@ typedef struct {
     void* data;
 } hash_pair_t;
 
-typedef uint32_t (* hash_function_t) (void*);
-typedef bool (* cmpr_function_t) (void*, void*);
-
 typedef struct {
-    hash_pair_t**   hash_table;
+    hash_pair_t** hash_table;
     hash_function_t hash_fn;
-    cmpr_function_t cmpr_fn;
-    uint32_t            len;
+    eq_function_t cmpr_fn;
+    uint32_t len;
     uint32_t max_size;
 } hash_table_t;
 
 typedef uint32_t hash_it_t;
 
-hash_table_t* create_table(hash_function_t hash_fn, cmpr_function_t cmpr_fn);
+hash_table_t* create_table(hash_function_t hash_fn, eq_function_t cmpr_fn);
 
 void destroy_table(hash_table_t* table);
 
@@ -73,23 +71,8 @@ hash_table_t* copy_table(hash_table_t* table);
 
 void* hash_it_next(hash_table_t* table, hash_it_t* iterator);
 
-/* hash helper functions */
+/* helper constructor functions */
 
-// TSOURCE: http://www.concentric.net/~ttwang/tech/inthash.htm
-/**
- * Converts void* into hash.
- */
-uint32_t uint32_hash_function(void* integer);
-/**
- * Integer comparisons, of void* arguments representing integer.
- */
-bool uint32_cmpr_function(void* a, void* b);
 hash_table_t* create_uint32_table();
-
-uint32_t uint64_hash_function(void* integer);
-bool uint64_cmpr_function(void* a, void* b);
 hash_table_t* create_uint64_table();
-
-uint32_t string_hash_function(void* string);
-bool string_cmpr_function(void* a, void* b);
 hash_table_t* create_string_table();

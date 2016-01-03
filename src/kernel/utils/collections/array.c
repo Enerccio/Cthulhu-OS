@@ -162,7 +162,7 @@ void destroy_array(array_t* array) {
  * Finds the data that matches predicate. Predicate is called with
  * data element and data provided and returns true or false.
  */
-void* array_find_by_pred(array_t* array, array_search_predicate_t predicate, void* data) {
+void* array_find_by_pred(array_t* array, search_predicate_t predicate, void* data) {
     uint32_t i = 0;
 
     for (; i<array->size; i++)

@@ -169,7 +169,7 @@ void queue_remove(void* element, queue_t* queue) {
     }
 }
 
-void* queue_find_by_func(void* data, find_func_t func, queue_t* queue) {
+void* queue_find_by_predicate(void* data, search_predicate_t func, queue_t* queue) {
     if (queue->size == 0)
         return 0;
 

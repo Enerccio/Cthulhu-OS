@@ -27,7 +27,7 @@
 
 #include "hmap.h"
 
-hash_table_t* create_table(hash_function_t hash_fn, cmpr_function_t cmpr_fn) {
+hash_table_t* create_table(hash_function_t hash_fn, eq_function_t cmpr_fn) {
     hash_table_t* table = (hash_table_t*) malloc(sizeof(hash_table_t));
     table->hash_fn = hash_fn;
     table->cmpr_fn = cmpr_fn;
@@ -178,60 +178,14 @@ void* hash_it_next(hash_table_t* table, hash_it_t* iterator) {
     return data;
 }
 
-/**
- * Converts uint32_t in void* into hash.
- */
-uint32_t uint32_hash_function(void* integer) {
-    uint32_t a = (uint32_t) ((uintptr_t)integer);
-    a = (a + 0x7ed55d16) + (a << 12);
-    a = (a ^ 0xc761c23c) ^ (a >> 19);
-    a = (a + 0x165667b1) + (a << 5);
-    a = (a + 0xd3a2646c) ^ (a << 9);
-    a = (a + 0xfd7046c5) + (a << 3);
-    a = (a ^ 0xb55a4f09) ^ (a >> 16);
-    return a;
-}
-
-/**
- * Integer comparisons, of void* arguments representing integer.
- */
-bool uint32_cmpr_function(void* a, void* b) {
-    return a == b ? true : false;
-}
-
 hash_table_t* create_uint32_table() {
-    return create_table(uint32_hash_function, uint32_cmpr_function);
-}
-
-uint32_t uint64_hash_function(void* integer) {
-    uint64_t a = (uint64_t)integer;
-    return uint32_hash_function((void*)(uintptr_t)(a >> 32 & 0xFFFFFFFF)) ^
-            uint32_hash_function((void*)(uintptr_t)(a & 0xFFFFFFFF));
-}
-
-bool uint64_cmpr_function(void* a, void* b) {
-    return a == b ? true : false;
+    return create_table(uint32_hash_function, uint32_eq_function);
 }
 
 hash_table_t* create_uint64_table() {
-    return create_table(uint64_hash_function, uint64_cmpr_function);
-}
-
-uint32_t string_hash_function(void* string) {
-    char* str = string;
-    uint32_t hash = 5381;
-    char c;
-
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c;
-
-    return hash;
-}
-
-bool string_cmpr_function(void* a, void* b) {
-    return strcmp((char*)a, (char*)b) == 0;
+    return create_table(uint64_hash_function, uint64_eq_function);
 }
 
 hash_table_t* create_string_table() {
-    return create_table(string_hash_function, string_cmpr_function);
+    return create_table(string_hash_function, string_eq_function);
 }

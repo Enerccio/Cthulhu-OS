@@ -28,6 +28,7 @@
 #pragma once
 
 #include "../../commons.h"
+#include "funcops.h"
 #include "../random.h"
 #include <stdlib.h>
 #include <string.h>
@@ -35,7 +36,7 @@
 /** Number of elements in starting size */
 #define ARRAY_STARTING_SIZE 32
 
-typedef bool (* array_search_predicate_t) (void* element, void* passed_data);
+
 
 typedef struct {
     void**   data;
@@ -100,7 +101,7 @@ void destroy_array(array_t* array);
  * Finds the data that matches predicate. Predicate is called with
  * data element and data provided and returns true or false.
  */
-void* array_find_by_pred(array_t* array, array_search_predicate_t predicate, void* data);
+void* array_find_by_pred(array_t* array, search_predicate_t predicate, void* data);
 
 // defined as inline
 /** Cleans the array, returning number of elements to 0. Keeps the buffer active */
