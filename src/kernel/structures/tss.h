@@ -30,19 +30,19 @@
 #include "../commons.h"
 
 typedef struct __attribute__((packed)) tss {
-	uint32_t reserved;
-	uintptr_t rsp0;
-	uintptr_t rsp1;
-	uintptr_t rsp2;
-	uint64_t r0;
-	uintptr_t ist1;
-	uintptr_t ist2;
-	uintptr_t ist3;
-	uintptr_t ist4;
-	uintptr_t ist5;
-	uintptr_t ist6;
-	uintptr_t ist7;
-	uint64_t r1;
-	uint16_t r2;
-	uint16_t io_map_base_address;
+    uint32_t reserved;
+    uintptr_t rsp0;
+    uintptr_t rsp1;
+    uintptr_t rsp2;
+    uint64_t r0;
+    uintptr_t ist1;
+    uintptr_t ist2;
+    uintptr_t ist3;
+    uintptr_t ist4;
+    uintptr_t ist5;
+    uintptr_t ist6;
+    uintptr_t ist7;
+    uint64_t r1;
+    uint16_t r2;
+    uint16_t io_map_base_address;
 } tss_t;

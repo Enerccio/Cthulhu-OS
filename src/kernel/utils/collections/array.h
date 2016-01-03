@@ -38,10 +38,10 @@
 typedef bool (* array_search_predicate_t) (void* element, void* passed_data);
 
 typedef struct {
-	void**   data;
-	uint32_t size;
-	uint32_t data_size;
-	uint32_t starting_size;
+    void**   data;
+    uint32_t size;
+    uint32_t data_size;
+    uint32_t starting_size;
 } array_t;
 
 /**

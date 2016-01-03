@@ -31,5 +31,5 @@
 #include <stdnoreturn.h>
 
 int main(void) {
-	while (true) ;
+    while (true) ;
 }

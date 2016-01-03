@@ -38,37 +38,37 @@
 #include "../processes/process.h"
 
 typedef struct cpu {
-	void*	 stack;
-	void*    handler_stack;
-	void*    pf_stack;
-	void*    df_stack;
-	void*    ipi_stack;
+    void*    stack;
+    void*    handler_stack;
+    void*    pf_stack;
+    void*    df_stack;
+    void*    ipi_stack;
 
-	size_t    insert_id;
-	ruint_t   processor_id;
-	uint8_t   apic_id;
+    size_t    insert_id;
+    ruint_t   processor_id;
+    uint8_t   apic_id;
 
-	volatile ruint_t __cpu_lock;
-	volatile ruint_t __ipi_lock;
-	volatile ruint_t __message_clear_lock;
-	volatile ruint_t apic_message;
-	volatile ruint_t apic_message2;
-	volatile bool apic_message_handled;
-	volatile uint8_t apic_message_type;
+    volatile ruint_t __cpu_lock;
+    volatile ruint_t __ipi_lock;
+    volatile ruint_t __message_clear_lock;
+    volatile ruint_t apic_message;
+    volatile ruint_t apic_message2;
+    volatile bool apic_message_handled;
+    volatile uint8_t apic_message_type;
 
-	/* scheduler info */
-	volatile ruint_t __cpu_sched_lock;
-	uint64_t total_tickets;
-	thread_t* threads; // head thread is being executed
+    /* scheduler info */
+    volatile ruint_t __cpu_sched_lock;
+    uint64_t total_tickets;
+    thread_t* threads; // head thread is being executed
 
-	volatile bool started;
+    volatile bool started;
 } cpu_t;
 
-#define WAIT_NO_WAIT			  (0)
+#define WAIT_NO_WAIT              (0)
 #define WAIT_GENERAL_WAIT         (1)
 #define WAIT_SCHEDULER_INIT_WAIT  (2)
 #define WAIT_SCHEDULER_QUEUE_CHNG (3)
-#define WAIT_KERNEL_MUTEX		  (4)
+#define WAIT_KERNEL_MUTEX         (4)
 
 extern array_t* cpus;
 extern uint32_t apicaddr;

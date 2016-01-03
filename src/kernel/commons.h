@@ -61,13 +61,13 @@ typedef void* aligned_ptr_t;
 #define ADDRESS_OFFSET(offset) (0xFFFF000000000000UL + (offset<<39))
 
 #define debug_break do { \
-		volatile bool _debug_var = true; \
-		while (_debug_var) \
-			; \
-	} while (0)
+        volatile bool _debug_var = true; \
+        while (_debug_var) \
+            ; \
+    } while (0)
 
 #define debug_cond(cond) do{\
-	if	(cond)\
-		debug_break; \
-	}while(0)
+    if  (cond)\
+        debug_break; \
+    }while(0)
 

@@ -58,10 +58,10 @@ typedef union page {
         uint64_t xd         : 1;  // if A32_EFER.NXE = 1, execute-disable -> 1-can't be executed, must be 0 if not enabled
     }                       flaggable;
     struct {
-    	uint64_t copy        : 9;
-    	uint64_t do_not_copy : 54;
-    	uint64_t copy2		 : 1;
-    } 						copyinfo;
+        uint64_t copy        : 9;
+        uint64_t do_not_copy : 54;
+        uint64_t copy2       : 1;
+    }                       copyinfo;
     uint64_t                address;
 } page_t;
 
@@ -81,10 +81,10 @@ typedef union page_table {
         uint64_t xd         : 1;  // if A32_EFER.NXE = 1, execute-disable -> 1-can't be executed, must be 0 if not enabled
     }                       flaggable;
     struct {
-	   uint64_t copy		: 7;
-	   uint64_t do_not_copy : 56;
-	   uint64_t copy2		: 1;
-	}						copyinfo;
+       uint64_t copy        : 7;
+       uint64_t do_not_copy : 56;
+       uint64_t copy2       : 1;
+    }                       copyinfo;
     uint64_t                number;
     uint64_t*               array;
 } page_table_t;
@@ -105,10 +105,10 @@ typedef union page_directory {
         uint64_t xd         : 1;  // if A32_EFER.NXE = 1, execute-disable -> 1-can't be executed, must be 0 if not enabled
     }                       flaggable;
     struct {
-	   uint64_t copy		: 8;
-	   uint64_t do_not_copy : 55;
-	   uint64_t copy2		: 1;
-	}						copyinfo;
+       uint64_t copy        : 8;
+       uint64_t do_not_copy : 55;
+       uint64_t copy2       : 1;
+    }                       copyinfo;
     uint64_t                number;
     uint64_t*               array;
 } page_directory_t;
@@ -133,10 +133,10 @@ typedef union page_directory1GB {
         uint64_t xd         : 1;  // execute disable
     }                       flaggable;
     struct {
-	   uint64_t copy		: 13;
-	   uint64_t do_not_copy : 50;
-	   uint64_t copy2		: 1;
-	}						copyinfo;
+       uint64_t copy        : 13;
+       uint64_t do_not_copy : 50;
+       uint64_t copy2       : 1;
+    }                       copyinfo;
     uint64_t                number;
 } page_directory1GB_t;
 
@@ -153,9 +153,9 @@ typedef union pdpt {
         uint64_t reserved3  : 1;  // must be 0
     }                       flaggable;
     struct {
-	   uint64_t copy		: 5;
-	   uint64_t do_not_copy : 59;
-	}						copyinfo;
+       uint64_t copy        : 5;
+       uint64_t do_not_copy : 59;
+    }                       copyinfo;
     uint64_t                number;
     uint64_t*               array;
 } pdpt_t;
@@ -176,10 +176,10 @@ typedef union pml4 {
         uint64_t xd         : 1;  // if A32_EFER.NXE = 1, execute-disable -> 1-can't be executed, must be 0 if not enabled
     }                       flaggable;
     struct {
-	   uint64_t copy		: 8;
-	   uint64_t do_not_copy : 55;
-	   uint64_t copy2		: 1;
-    }						copyinfo;
+       uint64_t copy        : 8;
+       uint64_t do_not_copy : 55;
+       uint64_t copy2       : 1;
+    }                       copyinfo;
     uint64_t                number;
     uint64_t*               array;
 } pml4_t;
@@ -194,35 +194,35 @@ typedef union cr3_page_entry
        uint64_t address     : 53;  // rest is address up to MAXPHYADDR, then zeros
    }                        flaggable;
    struct {
-	   uint64_t copy		: 4;
-	   uint64_t do_not_copy : 60;
-   }						copyinfo;
+       uint64_t copy        : 4;
+       uint64_t do_not_copy : 60;
+   }                        copyinfo;
    uint64_t                 number;
    uint64_t                 pml;
 } cr3_page_entry_t;
 
 typedef struct stack_element {
-	uint64_t frame_address;
-	uint64_t array_ord;
-	struct stack_element* next;
+    uint64_t frame_address;
+    uint64_t array_ord;
+    struct stack_element* next;
 } stack_element_t;
 
 typedef struct frame_info frame_info_t;
 
 typedef struct section_info {
-	stack_element_t* head;
-	struct section_info* next_section;
-	frame_info_t* frame_array;
+    stack_element_t* head;
+    struct section_info* next_section;
+    frame_info_t* frame_array;
 
-	uint64_t start_word;
-	uint64_t end_word;
-	uint64_t total_frames;
+    uint64_t start_word;
+    uint64_t end_word;
+    uint64_t total_frames;
 } section_info_t;
 
 struct frame_info {
-	uint32_t usage_count;
-	uint32_t cow_count;
-	stack_element_t* bound_stack_element;
+    uint32_t usage_count;
+    uint32_t cow_count;
+    stack_element_t* bound_stack_element;
 };
 
 /**

@@ -57,26 +57,26 @@ extern bool multiprocessing_ready;
 extern bool scheduler_enabled;
 
 void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
-	__ports_initialized = false;
-	__print_initialized = false;
-	cpus = NULL;
-	kernel_tmp_heap_start = heap_start;
+    __ports_initialized = false;
+    __print_initialized = false;
+    cpus = NULL;
+    kernel_tmp_heap_start = heap_start;
 
-	initialize_temporary_heap(heap_start);
-	initialize_physical_memory_allocation(mboot_addr);
-	initialize_standard_heap();
+    initialize_temporary_heap(heap_start);
+    initialize_physical_memory_allocation(mboot_addr);
+    initialize_standard_heap();
 
-	initialize_logger();
-	log_msg("Paging memory and kernel heap initialized");
-	log_msg("Logger initialized");
+    initialize_logger();
+    log_msg("Paging memory and kernel heap initialized");
+    log_msg("Logger initialized");
 
-	initialize_ports();
-	log_msg("Ports initialized");
+    initialize_ports();
+    log_msg("Ports initialized");
 
-	__initialize_kclib();
-	log_msg("KCLib initialized");
+    __initialize_kclib();
+    log_msg("KCLib initialized");
 
-	initialize_grx(mboot_addr);
+    initialize_grx(mboot_addr);
 
     kd_cclear(0);
     kd_cwrite("Azathoth kernel bootup sequence initiated\n", 0, 5);
@@ -105,14 +105,14 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     vlog_msg("Kernel clock initialized, current time in unix time %llu", get_unix_time());
 
     if (array_get_size(cpus) > 1) {
-		initialize_mp(get_local_apic_id());
-	}
+        initialize_mp(get_local_apic_id());
+    }
     vlog_msg("CPU queried and initialized. Number of logical cpus %u", array_get_size(cpus));
 
     initialize_ipi_subsystem();
-	initialize_lapic();
-	multiprocessing_ready = true;
-	log_msg("Inter-processor interrupts initialized");
+    initialize_lapic();
+    multiprocessing_ready = true;
+    log_msg("Inter-processor interrupts initialized");
 
     deallocate_start_memory();
     log_msg("Bootup memory removed.");

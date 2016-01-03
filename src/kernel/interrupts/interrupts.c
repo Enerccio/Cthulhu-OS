@@ -89,14 +89,14 @@ void gp_exception(ruint_t ecode, registers_t* registers) {
 void pf_exception(ruint_t ecode, registers_t* registers) {
     void* fa = get_faulting_address();
     if (registers->cs == 0x8) {
-    	// kernel page fault
-    	// TODO: add swap
-    	error(ERROR_KERNEL_PAGE_FAULT_IN_NONPAGED_AREA, (ruint_t)fa, ecode, (void*)registers->rip);
+        // kernel page fault
+        // TODO: add swap
+        error(ERROR_KERNEL_PAGE_FAULT_IN_NONPAGED_AREA, (ruint_t)fa, ecode, (void*)registers->rip);
     } else {
-    	if (!page_fault((uintptr_t)fa, registers->ecode)) {
-    		// TODO: add abort
-    		kp_halt();
-    	}
+        if (!page_fault((uintptr_t)fa, registers->ecode)) {
+            // TODO: add abort
+            kp_halt();
+        }
     }
 }
 

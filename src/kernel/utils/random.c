@@ -30,27 +30,27 @@
  * Creates random generator with provided seed.
  */
 rg_t rg_create_random_generator(uint64_t seed) {
-	rg_t rg;
-	rg.state[0] = (seed & 0xFFFFFFFF00000000) + ((seed << 32) ^ seed);
-	rg.state[1] = (seed & 0x00000000FFFFFFFF) + ((seed >> 32) ^ seed);
-	return rg;
+    rg_t rg;
+    rg.state[0] = (seed & 0xFFFFFFFF00000000) + ((seed << 32) ^ seed);
+    rg.state[1] = (seed & 0x00000000FFFFFFFF) + ((seed >> 32) ^ seed);
+    return rg;
 }
 
 /**
  * Returns next uint from random generator.
  */
 ruint_t rg_next_uint(rg_t* rg) {
-	ruint_t x = rg->state[0];
-	ruint_t const y = rg->state[1];
-	rg->state[0] = y;
-	x ^= x << 23; // a
-	rg->state[1] = x ^ y ^ (x >> 17) ^ (y >> 26); // b, c
-	return rg->state[1] + y;
+    ruint_t x = rg->state[0];
+    ruint_t const y = rg->state[1];
+    rg->state[0] = y;
+    x ^= x << 23; // a
+    rg->state[1] = x ^ y ^ (x >> 17) ^ (y >> 26); // b, c
+    return rg->state[1] + y;
 }
 
 /**
  * Returns next uint from 0 to limit.
  */
 ruint_t rg_next_uint_l(rg_t* rg, ruint_t limit) {
-	return rg_next_uint(rg) % limit;
+    return rg_next_uint(rg) % limit;
 }

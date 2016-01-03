@@ -32,23 +32,23 @@
 typedef struct queue_element queue_element_t;
 
 struct queue_element {
-	bool __pool_c;
-	void* data;
-	queue_element_t* previous;
-	queue_element_t* next;
+    bool __pool_c;
+    void* data;
+    queue_element_t* previous;
+    queue_element_t* next;
 };
 
 typedef struct queue_pool {
-	void* pool_data;
-	uint32_t max_size;
+    void* pool_data;
+    uint32_t max_size;
 } queue_pool_t;
 
 typedef struct queue {
-	bool is_static;
-	queue_element_t* first;
-	queue_element_t* last;
-	uint32_t size;
-	queue_pool_t queue_pool;
+    bool is_static;
+    queue_element_t* first;
+    queue_element_t* last;
+    uint32_t size;
+    queue_pool_t queue_pool;
 } queue_t;
 
 typedef bool (*find_func_t) (void* data, void* element);

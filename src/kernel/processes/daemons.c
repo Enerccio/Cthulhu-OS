@@ -34,17 +34,17 @@ ruint_t __daemon_registration_lock;
 hash_table_t* dr_table;
 
 uint64_t register_daemon_service(uint64_t process, const char* service, bool overwrite_old_service_provider) {
-	proc_spinlock_lock(&__daemon_registration_lock);
+    proc_spinlock_lock(&__daemon_registration_lock);
 
-	if (table_contains(dr_table, (void*)service) && !overwrite_old_service_provider) {
-		return DAEMON_NOT_REGISTERED;
-	}
-	table_set(dr_table, (void*)service, (void*)(uintptr_t)process);
+    if (table_contains(dr_table, (void*)service) && !overwrite_old_service_provider) {
+        return DAEMON_NOT_REGISTERED;
+    }
+    table_set(dr_table, (void*)service, (void*)(uintptr_t)process);
 
-	proc_spinlock_unlock(&__daemon_registration_lock);
+    proc_spinlock_unlock(&__daemon_registration_lock);
 }
 
 void initialize_daemon_services() {
-	__daemon_registration_lock = 0;
-	dr_table = create_string_table();
+    __daemon_registration_lock = 0;
+    dr_table = create_string_table();
 }

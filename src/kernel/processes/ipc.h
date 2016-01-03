@@ -38,30 +38,30 @@ typedef void* ipc_pointer_t;
 #define NO_RECEIVER_THREAD_SPECIFIED  __TID_MAX__
 
 typedef enum message_type {
-	targetted_message,
-	broadcast_message,
-	daemon_message,
-	continuation_message,
+    targetted_message,
+    broadcast_message,
+    daemon_message,
+    continuation_message,
 } message_type_t;
 
 typedef struct message {
-	message_type_t mtype;
+    message_type_t mtype;
 
-	uint64_t sender_process;
-	tid_t    sender_thread;
-	uint64_t receiver_process;
+    uint64_t sender_process;
+    tid_t    sender_thread;
+    uint64_t receiver_process;
 
-	ruint_t message_inc_id;
-	ruint_t split_message_order;
-	bool     has_next_message;
+    ruint_t message_inc_id;
+    ruint_t split_message_order;
+    bool     has_next_message;
 
-	/* Body is special pointer because it points to physical memory */
-	/* However, it should be kernel readable identity map pointer */
-	/* with size of 4096 bytes (one page) */
-	ipc_pointer_t body;
-	uint16_t body_used_bytes;
+    /* Body is special pointer because it points to physical memory */
+    /* However, it should be kernel readable identity map pointer */
+    /* with size of 4096 bytes (one page) */
+    ipc_pointer_t body;
+    uint16_t body_used_bytes;
 
-	/** Used for message managing */
-	ruint_t __message_lock;
-	uint32_t __message_ref_count;
+    /** Used for message managing */
+    ruint_t __message_lock;
+    uint32_t __message_ref_count;
 } message_t;

@@ -43,7 +43,7 @@ void* __kclib_heap_start() {
 }
 
 void*     __kclib_allocate(size_t aamount) {
-	uintptr_t ha = heap_start_address;
+    uintptr_t ha = heap_start_address;
     allocate(heap_start_address, aamount, true, false);
     heap_start_address += ALIGN_UP(aamount); // fix deallocation
     return (void*)ha;
@@ -73,31 +73,31 @@ ptrdiff_t  __kclib_read_data(void* stream, uint8_t* buffer, size_t read_amount) 
 
 extern uint64_t get_unix_time();
 clock_t __kclib_clock() {
-	return get_unix_time() * CLOCKS_PER_SEC;
+    return get_unix_time() * CLOCKS_PER_SEC;
 }
 
 mtx_id_t __kclib_get_mutex_global_identifier() {
-	return 0; // all mutexes in kernel have same identifier
+    return 0; // all mutexes in kernel have same identifier
 }
 
 extern bool multiprocessing_ready;
 
 extern uint8_t get_local_apic_id();
 tid_t __kclib_get_tid() {
-	if (multiprocessing_ready)
-		return get_local_apic_id();
-	return 0;
+    if (multiprocessing_ready)
+        return get_local_apic_id();
+    return 0;
 }
 
 extern void wait_until_activated();
 void __kclib_halt(mtx_id_t __asked_mutex) {
-	if (multiprocessing_ready)
-		wait_until_activated(WAIT_KERNEL_MUTEX);
+    if (multiprocessing_ready)
+        wait_until_activated(WAIT_KERNEL_MUTEX);
 }
 
 extern void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t message, ruint_t message2,
-		registers_t* r);
+        registers_t* r);
 void __kclib_mutex_unlocked(mtx_id_t __asked_mutex) {
-	if (multiprocessing_ready)
-		broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_KERNEL_MUTEX, 0, NULL);
+    if (multiprocessing_ready)
+        broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_KERNEL_MUTEX, 0, NULL);
 }

@@ -30,5 +30,5 @@
 array_t processes;
 
 proc_t* load_init() {
-	return NULL;
+    return NULL;
 }

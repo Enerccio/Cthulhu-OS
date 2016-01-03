@@ -38,19 +38,19 @@
 #define DELETED_CELL    ((void*)1)
 
 typedef struct {
-	void* key;
-	void* data;
+    void* key;
+    void* data;
 } hash_pair_t;
 
 typedef uint32_t (* hash_function_t) (void*);
 typedef bool (* cmpr_function_t) (void*, void*);
 
 typedef struct {
-	hash_pair_t**   hash_table;
-	hash_function_t hash_fn;
-	cmpr_function_t cmpr_fn;
-	uint32_t            len;
-	uint32_t max_size;
+    hash_pair_t**   hash_table;
+    hash_function_t hash_fn;
+    cmpr_function_t cmpr_fn;
+    uint32_t            len;
+    uint32_t max_size;
 } hash_table_t;
 
 typedef uint32_t hash_it_t;

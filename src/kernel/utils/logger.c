@@ -34,8 +34,8 @@ typedef enum {
 array_t* boot_log;
 
 typedef struct log_entry {
-	log_level_t ll;
-	char message[255];
+    log_level_t ll;
+    char message[255];
 } log_entry_t;
 
 extern bool __ports_initialized;
@@ -43,16 +43,16 @@ extern bool __print_initialized;
 extern void write_byte_com(uint8_t com, uint8_t data);
 
 void initialize_logger() {
-	boot_log = create_array();
+    boot_log = create_array();
 }
 
 static inline void print_to_com(char* ch) {
-	char c;
-	while ((c = *ch++) != '\0') {
-		if (c == '\n')
-	        write_byte_com(0, '\r');
-	    write_byte_com(0, c);
-	}
+    char c;
+    while ((c = *ch++) != '\0') {
+        if (c == '\n')
+            write_byte_com(0, '\r');
+        write_byte_com(0, c);
+    }
 }
 
 /**
@@ -61,50 +61,50 @@ static inline void print_to_com(char* ch) {
 void log(log_level_t log_level, const char* message) {
 
     // write message that we are in the kernel
-	log_entry_t* le = malloc(sizeof(log_entry_t));
-	le->ll = log_level;
+    log_entry_t* le = malloc(sizeof(log_entry_t));
+    le->ll = log_level;
 
     // display log level
     switch (log_level) {
     case WARNING:
-    	if (__ports_initialized) {
-    		print_to_com("WARNING: ");
-    	}
-    	if (__print_initialized) {
-    		kd_cwrite("WARNING: ", 0, 6);
-    	}
+        if (__ports_initialized) {
+            print_to_com("WARNING: ");
+        }
+        if (__print_initialized) {
+            kd_cwrite("WARNING: ", 0, 6);
+        }
         break;
     case ERROR:
-    	if (__ports_initialized) {
-			print_to_com("ERROR: ");
-		}
-		if (__print_initialized) {
-			kd_cwrite("ERROR: ", 0, 4);
-		}
+        if (__ports_initialized) {
+            print_to_com("ERROR: ");
+        }
+        if (__print_initialized) {
+            kd_cwrite("ERROR: ", 0, 4);
+        }
         break;
     default:
-    	if (__ports_initialized) {
-			print_to_com("MESSAGE: ");
-		}
-		if (__print_initialized) {
-			kd_cwrite("MESSAGE: ", 0, 15);
-		}
+        if (__ports_initialized) {
+            print_to_com("MESSAGE: ");
+        }
+        if (__print_initialized) {
+            kd_cwrite("MESSAGE: ", 0, 15);
+        }
         break;
     }
 
     if (__ports_initialized) {
-		print_to_com((char*)message);
-		print_to_com("\n");
-	}
-	if (__print_initialized) {
-	    kd_write(message);
-	    kd_put('\n');
-	}
+        print_to_com((char*)message);
+        print_to_com("\n");
+    }
+    if (__print_initialized) {
+        kd_write(message);
+        kd_put('\n');
+    }
 
-	strncpy(le->message, message, 254);
-	le->message[254] = '\0';
+    strncpy(le->message, message, 254);
+    le->message[254] = '\0';
 
-	array_push_data(boot_log, le);
+    array_push_data(boot_log, le);
 }
 
 /**

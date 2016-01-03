@@ -56,27 +56,27 @@ typedef enum vga_color {
  * Scrolls the screen by one line.
  */
 static inline void scroll() {
-	if (mode == MODE_TEXT) {
-		uint8_t attributeByte = (0 /*black*/<< 4) | (15 /*white*/& 0x0F);
-		uint16_t blank = 0x20 | (attributeByte << 8);
+    if (mode == MODE_TEXT) {
+        uint8_t attributeByte = (0 /*black*/<< 4) | (15 /*white*/& 0x0F);
+        uint16_t blank = 0x20 | (attributeByte << 8);
 
-		if (cursor_y >= grx_get_height()+1) {
-			unsigned int i;
-			for (i = 0 * grx_get_width(); i < grx_get_height() * grx_get_width(); i++) {
-				text_mode_video_memory[i] = text_mode_video_memory[i + grx_get_width()];
-			}
+        if (cursor_y >= grx_get_height()+1) {
+            unsigned int i;
+            for (i = 0 * grx_get_width(); i < grx_get_height() * grx_get_width(); i++) {
+                text_mode_video_memory[i] = text_mode_video_memory[i + grx_get_width()];
+            }
 
-			for (i = grx_get_height() * grx_get_width(); i < (grx_get_height()+1) * grx_get_width(); i++) {
-				text_mode_video_memory[i] = blank;
-			}
-			cursor_y = grx_get_height();
-		}
-	} else {
-		if (cursor_y >= (grx_get_height()/__font_h)+1) {
-			scroll_up(__font_h);
-			cursor_y = (grx_get_height()/__font_h);
-		}
-	}
+            for (i = grx_get_height() * grx_get_width(); i < (grx_get_height()+1) * grx_get_width(); i++) {
+                text_mode_video_memory[i] = blank;
+            }
+            cursor_y = grx_get_height();
+        }
+    } else {
+        if (cursor_y >= (grx_get_height()/__font_h)+1) {
+            scroll_up(__font_h);
+            cursor_y = (grx_get_height()/__font_h);
+        }
+    }
 }
 
 /**
@@ -109,37 +109,37 @@ void kd_cput(char c, uint8_t back_color, uint8_t fore_color) {
     } else if (c == 0x09) {
         cursor_x = (cursor_x + 8) & ~(8 - 1);
     } else if (c == '\r') {
-    	flush_buffer();
+        flush_buffer();
         cursor_x = 0;
     } else if (c == '\n') {
         cursor_x = 0;
         cursor_y++;
         flush_buffer();
     } else if (c >= ' ') {
-    	if (mode == MODE_TEXT) {
-			uint8_t attributeByte = (back_color << 4) | (fore_color & 0x0F);
-			uint16_t attribute = attributeByte << 8;
-			volatile uint16_t* location;
-			location = text_mode_video_memory + (cursor_y * grx_get_width() + cursor_x);
-			*location = c | attribute;
-			cursor_x++;
-    	} else {
-    		blit_colored(get_letter(c), cursor_x*__font_w, cursor_y*__font_h, ega[fore_color]);
-    		cursor_x++;
-    	}
+        if (mode == MODE_TEXT) {
+            uint8_t attributeByte = (back_color << 4) | (fore_color & 0x0F);
+            uint16_t attribute = attributeByte << 8;
+            volatile uint16_t* location;
+            location = text_mode_video_memory + (cursor_y * grx_get_width() + cursor_x);
+            *location = c | attribute;
+            cursor_x++;
+        } else {
+            blit_colored(get_letter(c), cursor_x*__font_w, cursor_y*__font_h, ega[fore_color]);
+            cursor_x++;
+        }
     }
 
     if (cursor_x >= 80 && mode == MODE_TEXT) {
         cursor_x = 0;
         cursor_y++;
     } else if (cursor_x >= grx_get_width()/__font_w) {
-    	cursor_x = 0;
-    	cursor_y++;
+        cursor_x = 0;
+        cursor_y++;
     }
 
     scroll();
     if (mode == MODE_TEXT) {
-    	move_cursor();
+        move_cursor();
     }
 }
 
@@ -154,22 +154,22 @@ void kd_clear() {
  * Clears screen with selected color.
  */
 void kd_cclear(uint8_t back_color) {
-	if (mode == MODE_TEXT) {
-		uint8_t attributeByte = (back_color << 4) | (15 & 0x0F);
-		uint16_t blank = 0x20 | (attributeByte << 8);
+    if (mode == MODE_TEXT) {
+        uint8_t attributeByte = (back_color << 4) | (15 & 0x0F);
+        uint16_t blank = 0x20 | (attributeByte << 8);
 
-		unsigned int i;
-		for (i = 0; i < grx_get_width() * grx_get_height(); i++) {
-			text_mode_video_memory[i] = blank;
-		}
+        unsigned int i;
+        for (i = 0; i < grx_get_width() * grx_get_height(); i++) {
+            text_mode_video_memory[i] = blank;
+        }
 
-	    cursor_x = 0;
-	    cursor_y = 0;
-	    move_cursor();
-	} else {
-		blit_colored(clear_screen_blit, 0, 0, ega[back_color]);
-		flush_buffer();
-	}
+        cursor_x = 0;
+        cursor_y = 0;
+        move_cursor();
+    } else {
+        blit_colored(clear_screen_blit, 0, 0, ega[back_color]);
+        flush_buffer();
+    }
 }
 
 /**
@@ -275,10 +275,10 @@ void kd_cwrite_hex64(ruint_t number, uint8_t bgcolor, uint8_t fgcolor) {
     kd_cwrite("0x", bgcolor, fgcolor);
 
     if (sizeof(ruint_t) == 8) {
-		__write_hex_c(number / (1ULL << 56), bgcolor, fgcolor);
-		__write_hex_c(number / (1ULL << 48), bgcolor, fgcolor);
-		__write_hex_c(number / (1ULL << 40), bgcolor, fgcolor);
-		__write_hex_c(number / (1ULL << 32), bgcolor, fgcolor);
+        __write_hex_c(number / (1ULL << 56), bgcolor, fgcolor);
+        __write_hex_c(number / (1ULL << 48), bgcolor, fgcolor);
+        __write_hex_c(number / (1ULL << 40), bgcolor, fgcolor);
+        __write_hex_c(number / (1ULL << 32), bgcolor, fgcolor);
     }
 
     __write_hex_c(number / (1 << 24), bgcolor, fgcolor);

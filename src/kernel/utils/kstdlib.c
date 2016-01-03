@@ -64,7 +64,7 @@ static char bytetohex(uint8_t byte) {
  * Is not thread safe.
  */
 const char* hextochar(uint32_t num) {
-	static char conv[11];
+    static char conv[11];
 
     conv[0] = '0';
     conv[1] = 'x';
@@ -82,43 +82,43 @@ const char* hextochar(uint32_t num) {
 }
 
 void* get_module(struct multiboot_info* mbheader, const char* name,
-		size_t* size, bool reallocate, bool delete) {
-	struct multiboot_mod_list* modules = (struct multiboot_mod_list*) (uintptr_t) mbheader->mods_addr;
-	for (uint32_t i=0; i<mbheader->mods_count; i++) {
-		struct multiboot_mod_list* module =
-				(struct multiboot_mod_list*)physical_to_virtual((puint_t)&modules[i]);
-		size_t mod_size = module->mod_end-module->mod_start;
-		*size = mod_size;
-		char* mod_name = (char*)physical_to_virtual((puint_t)module->cmdline);
-		if (strcmp(mod_name, name) == 0){
-			// found the correct module
-			void* module_address = (void*)physical_to_virtual(module->mod_start);
-			if (reallocate){
-				void* mod_na = malloc(mod_size);
-				if (mod_na == NULL)
-					return NULL;
-				memcpy(mod_na, module_address, mod_size);
-				module_address = mod_na;
-			}
-			if (delete){
-				deallocate_starting_address(module->mod_start, mod_size);
-			}
-			return module_address;
-		}
-	}
-	return NULL;
+        size_t* size, bool reallocate, bool delete) {
+    struct multiboot_mod_list* modules = (struct multiboot_mod_list*) (uintptr_t) mbheader->mods_addr;
+    for (uint32_t i=0; i<mbheader->mods_count; i++) {
+        struct multiboot_mod_list* module =
+                (struct multiboot_mod_list*)physical_to_virtual((puint_t)&modules[i]);
+        size_t mod_size = module->mod_end-module->mod_start;
+        *size = mod_size;
+        char* mod_name = (char*)physical_to_virtual((puint_t)module->cmdline);
+        if (strcmp(mod_name, name) == 0) {
+            // found the correct module
+            void* module_address = (void*)physical_to_virtual(module->mod_start);
+            if (reallocate) {
+                void* mod_na = malloc(mod_size);
+                if (mod_na == NULL)
+                    return NULL;
+                memcpy(mod_na, module_address, mod_size);
+                module_address = mod_na;
+            }
+            if (delete) {
+                deallocate_starting_address(module->mod_start, mod_size);
+            }
+            return module_address;
+        }
+    }
+    return NULL;
 }
 
 
 char* get_extension(char* fname) {
-	if (fname == NULL)
-		return NULL;
+    if (fname == NULL)
+        return NULL;
 
-	char* ext;
-	do {
-		ext = fname;
-		fname = fname+strcspn(fname, ".")+1;
-	} while (*(fname-1) != '\0');
+    char* ext;
+    do {
+        ext = fname;
+        fname = fname+strcspn(fname, ".")+1;
+    } while (*(fname-1) != '\0');
 
-	return ext;
+    return ext;
 }

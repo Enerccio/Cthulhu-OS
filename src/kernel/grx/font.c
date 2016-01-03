@@ -42,18 +42,18 @@ uint8_t reverse(uint8_t b) {
 }
 
 void initialize_font(struct multiboot_info* mbinfo) {
-	for (size_t i=0; i<255*__font_h; i++)
-		__font[i] = reverse(__font[i]);
+    for (size_t i=0; i<255*__font_h; i++)
+        __font[i] = reverse(__font[i]);
 
-	for (uint8_t i=0; i<255; i++) {
-		image_t* image = &__letters[i];
-		image->image_data = &__font[i*__font_h];
-		image->image_type = IMAGE_MONOCHROMATIC;
-		image->w = __font_w;
-		image->h = __font_h;
-	}
+    for (uint8_t i=0; i<255; i++) {
+        image_t* image = &__letters[i];
+        image->image_data = &__font[i*__font_h];
+        image->image_type = IMAGE_MONOCHROMATIC;
+        image->w = __font_w;
+        image->h = __font_h;
+    }
 }
 
 image_t* get_letter(char letter) {
-	return &__letters[(uint8_t)letter];
+    return &__letters[(uint8_t)letter];
 }

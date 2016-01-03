@@ -30,7 +30,7 @@
 #include "../commons.h"
 
 typedef struct random_generator {
-	uint64_t state[2];
+    uint64_t state[2];
 } rg_t;
 
 /**

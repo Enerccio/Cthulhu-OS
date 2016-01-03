@@ -36,15 +36,15 @@ typedef ruint_t (*syscall_3)(ruint_t, ruint_t, ruint_t);
 typedef ruint_t (*syscall_4)(ruint_t, ruint_t, ruint_t, ruint_t);
 typedef ruint_t (*syscall_5)(ruint_t, ruint_t, ruint_t, ruint_t, ruint_t);
 typedef struct syscall {
-	uint8_t args;
-	union {
-		syscall_0 _0;
-		syscall_1 _1;
-		syscall_2 _2;
-		syscall_3 _3;
-		syscall_4 _4;
-		syscall_5 _5;
-	} syscall;
+    uint8_t args;
+    union {
+        syscall_0 _0;
+        syscall_1 _1;
+        syscall_2 _2;
+        syscall_3 _3;
+        syscall_4 _4;
+        syscall_5 _5;
+    } syscall;
 } syscall_t;
 
 void initialize_system_calls();

@@ -110,16 +110,16 @@ static volatile bool error_displaying = 0;
  */
 void error(uint16_t ecode, ruint_t speccode, ruint_t speccode2, void* eaddress) {
 
-	proc_spinlock_lock(&lock);
-	if (error_displaying != 0) {
-		proc_spinlock_unlock(&lock);
-		cpu_t* ccput = get_current_cput();
-		ccput->started = false;
-		kp_halt();
-	} else {
-		error_displaying = 1;
-	}
-	proc_spinlock_unlock(&lock);
+    proc_spinlock_lock(&lock);
+    if (error_displaying != 0) {
+        proc_spinlock_unlock(&lock);
+        cpu_t* ccput = get_current_cput();
+        ccput->started = false;
+        kp_halt();
+    } else {
+        error_displaying = 1;
+    }
+    proc_spinlock_unlock(&lock);
 
     uint8_t fg = rand_number(15)+1;
 
@@ -150,9 +150,9 @@ void error(uint16_t ecode, ruint_t speccode, ruint_t speccode2, void* eaddress) 
     kd_cwrite_hex64((ruint_t) eaddress, BACKGROUND_COLOR, FOREGROUND_COLOR);
 
     if (cpus != NULL) {
-		kd_setxy(16, 12);
-		kd_cwrite("Faulting processor: ", BACKGROUND_COLOR, FOREGROUND_COLOR);
-		kd_cwrite_hex64(get_local_processor_id(), BACKGROUND_COLOR, FOREGROUND_COLOR);
+        kd_setxy(16, 12);
+        kd_cwrite("Faulting processor: ", BACKGROUND_COLOR, FOREGROUND_COLOR);
+        kd_cwrite_hex64(get_local_processor_id(), BACKGROUND_COLOR, FOREGROUND_COLOR);
     }
 
     kd_setxy(10, 19);
@@ -163,9 +163,9 @@ void error(uint16_t ecode, ruint_t speccode, ruint_t speccode2, void* eaddress) 
     flush_buffer();
 
     if (cpus == NULL)
-    	kp_halt();
+        kp_halt();
     else {
-    	broadcast_ipi_message(true, IPI_HALT_IMMEDIATELLY, ecode+1, 0, NULL);
+        broadcast_ipi_message(true, IPI_HALT_IMMEDIATELLY, ecode+1, 0, NULL);
     }
 
     while (true) ;

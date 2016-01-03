@@ -59,11 +59,11 @@ void idt_set_gate(uint8_t gn, uintptr_t funcall) {
     gate->flags.dpl = 0;
 
     if (gn == 14) // page fault
-    	gate->flags.ist = 1;
+        gate->flags.ist = 1;
     if (gn == 8) // double fault
         gate->flags.ist = 2;
     if (gn == 255) // ipi fault
-    	gate->flags.ist = 3;
+        gate->flags.ist = 3;
 }
 
 /**
@@ -197,15 +197,15 @@ void isr_handler(registers_t* r) {
     }
 
     if (r->type > 31 && r->type < 48) {
-		if (r->type >= 40 && r->type != 47)
-			pic_sendeoi(PIC_EOI_SLAVE);
-		if (r->type != 39)
-			pic_sendeoi(PIC_EOI_MASTER);
-	} else if (r->type == 255) {
-		// ipi interrupt
-		volatile uint32_t* eoi = (uint32_t*)physical_to_virtual(apicaddr+0xB0);
-		*eoi = 0;
-	}
+        if (r->type >= 40 && r->type != 47)
+            pic_sendeoi(PIC_EOI_SLAVE);
+        if (r->type != 39)
+            pic_sendeoi(PIC_EOI_MASTER);
+    } else if (r->type == 255) {
+        // ipi interrupt
+        volatile uint32_t* eoi = (uint32_t*)physical_to_virtual(apicaddr+0xB0);
+        *eoi = 0;
+    }
 }
 
 /**

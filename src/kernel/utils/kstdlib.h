@@ -49,7 +49,7 @@ const char* hextochar(uint32_t num) UNSAFE_THREAD_CALL SINGLETON_RETURN;
  *
  */
 void* get_module(struct multiboot_info* mbheader, const char* name,
-		size_t* size, bool reallocate, bool delete);
+        size_t* size, bool reallocate, bool delete);
 
 /**
  * Returns extension of the filename (last part after .) if any, or whole string

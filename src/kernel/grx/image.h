@@ -28,17 +28,17 @@
 #pragma once
 
 #define IMAGE_MONOCHROMATIC (0)
-#define IMAGE_RGB			(1)
+#define IMAGE_RGB           (1)
 
 typedef struct image {
-	uint8_t* image_data;
-	uint8_t  image_type;
-	uint32_t w;
-	uint32_t h;
+    uint8_t* image_data;
+    uint8_t  image_type;
+    uint32_t w;
+    uint32_t h;
 } image_t;
 
 typedef struct color {
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 } color_t;

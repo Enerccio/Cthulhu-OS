@@ -44,19 +44,19 @@ extern void* ebda;
  * Adds all bytes of target address together to one number.
  */
 uintmax_t add_bytes(uint8_t* addr, size_t len) {
-	uintmax_t v = 0;
-	for (size_t p = 0; p < len ; p++)
-		v += addr[p];
-	return v;
+    uintmax_t v = 0;
+    for (size_t p = 0; p < len ; p++)
+        v += addr[p];
+    return v;
 }
 
 /**
  * Performs acpisdt checksum for header.
  */
 bool acpisdt_checksum(ACPISDTHeader* th) {
-	unsigned char sum = 0;
+    unsigned char sum = 0;
 
-	for (unsigned int i = 0; i < th->Length; i++) {
+    for (unsigned int i = 0; i < th->Length; i++) {
         sum += ((char *) th)[i];
     }
 
@@ -67,14 +67,14 @@ bool acpisdt_checksum(ACPISDTHeader* th) {
  * Checks whether rsdt is valid
  */
 bool valid_rsdt(RSDT* rsdt) {
-	return acpisdt_checksum((ACPISDTHeader*)rsdt);
+    return acpisdt_checksum((ACPISDTHeader*)rsdt);
 }
 
 /**
  * Checks whether xsdt is valid
  */
 bool valid_xsdt(XSDT* xsdt) {
-	return acpisdt_checksum((ACPISDTHeader*)xsdt);
+    return acpisdt_checksum((ACPISDTHeader*)xsdt);
 }
 
 /**
@@ -121,48 +121,48 @@ void* findFACP_XSDT(void* RootSDT) {
  * Searches either RSDT or XSDT for MADT table and returns it.
  */
 void* find_madt() {
-	if (acpi_version == 1) {
-		if (rsdt == NULL)
-			return NULL;
-		int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
-		for (int i=0; i<entries; i++) {
-			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&rsdt->PointerToOtherSDT)[i]);
-			if (!strncmp(h->Signature, "APIC", 4)) {
-				return h;
-			}
-		}
-	} else {
-		if (xsdt == NULL)
-			return NULL;
-		int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
-		for (int i=0; i<entries; i++) {
-			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&xsdt->PointerToOtherSDT)[i]);
-			if (!strncmp(h->Signature, "APIC", 4)) {
-				return h;
-			}
-		}
-	}
-	return NULL;
+    if (acpi_version == 1) {
+        if (rsdt == NULL)
+            return NULL;
+        int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
+        for (int i=0; i<entries; i++) {
+            ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&rsdt->PointerToOtherSDT)[i]);
+            if (!strncmp(h->Signature, "APIC", 4)) {
+                return h;
+            }
+        }
+    } else {
+        if (xsdt == NULL)
+            return NULL;
+        int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
+        for (int i=0; i<entries; i++) {
+            ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&xsdt->PointerToOtherSDT)[i]);
+            if (!strncmp(h->Signature, "APIC", 4)) {
+                return h;
+            }
+        }
+    }
+    return NULL;
 }
 
 /**
  * Checks whether lowest byte of value is 0.
  */
 bool check_lowestbyte(uintmax_t value) {
-	char* ch = (char*) &value;
-	return ch[0] == 0;
+    char* ch = (char*) &value;
+    return ch[0] == 0;
 }
 
 /**
  * Checks whether RSDP is valid.
  */
 bool valid_rsdp(struct RSDPDescriptor* rsdp) {
-	acpi_version = rsdp->Revision+1;
-	if (acpi_version == 1) {
-		return check_lowestbyte(add_bytes((uint8_t*)rsdp, sizeof(struct RSDPDescriptor)));
-	} else {
-		return check_lowestbyte(add_bytes((uint8_t*)rsdp, sizeof(struct RSDPDescriptor20)));
-	}
+    acpi_version = rsdp->Revision+1;
+    if (acpi_version == 1) {
+        return check_lowestbyte(add_bytes((uint8_t*)rsdp, sizeof(struct RSDPDescriptor)));
+    } else {
+        return check_lowestbyte(add_bytes((uint8_t*)rsdp, sizeof(struct RSDPDescriptor20)));
+    }
 }
 
 /**
@@ -174,34 +174,34 @@ bool valid_rsdp(struct RSDPDescriptor* rsdp) {
  * If valid, it returns it, otherwise continues the search loop.
  */
 struct RSDPDescriptor* find_rsdp() {
-	struct RSDPDescriptor* desc;
-	uintptr_t test_addr = (uintptr_t)ebda;
-	for (uintptr_t addr = test_addr; addr < test_addr+0x1000; addr += 16) {
-		char* test_address = (char*)addr;
-		if (strncmp(test_address, "RSD PTR ", 8)==0) {
-			desc = (struct RSDPDescriptor*)test_address;
-			if (valid_rsdp(desc))
-				return desc;
-		}
-	}
-	test_addr = 0x000E0000;
-	for (uintptr_t addr = test_addr; addr < 0x000FFFFF; addr += 16) {
-		char* test_address = (char*)addr;
-		if (strncmp(test_address, "RSD PTR ", 8)==0) {
-			desc = (struct RSDPDescriptor*)test_address;
-			if (valid_rsdp(desc))
-				return desc;
-		}
-	}
+    struct RSDPDescriptor* desc;
+    uintptr_t test_addr = (uintptr_t)ebda;
+    for (uintptr_t addr = test_addr; addr < test_addr+0x1000; addr += 16) {
+        char* test_address = (char*)addr;
+        if (strncmp(test_address, "RSD PTR ", 8)==0) {
+            desc = (struct RSDPDescriptor*)test_address;
+            if (valid_rsdp(desc))
+                return desc;
+        }
+    }
+    test_addr = 0x000E0000;
+    for (uintptr_t addr = test_addr; addr < 0x000FFFFF; addr += 16) {
+        char* test_address = (char*)addr;
+        if (strncmp(test_address, "RSD PTR ", 8)==0) {
+            desc = (struct RSDPDescriptor*)test_address;
+            if (valid_rsdp(desc))
+                return desc;
+        }
+    }
 
-	return NULL;
+    return NULL;
 }
 
 /**
  * Checks whether fadt is valid or not.
  */
 bool valid_fadt(FADT* fadt) {
-	return acpisdt_checksum((ACPISDTHeader*)fadt);
+    return acpisdt_checksum((ACPISDTHeader*)fadt);
 }
 
 /**
@@ -214,47 +214,47 @@ bool valid_fadt(FADT* fadt) {
  * If any of those steps fail, sets remaining structures to NULL.
  */
 void init_table_acpi() {
-	rsdp_descriptor = NULL;
-	rsdt = NULL;
-	xsdt = NULL;
-	fadt = NULL;
-	acpi_version = 0;
+    rsdp_descriptor = NULL;
+    rsdt = NULL;
+    xsdt = NULL;
+    fadt = NULL;
+    acpi_version = 0;
 
-	rsdp_descriptor = find_rsdp();
+    rsdp_descriptor = find_rsdp();
 
-	if (rsdp_descriptor == NULL) {
-		log_warn("No RSDP Table detected");
-		return;
-	}
+    if (rsdp_descriptor == NULL) {
+        log_warn("No RSDP Table detected");
+        return;
+    }
 
-	if (acpi_version == 1) {
-		RSDT* rsdtp = (RSDT*)physical_to_virtual((uintptr_t)rsdp_descriptor->RsdtAddress);
-		if (valid_rsdt(rsdtp)) {
-			rsdt = rsdtp;
-		} else {
-			log_warn("No RSDT Table detected");
-			return;
-		}
-	} else {
-		XSDT* xsdtp = (XSDT*)physical_to_virtual(((struct RSDPDescriptor20*)rsdp_descriptor)->XsdtAddress);
-		if (valid_xsdt(xsdtp)) {
-			xsdt = xsdtp;
-		} else {
-			log_warn("No XSDT Table detected");
-			return;
-		}
-	}
+    if (acpi_version == 1) {
+        RSDT* rsdtp = (RSDT*)physical_to_virtual((uintptr_t)rsdp_descriptor->RsdtAddress);
+        if (valid_rsdt(rsdtp)) {
+            rsdt = rsdtp;
+        } else {
+            log_warn("No RSDT Table detected");
+            return;
+        }
+    } else {
+        XSDT* xsdtp = (XSDT*)physical_to_virtual(((struct RSDPDescriptor20*)rsdp_descriptor)->XsdtAddress);
+        if (valid_xsdt(xsdtp)) {
+            xsdt = xsdtp;
+        } else {
+            log_warn("No XSDT Table detected");
+            return;
+        }
+    }
 
-	void* fadt_address;
+    void* fadt_address;
 
-	if (acpi_version == 1)
-		fadt_address = findFACP(rsdt);
-	else
-		fadt_address = findFACP_XSDT(xsdt);
+    if (acpi_version == 1)
+        fadt_address = findFACP(rsdt);
+    else
+        fadt_address = findFACP_XSDT(xsdt);
 
-	if (valid_fadt((FADT*)fadt_address)) {
-		fadt = (FADT*)fadt_address;
-	} else {
-		log_warn("No FADT Table detected");
-	}
+    if (valid_fadt((FADT*)fadt_address)) {
+        fadt = (FADT*)fadt_address;
+    } else {
+        log_warn("No FADT Table detected");
+    }
 }

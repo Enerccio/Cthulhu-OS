@@ -140,11 +140,11 @@ extern void isr255();
 #define PIC_EOI_ALL (PIC_EOI_SLAVE +1)
 
 typedef struct registers{
-	ruint_t r15, r14, r13, r12, r11, r10, r9, r8, rbp, rcx, rbx;
-	ruint_t rdx, rsi, rdi;
-	ruint_t es, ds, fs, gs, rax;
-	ruint_t type, ecode;
-	ruint_t rip, cs, rflags, uesp, ss;
+    ruint_t r15, r14, r13, r12, r11, r10, r9, r8, rbp, rcx, rbx;
+    ruint_t rdx, rsi, rdi;
+    ruint_t es, ds, fs, gs, rax;
+    ruint_t type, ecode;
+    ruint_t rip, cs, rflags, uesp, ss;
 } registers_t ;
 
 /** Register callback function */

@@ -33,30 +33,30 @@
 #include <stdlib.h>
 
 typedef struct __attribute__((packed)) descriptor {
-	uint64_t limit0015 : 16;
-	uint64_t base0015  : 16;
-	uint64_t base2316  : 8;
-	uint64_t type      : 4;
-	uint64_t s		   : 1;
-	uint64_t dpl       : 2;
-	uint64_t p         : 1;
-	uint64_t limit1916 : 4;
-	uint64_t avl       : 1;
-	uint64_t l		   : 1;
-	uint64_t db		   : 1;
-	uint64_t g		   : 1;
-	uint64_t base3124  : 8;
+    uint64_t limit0015 : 16;
+    uint64_t base0015  : 16;
+    uint64_t base2316  : 8;
+    uint64_t type      : 4;
+    uint64_t s         : 1;
+    uint64_t dpl       : 2;
+    uint64_t p         : 1;
+    uint64_t limit1916 : 4;
+    uint64_t avl       : 1;
+    uint64_t l         : 1;
+    uint64_t db        : 1;
+    uint64_t g         : 1;
+    uint64_t base3124  : 8;
 } descriptor_t;
 
 typedef struct __attribute__((packed)) tss_descriptor  {
-	descriptor_t descriptor;
-	uint32_t base6332;
-	uint32_t reserved;
+    descriptor_t descriptor;
+    uint32_t base6332;
+    uint32_t reserved;
 } tss_descriptor_t;
 
 typedef struct __attribute__((packed)) gdt_ptr {
-	uint16_t limit;
-	descriptor_t* descriptors;
+    uint16_t limit;
+    descriptor_t* descriptors;
 } gdt_ptr_t;
 
 extern gdt_ptr_t gdt;

@@ -23,7 +23,7 @@
  *  Created on: Dec 27, 2015
  *      Author: Peter Vanusanik
  *  Contents: developer needed static library functions for processes such as init, daemons, daemon loaders etc
- *  	Should only be used to create those.
+ *      Should only be used to create those.
  */
 
 #pragma once

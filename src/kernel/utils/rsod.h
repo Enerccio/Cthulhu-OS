@@ -51,10 +51,10 @@
 #define ERROR_KERNEL_MACHINE_CHECK_EXCEPTION     20
 #define ERROR_KERNEL_SIMD_FP_EXCEPTION           21
 #define ERROR_KERNEL_VIRTUALIZATION_EXCEPTION    22
-#define ERROR_MINIMAL_MEMORY_FAILURE			 23
-#define ERROR_KERNEL_IPI_EXCEPTION				 24
-#define ERROR_NO_FONT_DETECTED					 25
-#define ERROR_INITRD_ERROR						 26
+#define ERROR_MINIMAL_MEMORY_FAILURE             23
+#define ERROR_KERNEL_IPI_EXCEPTION               24
+#define ERROR_NO_FONT_DETECTED                   25
+#define ERROR_INITRD_ERROR                       26
 
 /**
  * Initializes error subsystem.

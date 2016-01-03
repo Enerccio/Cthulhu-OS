@@ -31,33 +31,33 @@
 #include "../utils/collections/array.h"
 #include "../../kernel_dev_lib/ny_initramfs.h"
 
-#define INITRD_ERROR_NO_INITRD		(1)
-#define INITRD_ERROR_WRONG_HEADER	(2)
-#define INITRD_ERROR_NOMEM			(3)
-#define INITRD_ERROR_INVALID_FILE	(4)
+#define INITRD_ERROR_NO_INITRD      (1)
+#define INITRD_ERROR_WRONG_HEADER   (2)
+#define INITRD_ERROR_NOMEM          (3)
+#define INITRD_ERROR_INVALID_FILE   (4)
 
-#define INITRD_IF_DIR_AS_FILE		(0)
-#define INITRD_IF_BOOTIMG_NOT_DIR	(1)
+#define INITRD_IF_DIR_AS_FILE       (0)
+#define INITRD_IF_BOOTIMG_NOT_DIR   (1)
 
 #define PE_DIR  (0)
 #define PE_FILE (1)
 
 typedef struct dir_entry {
-	array_t* path_el_array;
+    array_t* path_el_array;
 } dir_entry_t;
 
 typedef struct file_entry {
-	size_t size;
-	size_t offset;
+    size_t size;
+    size_t offset;
 } file_entry_t;
 
 typedef struct path_element {
-	char* name;
-	uint8_t type;
-	union {
-		dir_entry_t* dir;
-		file_entry_t* file;
-	} element;
+    char* name;
+    uint8_t type;
+    union {
+        dir_entry_t* dir;
+        file_entry_t* file;
+    } element;
 } path_element_t;
 
 void init_initramfs(struct multiboot_info* info);
