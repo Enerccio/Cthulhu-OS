@@ -19,32 +19,56 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * sys.h
- *  Created on: Dec 27, 2015
+ * queue.h
+ *  Created on: Jan 3, 2016
  *      Author: Peter Vanusanik
- *  Contents: syscall operation
+ *  Contents: 
  */
 
 #pragma once
 
-#include "../commons.h"
+#include "../../commons.h"
 
-typedef ruint_t (*syscall_0)();
-typedef ruint_t (*syscall_1)(ruint_t);
-typedef ruint_t (*syscall_2)(ruint_t, ruint_t);
-typedef ruint_t (*syscall_3)(ruint_t, ruint_t, ruint_t);
-typedef ruint_t (*syscall_4)(ruint_t, ruint_t, ruint_t, ruint_t);
-typedef ruint_t (*syscall_5)(ruint_t, ruint_t, ruint_t, ruint_t, ruint_t);
-typedef struct syscall {
-	uint8_t args;
-	union {
-		syscall_0 _0;
-		syscall_1 _1;
-		syscall_2 _2;
-		syscall_3 _3;
-		syscall_4 _4;
-		syscall_5 _5;
-	} syscall;
-} syscall_t;
+typedef struct queue_element queue_element_t;
 
-void initialize_system_calls();
+struct queue_element {
+	bool __pool_c;
+	void* data;
+	queue_element_t* previous;
+	queue_element_t* next;
+};
+
+typedef struct queue_pool {
+	void* pool_data;
+	uint32_t max_size;
+} queue_pool_t;
+
+typedef struct queue {
+	bool is_static;
+	queue_element_t* first;
+	queue_element_t* last;
+	uint32_t size;
+	queue_pool_t queue_pool;
+} queue_t;
+
+typedef bool (*find_func_t) (void* data, void* element);
+
+queue_t* create_queue();
+
+void* queue_pop(queue_t* queue);
+
+void* queue_peek(queue_t* queue);
+
+bool queue_has_elements(queue_t* queue);
+
+bool queue_push(queue_t* queue, void* data);
+
+uint32_t queue_size(queue_t* queue);
+
+void free_queue(queue_t* queue);
+
+queue_t* create_queue_static(uint32_t queue_max_size);
+
+void queue_remove(void* element, queue_t* queue);
+
+void* queue_find_by_func(void* data, find_func_t func, queue_t* queue);

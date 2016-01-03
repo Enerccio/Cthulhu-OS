@@ -749,7 +749,7 @@ void initialize_physical_memory_allocation(struct multiboot_info* mboot_addr) {
  *
  * If page is present, it does nothing.
  */
-static void allocate_frame(puint_t* paddress, bool kernel, bool readonly) {
+static puint_t allocate_frame(puint_t* paddress, bool kernel, bool readonly) {
     if (!PRESENT(*paddress)) {
         page_t page;
         memset(&page, 0, sizeof(page_t));
@@ -763,6 +763,7 @@ static void allocate_frame(puint_t* paddress, bool kernel, bool readonly) {
         if (__mem_mirror_present)
         	memset((void*)physical_to_virtual(ALIGN(page.address)), 0xCC, 0x1000);
     }
+    return ALIGN(*paddress);
 }
 
 /**
@@ -1041,4 +1042,8 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
 	}
 
 	return false;
+}
+
+void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool rw) {
+	*physmem = allocate_frame(get_page(block_addr, true), kernel, rw);
 }

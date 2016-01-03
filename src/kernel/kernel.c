@@ -44,6 +44,7 @@
 #include "structures/gdt.h"
 #include "rlyeh/rlyeh.h"
 #include "processes/scheduler.h"
+#include "processes/daemons.h"
 
 extern volatile uint64_t clock_ms;
 extern struct multiboot_info multiboot_info;
@@ -118,6 +119,10 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
 
     init_initramfs(&multiboot_info);
     log_msg("Initramfs loaded");
+
+    debug_break;
+    initialize_daemon_services();
+    log_msg("Daemon services initialized");
 
     initialize_system_calls();
     log_msg("System calls initialized");

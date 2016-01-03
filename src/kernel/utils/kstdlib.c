@@ -81,27 +81,6 @@ const char* hextochar(uint32_t num) {
     return conv;
 }
 
-/**
- * Converts uint32_t in void* into hash.
- */
-uint32_t int_hash_function(void* integer) {
-    uint32_t a = (uint32_t) ((uintptr_t)integer);
-    a = (a + 0x7ed55d16) + (a << 12);
-    a = (a ^ 0xc761c23c) ^ (a >> 19);
-    a = (a + 0x165667b1) + (a << 5);
-    a = (a + 0xd3a2646c) ^ (a << 9);
-    a = (a + 0xfd7046c5) + (a << 3);
-    a = (a ^ 0xb55a4f09) ^ (a >> 16);
-    return a;
-}
-
-/**
- * Integer comparisons, of void* arguments representing integer.
- */
-bool int_cmpr_function(void* a, void* b) {
-    return a == b ? true : false;
-}
-
 void* get_module(struct multiboot_info* mbheader, const char* name,
 		size_t* size, bool reallocate, bool delete) {
 	struct multiboot_mod_list* modules = (struct multiboot_mod_list*) (uintptr_t) mbheader->mods_addr;

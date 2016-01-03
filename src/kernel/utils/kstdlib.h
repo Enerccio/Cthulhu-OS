@@ -39,16 +39,6 @@ uint32_t rand_number(int32_t limit);
 const char* hextochar(uint32_t num) UNSAFE_THREAD_CALL SINGLETON_RETURN;
 
 /**
- * Converts void* into hash.
- */
-uint32_t int_hash_function(void* integer);
-
-/**
- * Integer comparisons, of void* arguments representing integer.
- */
-bool int_cmpr_function(void* a, void* b);
-
-/**
  * Returns module from multiboot.
  *
  * Address would either be physical_to_virtual, or

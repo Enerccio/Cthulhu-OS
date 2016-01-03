@@ -19,32 +19,30 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * sys.h
- *  Created on: Dec 27, 2015
+ * daemons.h
+ *  Created on: Jan 3, 2016
  *      Author: Peter Vanusanik
- *  Contents: syscall operation
+ *  Contents: 
  */
 
 #pragma once
 
 #include "../commons.h"
+#include "../utils/collections/hmap.h"
 
-typedef ruint_t (*syscall_0)();
-typedef ruint_t (*syscall_1)(ruint_t);
-typedef ruint_t (*syscall_2)(ruint_t, ruint_t);
-typedef ruint_t (*syscall_3)(ruint_t, ruint_t, ruint_t);
-typedef ruint_t (*syscall_4)(ruint_t, ruint_t, ruint_t, ruint_t);
-typedef ruint_t (*syscall_5)(ruint_t, ruint_t, ruint_t, ruint_t, ruint_t);
-typedef struct syscall {
-	uint8_t args;
-	union {
-		syscall_0 _0;
-		syscall_1 _1;
-		syscall_2 _2;
-		syscall_3 _3;
-		syscall_4 _4;
-		syscall_5 _5;
-	} syscall;
-} syscall_t;
+#define DAEMON_NOT_REGISTERED __UINT64_MAX__
 
-void initialize_system_calls();
+// List of internal services
+// These are provided internally by daemons
+// other daemons register their own services by their name and then inform these daemon
+//  services by their name and they communicate
+#define SERVICE_VFS "::service::internal::vfs"
+#define SERVICE_PORT "::service::internal::port"
+#define SERVICE_KEYBOARD "::service::internal::keyboard"
+#define SERVICE_MOUSE "::service::internal::mouse"
+#define SERVICE_FRAMEBUFFER "::service::internal::framebuffer"
+#define SERVICE_USERS "::service::internal::users"
+
+uint64_t register_daemon_service(uint64_t process, const char* service, bool overwrite_old_service_provider);
+
+void initialize_daemon_services();

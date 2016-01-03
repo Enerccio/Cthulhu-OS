@@ -268,3 +268,5 @@ void deallocate_starting_address(uintptr_t address, size_t size);
 puint_t clone_paging_structures();
 
 bool page_fault(uintptr_t address, ruint_t errcode);
+
+void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool rw);

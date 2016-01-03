@@ -19,32 +19,32 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * sys.h
- *  Created on: Dec 27, 2015
+ * daemons.c
+ *  Created on: Jan 3, 2016
  *      Author: Peter Vanusanik
- *  Contents: syscall operation
+ *  Contents: 
  */
 
-#pragma once
+#include "daemons.h"
 
-#include "../commons.h"
+extern void proc_spinlock_lock(volatile void* memaddr);
+extern void proc_spinlock_unlock(volatile void* memaddr);
 
-typedef ruint_t (*syscall_0)();
-typedef ruint_t (*syscall_1)(ruint_t);
-typedef ruint_t (*syscall_2)(ruint_t, ruint_t);
-typedef ruint_t (*syscall_3)(ruint_t, ruint_t, ruint_t);
-typedef ruint_t (*syscall_4)(ruint_t, ruint_t, ruint_t, ruint_t);
-typedef ruint_t (*syscall_5)(ruint_t, ruint_t, ruint_t, ruint_t, ruint_t);
-typedef struct syscall {
-	uint8_t args;
-	union {
-		syscall_0 _0;
-		syscall_1 _1;
-		syscall_2 _2;
-		syscall_3 _3;
-		syscall_4 _4;
-		syscall_5 _5;
-	} syscall;
-} syscall_t;
+ruint_t __daemon_registration_lock;
+hash_table_t* dr_table;
 
-void initialize_system_calls();
+uint64_t register_daemon_service(uint64_t process, const char* service, bool overwrite_old_service_provider) {
+	proc_spinlock_lock(&__daemon_registration_lock);
+
+	if (table_contains(dr_table, (void*)service) && !overwrite_old_service_provider) {
+		return DAEMON_NOT_REGISTERED;
+	}
+	table_set(dr_table, (void*)service, (void*)(uintptr_t)process);
+
+	proc_spinlock_unlock(&__daemon_registration_lock);
+}
+
+void initialize_daemon_services() {
+	__daemon_registration_lock = 0;
+	dr_table = create_string_table();
+}
