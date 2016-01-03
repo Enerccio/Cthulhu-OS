@@ -35,8 +35,8 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/fhtagn.h gcc/gcc/con
 +++ gcc/gcc/config/fhtagn.h	2015-12-01 18:14:29.037314293 +0100
 @@ -0,0 +1,32 @@
 +/* Useful if you wish to make target-specific gcc changes. */
-+#undef TARGET_fhtagn
-+#define TARGET_fhtagn 1
++#undef TARGET_FHTAGN
++#define TARGET_FHTAGN
 + 
 +/* Default arguments you want when running your
 +   i686-myos-gcc/x86_64-myos-gcc toolchain */

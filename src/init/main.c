@@ -19,34 +19,17 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * nyarlathotep.h
- *  Created on: Dec 27, 2015
+ * main.c
+ *  Created on: Jan 2, 2016
  *      Author: Peter Vanusanik
- *  Contents: developer needed static library functions for processes such as init, daemons, daemon loaders etc
- *  	Should only be used to create those.
+ *  Contents: 
  */
 
-#pragma once
+#include <ny/nyarlathotep.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdbool.h>
+#include <stdnoreturn.h>
 
-#include <stddef.h>
-#include <limits.h>
-#include <sys/types.h>
-#include <stdint.h>
-#include "ny_commons.h"
-
-extern ruint_t dev_sys_0arg(ruint_t syscallnum);
-extern ruint_t dev_sys_1arg(ruint_t syscallnum, void* arg1);
-extern ruint_t dev_sys_2arg(ruint_t syscallnum, void* arg1, void* arg2);
-extern ruint_t dev_sys_3arg(ruint_t syscallnum, void* arg1, void* arg2, void* arg3);
-extern ruint_t dev_sys_4arg(ruint_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4);
-extern ruint_t dev_sys_5arg(ruint_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4, void* arg5);
-
-#include "ny_initramfs.h"
-
-#ifdef __cplusplus
+int main(void) {
+	while (true) ;
 }
-#endif

@@ -1,8 +1,12 @@
-TARGETPATH ?= ../../build/libnyarlathotep/
+SYSPATH ?= ../../osroot
+PREFIX ?= /usr
+LIBPATH ?= ${SYSPATH}${PREFIX}/lib
+INCPATH ?= ${SYSPATH}${PREFIX}/include
 
 include confbase.mk
 include $(MODE).mk
 
+HSRC   := $(wildcard *.h)
 ASMSRC := $(wildcard *.s)
 SRC    := $(wildcard *.c)
 OBJ    := $(SRC:.c=.o) $(ASMSRC:.s=_o.o)
@@ -11,7 +15,7 @@ DEP    := $(SRC:.c=.d)
 
 CFLAGS    := $(BASE_CFLAGS)    $(MODE_CFLAGS) 
 CPPFLAGS  := $(BASE_CPPFLAGS)  $(MODE_CPPFLAGS)
-LDFLAGS   := $(BASE_LDFLAGS)   $(MODE_LDFLAGS)
+ARFLAGS   := $(BASE_ARFLAGS)   $(MODE_ARFLAGS)
 NASMFLAGS := $(BASE_NASMFLAGS) $(MODE_NASMFLAGS)
 
 CC := x86_64-fhtagn-gcc
@@ -25,8 +29,7 @@ all: libnyarlathotep.a
 clean: 
 	-rm -f $(OBJ)
 	-rm -f $(wildcard *.d)
-	-rm ${TARGETPATH}libnyarlathotep.a
-	-rm ${TARGETPATH}*.h
+	-rm ${LIBPATH}/libnyarlathotep.a
 	
 %.o : %.c 
 	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/usr/include" -c $<
@@ -36,5 +39,6 @@ clean:
 	$(AS) $(NASMFLAGS) $< -o $@
 	
 libnyarlathotep.a: $(OBJ)
-	cp *.h ${TARGETPATH} -r 
-	$(AR) -rcs ${TARGETPATH}$@ $(OBJ)
+	-mkdir ${INCPATH}/ny
+	cp *.h ${INCPATH}/ny -r 
+	$(AR) ${ARFLAGS} -rcs ${LIBPATH}/$@ $(OBJ)
