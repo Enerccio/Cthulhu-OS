@@ -2,12 +2,10 @@
 
 export PATH=$(realpath toolchain/usr/bin):/usr/local/bin:$PATH
 sudo -u enerccio make clean 
-sudo -u enerccio make all
+sudo -u enerccio make all MODE=release
 
 pushd disk
 ./update_image.sh
 popd
 
-sudo -u enerccio nm build/piko-kernel.img | grep " T " | awk '{ print $1" "$3 }' > kernel.sym
-
-sudo -u enerccio bochs -f bochscfg.bxrc
+sudo -u enerccio qemu-system-x86_64 -hdc disk.img -m 128 -s -smp cores=2,threads=2,sockets=3 -cpu Haswell,+pdpe1gb

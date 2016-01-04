@@ -94,7 +94,7 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     log_msg("CPU status queried.");
 
     reinitialize_gdt();
-    vlog_msg("GDT reinitialized to %xh", (uintptr_t)&gdt);
+    vlog_msg("GDT reinitialized to %llxh", (uintptr_t)&gdt);
 
     initialize_interrupts();
     log_msg("Interrupt table initialized");
@@ -121,7 +121,6 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     init_initramfs(&multiboot_info);
     log_msg("Initramfs loaded");
 
-    debug_break;
     initialize_daemon_services();
     log_msg("Daemon services initialized");
 

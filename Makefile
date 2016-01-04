@@ -22,7 +22,7 @@ lib:
 	bash build_kclib.sh $(MODE)
 
 lds:
-	$(MAKE) -C libds MODE=$(MODE) CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar CFLAGS_FOR_TARGET=-mcmodel=kernel SYSPATH=../osroot
+	$(MAKE) -C libds MODE=$(MODE) CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar CFLAGS_FOR_TARGET=-mcmodel=kernel SYSROOT=../osroot
 	
 kernel:
 	$(MAKE) -C src/kernel MODE=$(MODE)

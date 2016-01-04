@@ -1,7 +1,7 @@
-SYSPATH ?= ../../osroot
+SYSROOT ?= ../../osroot
 PREFIX ?= /usr
-LIBPATH ?= ${SYSPATH}${PREFIX}/lib
-INCPATH ?= ${SYSPATH}${PREFIX}/include
+LIBPATH ?= ${SYSROOT}${PREFIX}/lib
+INCPATH ?= ${SYSROOT}${PREFIX}/include
 
 include confbase.mk
 include $(MODE).mk
