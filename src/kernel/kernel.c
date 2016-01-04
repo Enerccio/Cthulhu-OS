@@ -24,18 +24,19 @@
  *      Author: Peter Vanusanik
  *  Contents: main kernel entry function (in long mode in c).
  */
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/kernel.h>
+#include <ds/random.h>
+#include <ds/array.h>
+
 #include "ports/ports.h"
 #include "commons.h"
 #include "utils/rsod.h"
-#include "utils/collections/array.h"
 #include "memory/heap.h"
 #include "memory/paging.h"
 #include "structures/acpi.h"
 #include "syscalls/sys.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/kernel.h>
-
 #include "cpus/cpu_mgmt.h"
 #include "cpus/ipi.h"
 #include "interrupts/clock.h"

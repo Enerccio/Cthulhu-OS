@@ -28,7 +28,7 @@
 #pragma once
 
 #include "../commons.h"
-#include "../utils/collections/hmap.h"
+#include <ds/hmap.h>
 
 #define DAEMON_NOT_REGISTERED __UINT64_MAX__
 

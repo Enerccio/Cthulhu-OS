@@ -28,10 +28,11 @@
 #pragma once
 
 #include "../commons.h"
-#include "../utils/random.h"
-#include "../utils/collections/array.h"
 #include "../interrupts/clock.h"
 #include "process.h"
+
+#include <ds/random.h>
+#include <ds/array.h>
 
 void attemp_to_run_scheduler(registers_t* r);
 void schedule(registers_t* r);

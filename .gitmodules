@@ -1,3 +1,6 @@
 [submodule "libelrond"]
 	path = libelrond
 	url = https://github.com/Enerccio/libelrond.git
+[submodule "libds"]
+	path = libds
+	url = https://github.com/Enerccio/libds.git

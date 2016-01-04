@@ -31,7 +31,7 @@
 #include "../utils/kstdlib.h"
 #include "../memory/paging.h"
 #include "../rlyeh/rlyeh.h"
-#include "../utils/collections/array.h"
+#include <ds/array.h>
 
 #define FB_COLOR_MODE_EGA  0
 #define FB_COLOR_MODE_IDXC 1

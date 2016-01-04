@@ -28,8 +28,9 @@
 #pragma once
 
 #include "../commons.h"
-#include "../utils/collections/array.h"
 #include "../../kernel_dev_lib/ny_initramfs.h"
+
+#include <ds/array.h>
 
 #define INITRD_ERROR_NO_INITRD      (1)
 #define INITRD_ERROR_WRONG_HEADER   (2)

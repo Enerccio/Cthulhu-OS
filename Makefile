@@ -2,9 +2,12 @@ MODE ?= debug
 
 .PHONY: clean kernel-clean kernel lib all nyarlathotep nyarlathotep-clean
 
-all: lib kernel nyarlathotep init
+all: lib lds kernel nyarlathotep init
 
-clean: kernel-clean nyarlathotep-clean init-clean
+clean: lds-clean kernel-clean nyarlathotep-clean init-clean
+
+lds-clean:
+	$(MAKE) clean -C libds MODE=$(MODE)
 
 kernel-clean:
 	$(MAKE) clean -C src/kernel MODE=$(MODE)
@@ -17,6 +20,9 @@ init-clean:
 
 lib:
 	bash build_kclib.sh $(MODE)
+
+lds:
+	$(MAKE) -C libds MODE=$(MODE) CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar CFLAGS_FOR_TARGET=-mcmodel=kernel SYSPATH=../osroot
 	
 kernel:
 	$(MAKE) -C src/kernel MODE=$(MODE)

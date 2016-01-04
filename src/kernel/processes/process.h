@@ -30,7 +30,7 @@
 #include <sys/types.h>
 
 #include "../commons.h"
-#include "../utils/collections/array.h"
+#include <ds/array.h>
 
 typedef struct file_descriptor {
     uint32_t fd_pid;

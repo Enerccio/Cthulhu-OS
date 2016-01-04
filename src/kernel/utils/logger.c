@@ -25,7 +25,8 @@
  *  Contents: minimal kernel logger functionality
  */
 #include "logger.h"
-#include "../utils/collections/array.h"
+
+#include <ds/array.h>
 
 typedef enum {
     MESSAGE, WARNING, ERROR,

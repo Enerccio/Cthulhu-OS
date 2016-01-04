@@ -28,12 +28,13 @@
 #pragma once
 
 #include "../commons.h"
-#include "../utils/random.h"
 #include "../memory/paging.h"
-#include "../utils/collections/array.h"
 #include "../structures/acpi.h"
+
 #include <stdlib.h>
 #include <string.h>
+#include <ds/random.h>
+#include <ds/array.h>
 
 #include "../processes/process.h"
 
