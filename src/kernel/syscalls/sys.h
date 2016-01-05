@@ -29,6 +29,8 @@
 
 #include "../commons.h"
 
+#define SYS_MEMALLOC 1
+
 typedef ruint_t (*syscall_0)();
 typedef ruint_t (*syscall_1)(ruint_t);
 typedef ruint_t (*syscall_2)(ruint_t, ruint_t);
@@ -36,6 +38,7 @@ typedef ruint_t (*syscall_3)(ruint_t, ruint_t, ruint_t);
 typedef ruint_t (*syscall_4)(ruint_t, ruint_t, ruint_t, ruint_t);
 typedef ruint_t (*syscall_5)(ruint_t, ruint_t, ruint_t, ruint_t, ruint_t);
 typedef struct syscall {
+	bool present;
     uint8_t args;
     union {
         syscall_0 _0;
@@ -47,6 +50,13 @@ typedef struct syscall {
     } syscall;
 } syscall_t;
 
-void register_syscall(bool system, uint16_t syscall_id, syscall_t syscall);
+syscall_t make_syscall_0(syscall_0 sfnc);
+syscall_t make_syscall_1(syscall_1 sfnc);
+syscall_t make_syscall_2(syscall_2 sfnc);
+syscall_t make_syscall_3(syscall_3 sfnc);
+syscall_t make_syscall_4(syscall_4 sfnc);
+syscall_t make_syscall_5(syscall_5 sfnc);
+
+void register_syscall(bool system, uint8_t syscall_id, syscall_t syscall);
 
 void initialize_system_calls();

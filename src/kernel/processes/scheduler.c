@@ -57,6 +57,7 @@ void attemp_to_run_scheduler(registers_t* r) {
         			continue;
         	}
             send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, r);
+            break;
         }
         ++ticks;
     } while (ticks < array_get_size(cpus));
@@ -123,6 +124,11 @@ void schedule(registers_t* r) {
             old_head->last_r14 = r->r14;
             old_head->last_r15 = r->r15;
         }
+    } else if (r != NULL && r->cs == (24|0x0003)){
+    	proc_spinlock_unlock(&__thread_modifier);
+		proc_spinlock_unlock(&cpu->__cpu_lock);
+		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+    	return; // same thread
     }
 
     // TODO: add flags for io

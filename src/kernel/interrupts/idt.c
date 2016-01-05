@@ -64,6 +64,9 @@ void idt_set_gate(uint8_t gn, uintptr_t funcall) {
         gate->flags.ist = 2;
     if (gn == 255) // ipi fault
         gate->flags.ist = 3;
+    if (gn == 128 || gn == 129) {
+    	gate->flags.dpl = 3;
+    }
 }
 
 /**
@@ -120,7 +123,7 @@ void initialize_interrupts() {
     idt_set_gate(30, (uintptr_t) isr30);
     idt_set_gate(31, (uintptr_t) isr31);
     idt_set_gate(128, (uintptr_t) isr128);
-    idt_set_gate(128, (uintptr_t) isr129);
+    idt_set_gate(129, (uintptr_t) isr129);
     idt_set_gate(255, (uintptr_t) isr255);
 
     // INTERRUPTS FROM THE BOARD

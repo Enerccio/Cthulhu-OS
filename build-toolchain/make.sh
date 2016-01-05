@@ -22,6 +22,11 @@ cd ..
 
 rm -rfv temp || true
 
+rm sources/kclib/kclib -rf
+pushd sources/kclib
+git clone https://github.com/Enerccio/kclib.git
+popd
+
 pushd sources/kclib/kclib
 cp -RT include ${SYSROOT}/usr/include
 cp -RT include ${KERNELLIB}/usr/include

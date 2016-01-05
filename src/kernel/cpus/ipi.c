@@ -130,6 +130,7 @@ void send_ipi_nowait(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message,
         cpu->apic_message = message;
         cpu->apic_message2 = message2;
         ipi_received(0, internalcall);
+        proc_spinlock_unlock(&cpu->__ipi_lock);
         return;
     }
 
