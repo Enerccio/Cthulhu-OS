@@ -136,8 +136,6 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
 
     broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_SCHEDULER_INIT_WAIT, 0, NULL);
 
-    debug_break;
-
     path_element_t* pe = get_path("init/init");
     if (pe == NULL || pe->type != PE_FILE) {
     	error(ERROR_NO_INIT, 0, 0, &kernel_main);

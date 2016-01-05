@@ -89,13 +89,13 @@ ruint_t allocate_memory(ruint_t size) {
 
 	thread_t* ct = cpu->threads;
 
-	mmap_area_t* mmap_area = find_va_hole(ct->parent_process, size, 32);
+	mmap_area_t* mmap_area = find_va_hole(ct->parent_process, size, 0x1000);
 	if (mmap_area == 0) {
 		proc_spinlock_unlock(&__thread_modifier);
 		proc_spinlock_unlock(&cpu->__cpu_lock);
 		return 0;
 	}
-
+	mmap_area->mtype = heap_data;
 	allocate(mmap_area->vastart, size, false, false);
 
 	proc_spinlock_unlock(&__thread_modifier);
