@@ -39,7 +39,7 @@ typedef struct file_descriptor {
 } fd_t;
 
 typedef enum mmap_area_type {
-    allocation
+    program_data, stack_data, heap_data
 } ma_type_t;
 
 typedef struct mmap_area {
@@ -83,6 +83,7 @@ struct thread {
 };
 
 #define PER_PROCESS_TICKETS 0x1000
+#define BASE_STACK_SIZE 0x1000000
 
 extern array_t* processes;
 

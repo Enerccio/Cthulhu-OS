@@ -153,6 +153,7 @@ int32_t load_elf_stage_one(Elf64_Ehdr* header, uintptr_t base_address, proc_t* p
 				if (mmap_area == NULL) {
 					return ELF_ERROR_SECTION_OVERLAPS;
 				}
+				mmap_area->mtype = program_data;
 				allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false);
 				if (section->sh_type == SHT_NOBITS) {
 					// nobits, just memset
@@ -185,6 +186,7 @@ int32_t load_elf_stage_one(Elf64_Ehdr* header, uintptr_t base_address, proc_t* p
 				if (mmap_area == NULL) {
 					return ELF_ERROR_SECTION_OVERLAPS;
 				}
+				mmap_area->mtype = program_data;
 				allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false);
 				if (section->sh_type == SHT_NOBITS) {
 					// nobits, just memset
@@ -208,6 +210,8 @@ int32_t load_elf_stage_one(Elf64_Ehdr* header, uintptr_t base_address, proc_t* p
 
 int32_t load_elf_stage_two(Elf64_Ehdr* header, uintptr_t base_address, proc_t* process) {
 	Elf64_Shdr* section_header = elf_section_header(header, base_address);
+
+	// TODO: add relocation
 
 	for (Elf64_Half i=0; i<header->e_shnum; i++) {
 			Elf64_Shdr* section = &section_header[i];
@@ -255,5 +259,22 @@ int32_t load_elf_exec(uintptr_t elf_file_data, proc_t* process) {
 	thread_t* thread = array_get_at(process->threads, 0);
 	thread->last_rip = header->e_entry;
 
-	return load_elf_general(header, elf_file_data, process);
+	if ((err = load_elf_general(header, elf_file_data, process)) != ELF_LOAD_SUCCESS) {
+		return err;
+	}
+
+	// TODO: support alloc size
+	size_t ssize = BASE_STACK_SIZE;
+	mmap_area_t* mmap_area = find_va_hole(process, ssize+0x2000, 0x1000);
+	if (mmap_area == NULL) {
+		return ELF_ERROR_ENOMEM;
+	}
+	mmap_area->mtype = stack_data;
+	allocate(mmap_area->vastart+0x1000, ssize, false, false);
+	memset((void*)mmap_area->vastart+0x1000, 0, ssize);
+	thread->stack_bottom_address = mmap_area->vastart+0x1000;
+	thread->stack_top_address = mmap_area->vaend-0x1000;
+	thread->last_rsp = thread->stack_top_address;
+
+	return ELF_LOAD_SUCCESS;
 }

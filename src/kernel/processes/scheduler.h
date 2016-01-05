@@ -29,6 +29,7 @@
 
 #include "../commons.h"
 #include "../interrupts/clock.h"
+#include "../cpus/cpu_mgmt.h"
 #include "process.h"
 
 #include <ds/random.h>
@@ -36,5 +37,7 @@
 
 void attemp_to_run_scheduler(registers_t* r);
 void schedule(registers_t* r);
+void enschedule(thread_t* p, cpu_t* cpu);
+void enschedule_to_self(thread_t* p);
 
 void initialize_scheduler();

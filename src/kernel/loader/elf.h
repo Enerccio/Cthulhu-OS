@@ -41,6 +41,7 @@
 #define ELF_ERROR_RELOC_ERROR_SYM_EXTERNAL_NOT_FOUND  8
 #define ELF_ERROR_SECTION_OVERLAPS		 9
 #define ELF_ERROR_UNSUPPORTED_SECTION_TYPE_FIXADDR   10
+#define ELF_ERROR_ENOMEM				11
 
 
 int32_t load_elf_exec(uintptr_t elf_file_data, proc_t* process);

@@ -51,8 +51,13 @@ void attemp_to_run_scheduler(registers_t* r) {
 
     do {
         cpu_t* cpu = array_get_random(cpus, &rd);
-        if (cpu->threads != NULL)
+        if (cpu->threads != NULL) {
+        	if (cpu == get_current_cput()) {
+        		if (cpu->__cpu_lock == 1)
+        			continue;
+        	}
             send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, r);
+        }
         ++ticks;
     } while (ticks < array_get_size(cpus));
 }
@@ -74,6 +79,7 @@ void schedule(registers_t* r) {
         proc_spinlock_lock(&cpu->__cpu_sched_lock);
     }
 
+    DISABLE_INTERRUPTS();
     proc_spinlock_lock(&__thread_modifier);
 
     rg_t schedule_random = rg_create_random_generator(get_unix_time()*get_unix_time_ms());
@@ -123,11 +129,11 @@ void schedule(registers_t* r) {
     ruint_t flags = INTERRUPT_FLAG;
 
     if (r != NULL) {
-        r->cs = 24; // user space code
-        r->ss = 32; // user space data
+        r->cs = 24 | 0x0003; // user space code
+        r->ss = 32 | 0x0003; // user space data
         // TODO: add thread locals
-        r->ds = 32; // user space data
-        r->es = 32; // user space data
+        r->ds = 32 | 0x0003; // user space data
+        r->es = 32 | 0x0003; // user space data
         r->rflags = flags;
 
         r->rip = cpu->threads->last_rip;
@@ -164,6 +170,28 @@ void schedule(registers_t* r) {
 				cpu->threads->last_rsi,
 				cpu->threads->last_rcx);
     }
+}
+
+void enschedule(thread_t* t, cpu_t* cpu) {
+	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&cpu->__cpu_sched_lock);
+	proc_spinlock_lock(&__thread_modifier);
+
+	t->next_thread = cpu->threads;
+	cpu->threads = t;
+	cpu->total_tickets += t->tickets;
+
+	if (cpu != get_current_cput()) {
+		send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, NULL);
+	}
+
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+}
+
+void enschedule_to_self(thread_t* t) {
+	enschedule(t, get_current_cput());
 }
 
 void initialize_scheduler() {

@@ -245,7 +245,7 @@ static frame_info_t* get_frame_info(puint_t fa) {
  * on the way to the virtual address. Returned pointer points to page in page
  * table.
  */
-static puint_t* get_page(uintptr_t vaddress, bool allocate_new) {
+static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
     puint_t* pdpt_addr = (uint64_t*) MMU_PML4(vaddress)[MMU_PML4_INDEX(
             vaddress)];
 
@@ -256,6 +256,8 @@ static puint_t* get_page(uintptr_t vaddress, bool allocate_new) {
         memset(&pdpt, 0, sizeof(pdpt_t));
         pdpt.number = get_free_frame();
         pdpt.flaggable.present = 1;
+        pdpt.flaggable.us = user;
+        pdpt.flaggable.rw = 1;
         MMU_PML4(vaddress)[MMU_PML4_INDEX(vaddress)] = pdpt.number;
         memset(MMU_PDPT(vaddress), 0, sizeof(uintptr_t)*512);
     }
@@ -270,6 +272,8 @@ static puint_t* get_page(uintptr_t vaddress, bool allocate_new) {
         memset(&dir, 0, sizeof(page_directory_t));
         dir.number = get_free_frame();
         dir.flaggable.present = 1;
+        dir.flaggable.us = user;
+        dir.flaggable.rw = 1;
         MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)] = dir.number;
         memset(MMU_PD(vaddress), 0, sizeof(uintptr_t)*512);
     }
@@ -283,11 +287,21 @@ static puint_t* get_page(uintptr_t vaddress, bool allocate_new) {
         memset(&pt, 0, sizeof(page_table_t));
         pt.number = get_free_frame();
         pt.flaggable.present = 1;
+        pt.flaggable.us = user;
+        pt.flaggable.rw = 1;
         MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)] = pt.number;
         memset(MMU_PT(vaddress), 0, sizeof(uintptr_t)*512);
     }
 
     return (puint_t*)&MMU_PT(vaddress)[MMU_PT_INDEX(vaddress)];
+}
+
+static puint_t* get_page(uintptr_t vaddress, bool allocate_new) {
+	return __get_page(vaddress, allocate_new, false);
+}
+
+static puint_t* get_page_user(uintptr_t vaddress, bool allocate_new) {
+	return __get_page(vaddress, allocate_new, true);
 }
 
 void free_page_structure(uintptr_t vaddress) {
@@ -796,7 +810,7 @@ void allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
 	amount = ALIGN_UP(amount+(from-ALIGN(from)));
 	from = ALIGN(from);
     for (uintptr_t addr = from; addr < from + amount; addr += 0x1000) {
-        allocate_frame(get_page(addr, true), kernel, readonly);
+        allocate_frame(kernel ? get_page(addr, true) : get_page_user(addr, true), kernel, readonly);
     }
 }
 

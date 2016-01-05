@@ -73,13 +73,21 @@ void initialize_processes() {
 
 mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_size) {
 	mmap_area_t** lm = &proc->mem_maps;
+	uintptr_t x1, x2, y1, y2;
+
 	while (*lm != NULL) {
 		mmap_area_t* mmap = *lm;
+
+		x1 = start_address;
+		x2 = start_address + req_size;
+		y1 = mmap->vastart;
+		y2 = mmap->vaend;
+
 		if (start_address >= mmap->vaend) {
 			lm = &mmap->next;
 			continue;
-		} else if (mmap->vastart >= start_address && mmap->vaend <= start_address+req_size) {
-			// section taken
+		} else if (x1 <= y2 && y1 <= x2) {
+			// section overlaps
 			return NULL;
 		} else {
 			// we have found the section above, therefore we are done with the search and we need to
@@ -97,34 +105,39 @@ mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_s
 	return newmm;
 }
 
-#define ALIGN_UP(a, b) ((a % b == 0) ? (a) : ((a + b) % (b)))
+#define ALIGN_DOWN(a, b) ((a) - (a % b))
+#define ALIGN_UP(a, b) ((a % b == 0) ? (a) : (ALIGN_DOWN(a, b) + b))
 
 mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount) {
 	mmap_area_t** lm = &proc->mem_maps;
 	uintptr_t start_address = 0;
-	uintptr_t total_hole_bytes = 0;
+	uintptr_t hole = 0;
+
+	if (*lm == NULL)
+		hole = 0x800000000000;
 
 	while (*lm != NULL) {
 		mmap_area_t* mmap = *lm;
-		if (start_address >= mmap->vaend) {
-			lm = &mmap->next;
-			start_address = ALIGN_UP(mmap->vaend, align_amount);
-			continue;
-		} else if (mmap->vastart >= start_address && mmap->vaend <= start_address+req_size) {
-			// section taken
-			lm = &mmap->next;
-			start_address = ALIGN_UP(mmap->vaend, align_amount);
-			continue;
-		} else {
-			// we have found the section above, therefore we are done with the search and we need to
-			// insert
-			total_hole_bytes = mmap->vastart - start_address;
-			break;
+
+		hole = mmap->vastart - start_address;
+		if (hole >= req_size+align_amount)
+			break; // hole found
+
+		start_address = mmap->vaend;
+		lm = &mmap->next;
+		if (*lm == NULL) {
+			hole = 0x800000000000 - start_address;
 		}
 	}
 
-	size_t diff_holes = total_hole_bytes;
-	uintptr_t offset = rg_next_uint_l(&proc->proc_random, diff_holes);
+	start_address = ALIGN_UP(start_address, align_amount);
+	size_t diff_holes = hole - req_size;
+	uintptr_t offset;
+	if (diff_holes == 0)
+		offset = 0;
+	else
+		offset = rg_next_uint_l(&proc->proc_random, diff_holes);
+	offset = ALIGN_DOWN(offset, align_amount);
 	mmap_area_t* newmm = malloc(sizeof(mmap_area_t));
 	memset(newmm, 0, sizeof(mmap_area_t));
 	newmm->next = *lm;

@@ -135,7 +135,6 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     log_msg("Scheduler initialized");
 
     broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_SCHEDULER_INIT_WAIT, 0, NULL);
-    scheduler_enabled = true;
 
     debug_break;
 
@@ -155,5 +154,8 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     log_msg("Init loaded.");
     log_msg("Scheduling init.");
 
+    enschedule_to_self(array_get_at(initp->threads, 0));
+
+    scheduler_enabled = true;
     schedule(NULL);
 }

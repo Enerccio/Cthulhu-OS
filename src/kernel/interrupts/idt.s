@@ -83,6 +83,12 @@ isr_common_stub:
     xor rax, rax
     mov ax, ds
     push rax ; 5
+    mov rax, 0x10
+    mov gs, ax
+    mov fs, ax
+    mov ds, ax
+    mov ss, ax
+    mov es, ax
 
     push rdi
     push rsi

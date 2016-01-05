@@ -14,6 +14,7 @@ switch_to_usermode:
     xor r14, r14
     xor r15, r15
     mov rax, 32
+    or rax, 0x0003
     mov ds, ax
     mov es, ax
     mov ds, ax
@@ -23,7 +24,7 @@ switch_to_usermode:
     push rax
     push rdx
     push rcx
-    push 24
+    push 24 | 0x3
     push rsi
     mov rsi, r8 ; for main thread, this is char* argv
     mov rdx, r9 ; for main thread, this is char** envp;
@@ -31,4 +32,4 @@ switch_to_usermode:
     xor rcx, rcx
     xor r10, r10
     xor r11, r11
-    iret
+    iretq
