@@ -270,3 +270,8 @@ puint_t clone_paging_structures();
 bool page_fault(uintptr_t address, ruint_t errcode);
 
 void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool rw);
+
+#define CHNG_TYPE_RW 0
+#define CHNG_TYPE_SU 1
+
+void mem_change_type(uintptr_t start, size_t len, int change_type, bool new_value, bool invalidate_others);

@@ -46,6 +46,7 @@
 #include "rlyeh/rlyeh.h"
 #include "processes/scheduler.h"
 #include "processes/daemons.h"
+#include "loader/elf.h"
 
 extern volatile uint64_t clock_ms;
 extern struct multiboot_info multiboot_info;
@@ -121,6 +122,9 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     init_initramfs(&multiboot_info);
     log_msg("Initramfs loaded");
 
+    initialize_processes();
+    log_msg("Process subsystem initialized");
+
     initialize_daemon_services();
     log_msg("Daemon services initialized");
 
@@ -133,7 +137,23 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_SCHEDULER_INIT_WAIT, 0, NULL);
     scheduler_enabled = true;
 
-    proc_t* initp = load_init();
+    debug_break;
+
+    path_element_t* pe = get_path("init/init");
+    if (pe == NULL || pe->type != PE_FILE) {
+    	error(ERROR_NO_INIT, 0, 0, &kernel_main);
+    }
+
+    log_msg("Loading init.");
+    proc_t* initp = create_process_structure((uintptr_t)get_active_page());
+
+    int32_t err;
+    if ((err=load_elf_exec((uintptr_t)get_data(pe->element.file),initp)) != ELF_LOAD_SUCCESS) {
+    	error(ERROR_INIT_INVALID, err, (uintptr_t)initp->proc_id, &kernel_main);
+    }
+
+    log_msg("Init loaded.");
+    log_msg("Scheduling init.");
 
     schedule(NULL);
 }

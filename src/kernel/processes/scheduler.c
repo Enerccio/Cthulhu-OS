@@ -34,7 +34,8 @@
 extern void wait_until_activated(ruint_t wait_code);
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
-extern noreturn void switch_to_usermode(ruint_t rdat, ruint_t rip, ruint_t rsp, ruint_t flags);
+extern noreturn void switch_to_usermode(ruint_t rdi, ruint_t rip, ruint_t rsp,
+		ruint_t flags, ruint_t rsi, ruint_t rdx);
 extern void* get_active_page();
 extern void set_active_page(void* page);
 
@@ -46,12 +47,14 @@ bool    scheduler_enabled = false;
 
 void attemp_to_run_scheduler(registers_t* r) {
     rg_t rd = rg_create_random_generator(get_unix_time());
+    uint32_t ticks = 0;
 
     do {
         cpu_t* cpu = array_get_random(cpus, &rd);
         if (cpu->threads != NULL)
             send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, r);
-    } while (true);
+        ++ticks;
+    } while (ticks < array_get_size(cpus));
 }
 
 // TODO add switching threads
@@ -120,9 +123,6 @@ void schedule(registers_t* r) {
     ruint_t flags = INTERRUPT_FLAG;
 
     if (r != NULL) {
-        if (cpu->threads->first_call) {
-            r->rdi = (ruint_t)cpu->threads->initial_thread_data;
-        }
         r->cs = 24; // user space code
         r->ss = 32; // user space data
         // TODO: add thread locals
@@ -159,8 +159,10 @@ void schedule(registers_t* r) {
     proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 
     if (r == NULL) {
-        switch_to_usermode((ruint_t)cpu->threads->initial_thread_data,
-                cpu->threads->last_rip, cpu->threads->last_rsp, flags);
+        switch_to_usermode(cpu->threads->last_rdi,
+                cpu->threads->last_rip, cpu->threads->last_rsp, flags,
+				cpu->threads->last_rsi,
+				cpu->threads->last_rcx);
     }
 }
 

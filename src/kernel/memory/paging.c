@@ -793,7 +793,8 @@ static void deallocate_frame(puint_t* paddress, uintptr_t va) {
  * Repeatedly calls allocate_frame for every frame.
  */
 void allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
-    amount = ALIGN_UP(amount);
+	amount = ALIGN_UP(amount+(from-ALIGN(from)));
+	from = ALIGN(from);
     for (uintptr_t addr = from; addr < from + amount; addr += 0x1000) {
         allocate_frame(get_page(addr, true), kernel, readonly);
     }
@@ -1046,4 +1047,29 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
 
 void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool rw) {
     *physmem = allocate_frame(get_page(block_addr, true), kernel, rw);
+}
+
+void mem_change_type(uintptr_t from, size_t amount,
+		int change_type, bool new_value, bool invalidate_others) {
+	amount = ALIGN_UP(amount);
+	for (uintptr_t addr = from; addr < from + amount; addr += 0x1000) {
+		puint_t* paddress = get_page(addr, true);
+		if (!PRESENT(*paddress)) {
+	        page_t page;
+	        memset(&page, 0, sizeof(page_t));
+	        page.address = *paddress;
+
+	        if (change_type == CHNG_TYPE_RW)
+	        	page.flaggable.rw = new_value;
+	        if (change_type == CHNG_TYPE_SU)
+	        	page.flaggable.us = new_value;
+	        *paddress = page.address;
+	    }
+	}
+
+	if (invalidate_others) {
+		send_ipi_message(get_local_apic_id(), IPI_INVALIDATE_PAGE, from, amount, NULL);
+	} else {
+		broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, from, amount, NULL);
+	}
 }

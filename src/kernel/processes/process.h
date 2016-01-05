@@ -28,9 +28,10 @@
 #pragma once
 
 #include <sys/types.h>
-
 #include "../commons.h"
+
 #include <ds/array.h>
+#include <ds/random.h>
 
 typedef struct file_descriptor {
     uint32_t fd_pid;
@@ -46,7 +47,7 @@ typedef struct mmap_area {
     uintptr_t  vaend;
     ma_type_t mtype;
 
-    struct mmap_area_t* next;
+    struct mmap_area* next;
 } mmap_area_t;
 
 typedef struct thread thread_t;
@@ -54,6 +55,7 @@ typedef struct thread thread_t;
 typedef struct proc {
     uint64_t     proc_id;
     uintptr_t    pml4;
+    rg_t 		 proc_random;
 
     char**       environ;
     char**       argc;
@@ -78,10 +80,14 @@ struct thread {
     ruint_t last_rbx, last_rbp, last_r12, last_r13, last_r14, last_r15;
     uintptr_t stack_top_address;
     uintptr_t stack_bottom_address;
-    bool  first_call;
-    void* initial_thread_data;
 };
 
-extern array_t processes;
+#define PER_PROCESS_TICKETS 0x1000
 
-proc_t* load_init();
+extern array_t* processes;
+
+proc_t* create_process_structure(uintptr_t pml);
+mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_size);
+mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount);
+
+void initialize_processes();

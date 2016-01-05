@@ -3,7 +3,8 @@
 [GLOBAL switch_to_usermode]
 ; Switches to usermode. Used when call was not from scheduler
 ;
-; extern Noreturn void switch_to_usermode(uint64_t initargs, uint64_t rip, uint64_t rsp, uint64_t flags)
+; extern Noreturn void switch_to_usermode(uint64_t rdi, uint64_t rip, uint64_t rsp, uint64_t flags,
+;                                         uint64_t rsi, uint64_t rdx);
 
 switch_to_usermode:
     xor rbx, rbx
@@ -24,12 +25,10 @@ switch_to_usermode:
     push rcx
     push 24
     push rsi
+    mov rsi, r8 ; for main thread, this is char* argv
+    mov rdx, r9 ; for main thread, this is char** envp;
     xor rax, rax
-    xor rsi, rsi
-    xor rdx, rdx
     xor rcx, rcx
-    xor r8, r8
-    xor r9, r9
     xor r10, r10
     xor r11, r11
     iret
