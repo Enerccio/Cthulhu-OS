@@ -303,11 +303,11 @@ static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
 }
 
 static puint_t* get_page(uintptr_t vaddress, bool allocate_new) {
-	return __get_page(vaddress, allocate_new, false);
+    return __get_page(vaddress, allocate_new, false);
 }
 
 static puint_t* get_page_user(uintptr_t vaddress, bool allocate_new) {
-	return __get_page(vaddress, allocate_new, true);
+    return __get_page(vaddress, allocate_new, true);
 }
 
 void free_page_structure(uintptr_t vaddress) {
@@ -772,27 +772,27 @@ void initialize_physical_memory_allocation(struct multiboot_info* mboot_addr) {
  * If page is present, it does nothing.
  */
 static puint_t allocate_frame(puint_t* paddress, bool kernel, bool readonly) {
-	bool new;
-	page_t page;
-	memset(&page, 0, sizeof(page_t));
-	if (!PRESENT(*paddress)) {
-		new = true;
+    bool new;
+    page_t page;
+    memset(&page, 0, sizeof(page_t));
+    if (!PRESENT(*paddress)) {
+        new = true;
         proc_spinlock_lock(&__frame_lock);
         page.address = get_free_frame();
         proc_spinlock_unlock(&__frame_lock);
-	} else {
-		new = false;
-		page.address = ALIGN(*paddress);
-	}
-	page.flaggable.present = 1;
-	page.flaggable.rw = readonly ? 0 : 1;
-	page.flaggable.us = kernel ? 0 : 1;
-	*paddress = page.address;
+    } else {
+        new = false;
+        page.address = ALIGN(*paddress);
+    }
+    page.flaggable.present = 1;
+    page.flaggable.rw = readonly ? 0 : 1;
+    page.flaggable.us = kernel ? 0 : 1;
+    *paddress = page.address;
 
-	if (new) {
-		if (__mem_mirror_present)
-			memset((void*)physical_to_virtual(ALIGN(page.address)), 0xCC, 0x1000);
-	}
+    if (new) {
+        if (__mem_mirror_present)
+            memset((void*)physical_to_virtual(ALIGN(page.address)), 0xCC, 0x1000);
+    }
 
     return ALIGN(*paddress);
 }
@@ -824,8 +824,8 @@ static void deallocate_frame(puint_t* paddress, uintptr_t va) {
  * Repeatedly calls allocate_frame for every frame.
  */
 void allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
-	amount = ALIGN_UP(amount+(from-ALIGN(from)));
-	from = ALIGN(from);
+    amount = ALIGN_UP(amount+(from-ALIGN(from)));
+    from = ALIGN(from);
     for (uintptr_t addr = from; addr < from + amount; addr += 0x1000) {
         allocate_frame(kernel ? get_page(addr, true) : get_page_user(addr, true), kernel, readonly);
     }
@@ -875,10 +875,10 @@ puint_t clone_ptable(puint_t source_ptable, puint_t target_ptable) {
     page_table_t tptable;
 
     if (!PRESENT(target_ptable)) {
-		proc_spinlock_lock(&__frame_lock);
-		target_ptable = get_free_frame();
-		proc_spinlock_unlock(&__frame_lock);
-	}
+        proc_spinlock_lock(&__frame_lock);
+        target_ptable = get_free_frame();
+        proc_spinlock_unlock(&__frame_lock);
+    }
 
     sptable.number = source_ptable;
     tptable.number = target_ptable;
@@ -926,10 +926,10 @@ puint_t clone_pdir(puint_t source_pdir, puint_t target_pdir) {
     page_directory_t tpdir;
 
     if (!PRESENT(target_pdir)) {
-		proc_spinlock_lock(&__frame_lock);
-		target_pdir = get_free_frame();
-		proc_spinlock_unlock(&__frame_lock);
-	}
+        proc_spinlock_lock(&__frame_lock);
+        target_pdir = get_free_frame();
+        proc_spinlock_unlock(&__frame_lock);
+    }
 
     spdir.number = source_pdir;
     tpdir.number = target_pdir;
@@ -956,10 +956,10 @@ puint_t clone_pdpt(puint_t source_pdpt, puint_t target_pdpt) {
     pdpt_t tpdpt;
 
     if (!PRESENT(target_pdpt)) {
-		proc_spinlock_lock(&__frame_lock);
-		target_pdpt = get_free_frame();
-		proc_spinlock_unlock(&__frame_lock);
-	}
+        proc_spinlock_lock(&__frame_lock);
+        target_pdpt = get_free_frame();
+        proc_spinlock_unlock(&__frame_lock);
+    }
 
     spdpt.number = source_pdpt;
     tpdpt.number = target_pdpt;
@@ -1078,26 +1078,26 @@ void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool 
 }
 
 void mem_change_type(uintptr_t from, size_t amount,
-		int change_type, bool new_value, bool invalidate_others) {
-	amount = ALIGN_UP(amount);
-	for (uintptr_t addr = from; addr < from + amount; addr += 0x1000) {
-		puint_t* paddress = get_page(addr, true);
-		if (!PRESENT(*paddress)) {
-	        page_t page;
-	        memset(&page, 0, sizeof(page_t));
-	        page.address = *paddress;
+        int change_type, bool new_value, bool invalidate_others) {
+    amount = ALIGN_UP(amount);
+    for (uintptr_t addr = from; addr < from + amount; addr += 0x1000) {
+        puint_t* paddress = get_page(addr, true);
+        if (!PRESENT(*paddress)) {
+            page_t page;
+            memset(&page, 0, sizeof(page_t));
+            page.address = *paddress;
 
-	        if (change_type == CHNG_TYPE_RW)
-	        	page.flaggable.rw = new_value;
-	        if (change_type == CHNG_TYPE_SU)
-	        	page.flaggable.us = new_value;
-	        *paddress = page.address;
-	    }
-	}
+            if (change_type == CHNG_TYPE_RW)
+                page.flaggable.rw = new_value;
+            if (change_type == CHNG_TYPE_SU)
+                page.flaggable.us = new_value;
+            *paddress = page.address;
+        }
+    }
 
-	if (invalidate_others) {
-		send_ipi_message(get_local_apic_id(), IPI_INVALIDATE_PAGE, from, amount, NULL);
-	} else {
-		broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, from, amount, NULL);
-	}
+    if (invalidate_others) {
+        send_ipi_message(get_local_apic_id(), IPI_INVALIDATE_PAGE, from, amount, NULL);
+    } else {
+        broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, from, amount, NULL);
+    }
 }

@@ -36,7 +36,7 @@ extern void wait_until_activated(ruint_t wait_code);
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
 extern noreturn void switch_to_usermode(ruint_t rdi, ruint_t rip, ruint_t rsp,
-		ruint_t flags, ruint_t rsi, ruint_t rdx);
+        ruint_t flags, ruint_t rsi, ruint_t rdx);
 extern void* get_active_page();
 extern void set_active_page(void* page);
 
@@ -53,10 +53,10 @@ void attemp_to_run_scheduler(registers_t* r) {
     do {
         cpu_t* cpu = array_get_random(cpus, &rd);
         if (cpu->threads != NULL) {
-        	if (cpu == get_current_cput()) {
-        		if (cpu->__cpu_lock == 1)
-        			continue;
-        	}
+            if (cpu == get_current_cput()) {
+                if (cpu->__cpu_lock == 1)
+                    continue;
+            }
             send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, r);
             break;
         }
@@ -65,46 +65,46 @@ void attemp_to_run_scheduler(registers_t* r) {
 }
 
 void release_tickets(thread_t* t) {
-	borrowed_ticket_t* bt;
-	list_iterator_t li;
-	list_create_iterator(t->borrowed_tickets, &li);
-	while (list_has_next(&li)) {
-		bt = list_next(&li);
-		if (bt->source == NULL) {
-			// source no longer exist
-			free(bt);
-		} else {
-			if (bt->release_now && t->tickets>=bt->tamount) {
-				bt->source->tickets += bt->tamount;
-				t->tickets -= bt->tamount;
+    borrowed_ticket_t* bt;
+    list_iterator_t li;
+    list_create_iterator(t->borrowed_tickets, &li);
+    while (list_has_next(&li)) {
+        bt = list_next(&li);
+        if (bt->source == NULL) {
+            // source no longer exist
+            free(bt);
+        } else {
+            if (bt->release_now && t->tickets>=bt->tamount) {
+                bt->source->tickets += bt->tamount;
+                t->tickets -= bt->tamount;
 
-				list_remove(bt, bt->source->lended_tickets);
+                list_remove(bt, bt->source->lended_tickets);
 
-				list_remove_it(&li);
-				free(bt);
-			}
-		}
-	}
+                list_remove_it(&li);
+                free(bt);
+            }
+        }
+    }
 }
 
 void copy_registers(registers_t* r, thread_t* t) {
-	t->last_rip = r->rip;
-	t->last_rsp = r->uesp;
-	t->last_rax = r->rax;
-	t->last_rcx = r->rcx;
-	t->last_rdx = r->rdx;
-	t->last_rdi = r->rdi;
-	t->last_rsi = r->rsi;
-	t->last_r8  = r->r8;
-	t->last_r9  = r->r9;
-	t->last_r10 = r->r10;
-	t->last_r11 = r->r11;
-	t->last_rbp = r->rbp;
-	t->last_rbx = r->rbx;
-	t->last_r12 = r->r12;
-	t->last_r13 = r->r13;
-	t->last_r14 = r->r14;
-	t->last_r15 = r->r15;
+    t->last_rip = r->rip;
+    t->last_rsp = r->uesp;
+    t->last_rax = r->rax;
+    t->last_rcx = r->rcx;
+    t->last_rdx = r->rdx;
+    t->last_rdi = r->rdi;
+    t->last_rsi = r->rsi;
+    t->last_r8  = r->r8;
+    t->last_r9  = r->r9;
+    t->last_r10 = r->r10;
+    t->last_r11 = r->r11;
+    t->last_rbp = r->rbp;
+    t->last_rbx = r->rbx;
+    t->last_r12 = r->r12;
+    t->last_r13 = r->r13;
+    t->last_r14 = r->r14;
+    t->last_r15 = r->r15;
 }
 
 // TODO add switching threads
@@ -145,7 +145,7 @@ void schedule(registers_t* r) {
     if (old_head != selection) {
         selection->prev_thread->next_thread = selection->next_thread;
         if (selection->next_thread != NULL) {
-        	selection->next_thread->prev_thread = selection->prev_thread;
+            selection->next_thread->prev_thread = selection->prev_thread;
         }
 
         selection->next_thread = old_head;
@@ -159,11 +159,11 @@ void schedule(registers_t* r) {
 
         release_tickets(old_head);
 
-    } else if (r != NULL && r->cs == (24|0x0003)){
-    	proc_spinlock_unlock(&__thread_modifier);
-		proc_spinlock_unlock(&cpu->__cpu_lock);
-		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-    	return; // same thread
+    } else if (r != NULL && r->cs == (24|0x0003)) {
+        proc_spinlock_unlock(&__thread_modifier);
+        proc_spinlock_unlock(&cpu->__cpu_lock);
+        proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+        return; // same thread
     }
 
     // TODO: add flags for io
@@ -208,80 +208,80 @@ void schedule(registers_t* r) {
     if (r == NULL) {
         switch_to_usermode(cpu->threads->last_rdi,
                 cpu->threads->last_rip, cpu->threads->last_rsp, flags,
-				cpu->threads->last_rsi,
-				cpu->threads->last_rcx);
+                cpu->threads->last_rsi,
+                cpu->threads->last_rcx);
     }
 }
 
 void enschedule(thread_t* t, cpu_t* cpu) {
-	proc_spinlock_lock(&cpu->__cpu_lock);
-	proc_spinlock_lock(&cpu->__cpu_sched_lock);
-	proc_spinlock_lock(&__thread_modifier);
+    proc_spinlock_lock(&cpu->__cpu_lock);
+    proc_spinlock_lock(&cpu->__cpu_sched_lock);
+    proc_spinlock_lock(&__thread_modifier);
 
-	if (cpu->threads == NULL) {
-		cpu->threads = t;
-		t->next_thread = NULL;
-		t->prev_thread = NULL;
-	} else {
-		thread_t* nt = cpu->threads->next_thread;
-		if (nt == NULL) {
-			t->next_thread = NULL;
-			cpu->threads->next_thread = t;
-		} else {
-			t->next_thread = cpu->threads->next_thread;
-			cpu->threads->next_thread->prev_thread = t;
-		}
-		t->prev_thread = cpu->threads;
-		cpu->threads->next_thread = t;
-	}
+    if (cpu->threads == NULL) {
+        cpu->threads = t;
+        t->next_thread = NULL;
+        t->prev_thread = NULL;
+    } else {
+        thread_t* nt = cpu->threads->next_thread;
+        if (nt == NULL) {
+            t->next_thread = NULL;
+            cpu->threads->next_thread = t;
+        } else {
+            t->next_thread = cpu->threads->next_thread;
+            cpu->threads->next_thread->prev_thread = t;
+        }
+        t->prev_thread = cpu->threads;
+        cpu->threads->next_thread = t;
+    }
 
-	cpu->total_tickets += t->tickets;
+    cpu->total_tickets += t->tickets;
 
-	if (cpu != get_current_cput()) {
-		send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, NULL);
-	}
+    if (cpu != get_current_cput()) {
+        send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, NULL);
+    }
 
-	proc_spinlock_unlock(&__thread_modifier);
-	proc_spinlock_unlock(&cpu->__cpu_lock);
-	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+    proc_spinlock_unlock(&__thread_modifier);
+    proc_spinlock_unlock(&cpu->__cpu_lock);
+    proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 }
 
 void enschedule_to_self(thread_t* t) {
-	enschedule(t, get_current_cput());
+    enschedule(t, get_current_cput());
 }
 
 uint64_t get_tickets_from(cpu_t* cpu) {
-	proc_spinlock_lock(&cpu->__cpu_lock);
-	proc_spinlock_lock(&cpu->__cpu_sched_lock);
-	proc_spinlock_lock(&__thread_modifier);
+    proc_spinlock_lock(&cpu->__cpu_lock);
+    proc_spinlock_lock(&cpu->__cpu_sched_lock);
+    proc_spinlock_lock(&__thread_modifier);
 
-	uint64_t tcount = 0;
-	thread_t* t = cpu->threads;
-	while (t != NULL) {
-		tcount += t->tickets;
-		t = t->next_thread;
-	}
+    uint64_t tcount = 0;
+    thread_t* t = cpu->threads;
+    while (t != NULL) {
+        tcount += t->tickets;
+        t = t->next_thread;
+    }
 
-	proc_spinlock_unlock(&__thread_modifier);
-	proc_spinlock_unlock(&cpu->__cpu_lock);
-	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+    proc_spinlock_unlock(&__thread_modifier);
+    proc_spinlock_unlock(&cpu->__cpu_lock);
+    proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 
-	return tcount;
+    return tcount;
 }
 
 void enschedule_best(thread_t* t) {
-	cpu_t* mincpu = array_get_at(cpus, 0);
-	uint64_t tickets = get_tickets_from(mincpu);
-	for (uint32_t i=1; i<array_get_size(cpus); i++) {
-		cpu_t* test = array_get_at(cpus, 0);
-		uint64_t nt = get_tickets_from(test);
-		if (tickets > nt) {
-			mincpu = test;
-			tickets = nt;
-		}
-	}
+    cpu_t* mincpu = array_get_at(cpus, 0);
+    uint64_t tickets = get_tickets_from(mincpu);
+    for (uint32_t i=1; i<array_get_size(cpus); i++) {
+        cpu_t* test = array_get_at(cpus, 0);
+        uint64_t nt = get_tickets_from(test);
+        if (tickets > nt) {
+            mincpu = test;
+            tickets = nt;
+        }
+    }
 
-	enschedule(t, mincpu);
+    enschedule(t, mincpu);
 }
 
 void initialize_scheduler() {

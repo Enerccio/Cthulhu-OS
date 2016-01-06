@@ -139,7 +139,7 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
 
     path_element_t* pe = get_path("init/init");
     if (pe == NULL || pe->type != PE_FILE) {
-    	error(ERROR_NO_INIT, 0, 0, &kernel_main);
+        error(ERROR_NO_INIT, 0, 0, &kernel_main);
     }
 
     log_msg("Loading init.");
@@ -150,7 +150,7 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
 
     int32_t err;
     if ((err=load_elf_exec((uintptr_t)get_data(pe->element.file),initp)) != ELF_LOAD_SUCCESS) {
-    	error(ERROR_INIT_INVALID, err, (uintptr_t)initp->proc_id, &kernel_main);
+        error(ERROR_INIT_INVALID, err, (uintptr_t)initp->proc_id, &kernel_main);
     }
 
     log_msg("Init loaded.");

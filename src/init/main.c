@@ -29,6 +29,6 @@
 #include <sys/unistd.h>
 
 int main(void) {
-	pid_t myprocess = fork();
+    pid_t myprocess = fork();
     while (1) ;
 }

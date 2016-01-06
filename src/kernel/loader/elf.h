@@ -30,18 +30,18 @@
 #include "../commons.h"
 #include "../processes/process.h"
 
-#define ELF_LOAD_SUCCESS 	             0
+#define ELF_LOAD_SUCCESS                 0
 #define ELF_ERROR_NOTCLASS64             1
 #define ELF_ERROR_NOTDATA2LSB            2
 #define ELF_ERROR_NOT_EXEC_EXEC_REQUIRED 3
 #define ELF_ERROR_HEADER_MAGIC_INCORRECT 4
-#define ELF_ERROR_MACHINE_INVALID		 5
+#define ELF_ERROR_MACHINE_INVALID        5
 #define ELF_ERROR_VERSION_NOT_CURRENT    6
 #define ELF_ERROR_RELOC_ERROR_SYM_INDEX_OUT_OF_RANGE  7
 #define ELF_ERROR_RELOC_ERROR_SYM_EXTERNAL_NOT_FOUND  8
-#define ELF_ERROR_SECTION_OVERLAPS		 9
+#define ELF_ERROR_SECTION_OVERLAPS       9
 #define ELF_ERROR_UNSUPPORTED_SECTION_TYPE_FIXADDR   10
-#define ELF_ERROR_ENOMEM				11
+#define ELF_ERROR_ENOMEM                11
 
 
 int32_t load_elf_exec(uintptr_t elf_file_data, proc_t* process);

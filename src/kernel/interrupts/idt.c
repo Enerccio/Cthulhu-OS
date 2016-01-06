@@ -65,7 +65,7 @@ void idt_set_gate(uint8_t gn, uintptr_t funcall) {
     if (gn == 255) // ipi fault
         gate->flags.ist = 3;
     if (gn == 128 || gn == 129) {
-    	gate->flags.dpl = 3;
+        gate->flags.dpl = 3;
     }
 }
 

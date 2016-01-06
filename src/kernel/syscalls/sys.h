@@ -32,8 +32,8 @@
 
 #define SYS_MEMALLOC       1
 #define SYS_MEMDEALLOC     2
-#define SYS_GET_TID	       3
-#define SYS_FORK	       4
+#define SYS_GET_TID        3
+#define SYS_FORK           4
 
 
 typedef ruint_t (*syscall_0)(registers_t*);
@@ -43,9 +43,9 @@ typedef ruint_t (*syscall_3)(registers_t*, ruint_t, ruint_t, ruint_t);
 typedef ruint_t (*syscall_4)(registers_t*, ruint_t, ruint_t, ruint_t, ruint_t);
 typedef ruint_t (*syscall_5)(registers_t*, ruint_t, ruint_t, ruint_t, ruint_t, ruint_t);
 typedef struct syscall {
-	bool present;
-	bool schedule_after;
-	bool uses_error;
+    bool present;
+    bool schedule_after;
+    bool uses_error;
     uint8_t args;
     union {
         syscall_0 _0;

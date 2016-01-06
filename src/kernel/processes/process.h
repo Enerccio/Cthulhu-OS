@@ -57,7 +57,7 @@ typedef struct thread thread_t;
 typedef struct proc {
     intmax_t     proc_id;
     uintptr_t    pml4;
-    rg_t 		 proc_random;
+    rg_t         proc_random;
 
     char**       environ;
     char**       argv;
@@ -88,10 +88,10 @@ struct thread {
 };
 
 typedef struct borrowed_ticket {
-	thread_t* source;
-	thread_t* target;
-	uint16_t  tamount;
-	bool release_now;
+    thread_t* source;
+    thread_t* target;
+    uint16_t  tamount;
+    bool release_now;
 } borrowed_ticket_t;
 
 #define PER_PROCESS_TICKETS 0x1000
