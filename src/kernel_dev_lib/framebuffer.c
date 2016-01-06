@@ -19,33 +19,30 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * daemons.h
- *  Created on: Jan 3, 2016
+ * framebuffer.c
+ *  Created on: Jan 6, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#pragma once
+#include "nyarlathotep.h"
 
-#include "../commons.h"
-#include <ds/hmap.h>
+int32_t framebuffer_width() {
+	return dev_sys_0arg(DEV_SYS_FRAMEBUFFER_GET_WIDTH);
+}
 
-#define DAEMON_NOT_REGISTERED -1
+int32_t framebuffer_height() {
+	return dev_sys_0arg(DEV_SYS_FRAMEBUFFER_GET_HEIGHT);
+}
 
-// List of internal services
-// These are provided internally by daemons
-// other daemons register their own services by their name and then inform these daemon
-//  services by their name and they communicate
-#define SERVICE_VFS "::service::internal::vfs"
-#define SERVICE_PORT "::service::internal::port"
-#define SERVICE_KEYBOARD "::service::internal::keyboard"
-#define SERVICE_MOUSE "::service::internal::mouse"
-#define SERVICE_FRAMEBUFFER "::service::internal::framebuffer"
-#define SERVICE_USERS "::service::internal::users"
+int framebuffer_update() {
+	return dev_sys_0arg(DEV_SYS_FRAMEBUFFER_UPDATE);
+}
 
-pid_t register_daemon_service(pid_t process, const char* service, bool overwrite_old_service_provider);
+int framebuffer_write(uint8_t* data, uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
+	return dev_sys_5arg(DEV_SYS_FRAMEBUFFER_WRITE, (ruint_t)(uintptr_t)data, x, y, w, h);
+}
 
-bool daemon_registered(const char* service);
-bool is_daemon_process(pid_t process, const char* service);
-
-void initialize_daemon_services();
+int framebuffer_read(uint8_t* data, uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
+	return DS_ERROR_NOT_IMPLEMENTED;
+}

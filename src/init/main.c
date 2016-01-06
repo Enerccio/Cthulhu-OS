@@ -26,9 +26,20 @@
  */
 
 #include <ny/nyarlathotep.h>
-#include <sys/unistd.h>
 
 int main(void) {
-    pid_t myprocess = fork();
+	int32_t w = framebuffer_width();
+	int32_t h = framebuffer_height();
+
+	uint8_t* screen = malloc(3*w*h);
+	for (int32_t i=0; i<3*w*h; i+=3) {
+		screen[i] = 0xFF; // red
+		screen[i+1] = 0;
+		screen[i+2] = 0;
+	}
+
+	framebuffer_write(screen, 0, 0, w, h);
+	framebuffer_update();
+
     while (1) ;
 }

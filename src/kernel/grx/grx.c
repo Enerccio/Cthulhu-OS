@@ -153,7 +153,7 @@ void blit_colored(image_t* image, uint32_t x, uint32_t y, color_t recolor) {
 
             bool drawn = true;
             if (image->image_type == IMAGE_RGB) {
-                size_t bps = ((py-y)*image->w)+(px-x)*3;
+                size_t bps = (((py-y)*image->w)+(px-x))*3;
                 recolor.r = image->image_data[bps];
                 recolor.g = image->image_data[bps+1];
                 recolor.b = image->image_data[bps+2];

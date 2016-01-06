@@ -100,6 +100,8 @@ typedef struct borrowed_ticket {
 
 extern array_t* processes;
 
+pid_t get_current_pid();
+
 proc_t* create_init_process_structure(uintptr_t pml);
 mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_size);
 mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount);

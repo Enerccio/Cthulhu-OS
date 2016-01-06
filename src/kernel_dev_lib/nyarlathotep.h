@@ -32,12 +32,10 @@
 extern "C" {
 #endif
 
-#include <stddef.h>
-#include <limits.h>
-#include <sys/types.h>
-#include <stdint.h>
+#include "ny_stddef.h"
 #include "ny_commons.h"
 
+#include "ny_framebuffer.h"
 #include "ny_initramfs.h"
 
 #ifdef __cplusplus

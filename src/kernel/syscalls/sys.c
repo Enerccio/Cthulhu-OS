@@ -30,6 +30,7 @@
 #include "../processes/process.h"
 #include "../cpus/cpu_mgmt.h"
 #include "../interrupts/idt.h"
+#include "../processes/daemons.h"
 
 extern ruint_t __thread_modifier;
 extern void proc_spinlock_lock(volatile void* memaddr);
@@ -37,24 +38,24 @@ extern void proc_spinlock_unlock(volatile void* memaddr);
 
 #include "syscall_defs.cc"
 
-syscall_t syscalls [512];
+syscall_t syscalls [4096];
 
 void register_syscall(bool system, uint8_t syscall_id, syscall_t syscall) {
     if (syscall.uses_error && syscall.args == 0) {
         // this has no sense
         return;
     }
-    uint16_t sysid = system ? (256 + syscall_id) : syscall_id;
+    uint16_t sysid = system ? (2048 + syscall_id) : syscall_id;
     syscall.present = true;
     syscalls[sysid] = syscall;
 }
 
 void sys_handler(registers_t* registers, bool dev) {
-    if (registers->rax >= 256) {
+    if (registers->rax >= 2048) {
         registers->rdi = -1;
         return;
     }
-    uint16_t rnum = dev ? (256 + registers->rax) : registers->rax;
+    uint16_t rnum = dev ? (2048 + registers->rax) : registers->rax;
     if (!syscalls[rnum].present) {
         registers->rdi = -1;
         return;
@@ -165,4 +166,10 @@ void initialize_system_calls() {
     register_syscall(false, SYS_MEMDEALLOC, make_syscall_2(deallocate_memory, false, false));
     register_syscall(false, SYS_GET_TID, make_syscall_0(get_tid, false, false));
     register_syscall(false, SYS_FORK, make_syscall_2(fork, true, false));
+
+    // dev syscalls
+    register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_HEIGHT, make_syscall_0(dev_fb_get_height, false, false));
+    register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_WIDTH, make_syscall_0(dev_fb_get_width, false, false));
+    register_syscall(true, DEV_SYS_FRAMEBUFFER_UPDATE, make_syscall_0(dev_fb_update, false, false));
+    register_syscall(true, DEV_SYS_FRAMEBUFFER_WRITE, make_syscall_5(dev_fb_write, false, false));
 }

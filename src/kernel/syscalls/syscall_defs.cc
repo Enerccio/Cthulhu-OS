@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <ny/devsys.h>
 
 ruint_t allocate_memory(registers_t* r, ruint_t size) {
     cpu_t* cpu = get_current_cput();
@@ -92,3 +93,5 @@ ruint_t fork(registers_t* r, ruint_t contcall, ruint_t ecptr) {
 	}
 	return pid;
 }
+
+#include "dev/framebuffer.cc"

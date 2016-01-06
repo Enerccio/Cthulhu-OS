@@ -33,18 +33,36 @@ extern void proc_spinlock_unlock(volatile void* memaddr);
 ruint_t __daemon_registration_lock;
 hash_table_t* dr_table;
 
-uint64_t register_daemon_service(uint64_t process, const char* service, bool overwrite_old_service_provider) {
+pid_t register_daemon_service(pid_t process, const char* service, bool overwrite_old_service_provider) {
     proc_spinlock_lock(&__daemon_registration_lock);
 
     if (table_contains(dr_table, (void*)service) && !overwrite_old_service_provider) {
         return DAEMON_NOT_REGISTERED;
     }
     table_set(dr_table, (void*)service, (void*)(uintptr_t)process);
-    uint64_t cdp = (uint64_t)(uintptr_t)table_get(dr_table, (void*)service);
+    uint64_t cdp = (pid_t)(uintptr_t)table_get(dr_table, (void*)service);
 
     proc_spinlock_unlock(&__daemon_registration_lock);
 
     return cdp;
+}
+
+bool daemon_registered(const char* service) {
+	proc_spinlock_lock(&__daemon_registration_lock);
+	bool daemon_registered = table_contains(dr_table, (void*)service);
+	proc_spinlock_unlock(&__daemon_registration_lock);
+	return daemon_registered;
+}
+
+bool is_daemon_process(pid_t process, const char* service) {
+	proc_spinlock_lock(&__daemon_registration_lock);
+	if (!table_contains(dr_table, (void*)service)) {
+		proc_spinlock_unlock(&__daemon_registration_lock);
+		return false;
+	}
+	bool daemon_process = ((pid_t)((uintptr_t)table_get(dr_table, (void*)service))) == process;
+	proc_spinlock_unlock(&__daemon_registration_lock);
+	return daemon_process;
 }
 
 void initialize_daemon_services() {

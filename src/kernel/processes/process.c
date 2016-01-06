@@ -42,6 +42,21 @@ array_t* processes;
 
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
+extern ruint_t __thread_modifier;
+
+pid_t get_current_pid() {
+	cpu_t* cpu = get_current_cput();
+	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&cpu->__cpu_sched_lock);
+	proc_spinlock_lock(&__thread_modifier);
+
+	pid_t pid = cpu->threads == NULL ? -1 : cpu->threads->parent_process->proc_id;
+
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+	return pid;
+}
 
 proc_t* create_init_process_structure(uintptr_t pml) {
     proc_t* process = malloc(sizeof(proc_t));

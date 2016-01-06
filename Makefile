@@ -2,7 +2,7 @@ MODE ?= debug
 
 .PHONY: clean kernel-clean kernel lib all nyarlathotep nyarlathotep-clean
 
-all: lib lds kernel nyarlathotep init
+all: lib lds nyarlathotep kernel init
 
 clean: lds-clean kernel-clean nyarlathotep-clean init-clean
 
