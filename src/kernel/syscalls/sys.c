@@ -172,4 +172,7 @@ void initialize_system_calls() {
     register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_WIDTH, make_syscall_0(dev_fb_get_width, false, false));
     register_syscall(true, DEV_SYS_FRAMEBUFFER_UPDATE, make_syscall_0(dev_fb_update, false, false));
     register_syscall(true, DEV_SYS_FRAMEBUFFER_WRITE, make_syscall_5(dev_fb_write, false, false));
+    // TODO: read
+    register_syscall(true, DEV_SYS_FRAMEBUFFER_CLEAR, make_syscall_3(dev_fb_clear, false, false));
+    register_syscall(true, DEV_SYS_FRAMEBUFFER_PUTPIXEL, make_syscall_3(dev_fb_putpixel, false, false));
 }

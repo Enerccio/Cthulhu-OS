@@ -179,6 +179,18 @@ void scroll_up(uint32_t bypx) {
     flush_buffer();
 }
 
+void clear_screen(uint8_t r, uint8_t g, uint8_t b) {
+	for (uint32_t py = 0; py < h; py++) {
+		for (uint32_t px = 0; px < w; px++) {
+
+			size_t pixelpos = ((py*w)+px);
+			uint32_t color = b << 16 | g << 8 | r;
+			local_fb[pixelpos] = color;
+			BITSET(local_fb_changes, pixelpos);
+		}
+	}
+}
+
 void flush_buffer() {
     size_t ppx = 0;
     for (size_t i=0; i<w*h; i++) {

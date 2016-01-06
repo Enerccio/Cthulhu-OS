@@ -68,3 +68,29 @@ ruint_t dev_fb_write(registers_t* r, ruint_t bytes, ruint_t x, ruint_t y, ruint_
 
 	return DS_ERROR_SUCCESS;
 }
+
+ruint_t dev_fb_clear(registers_t* r, ruint_t red, ruint_t green, ruint_t blue) {
+	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
+		return DS_ERROR_NOT_ALLOWED;
+	// TODO: add authorization
+
+	clear_screen(red, green, blue);
+
+	return DS_ERROR_SUCCESS;
+}
+
+ruint_t dev_fb_putpixel(registers_t* r, ruint_t* color, ruint_t x, ruint_t y) {
+	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
+		return DS_ERROR_NOT_ALLOWED;
+	// TODO: add authorization
+
+	image_t image;
+	image.image_data = (uint8_t*)color;
+	image.image_type = IMAGE_RGB;
+	image.w = 1;
+	image.h = 1;
+
+	blit(&image, (uint32_t)x, (uint32_t)y);
+
+	return DS_ERROR_SUCCESS;
+}

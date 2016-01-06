@@ -51,3 +51,5 @@ void blit_colored(image_t* image, uint32_t x, uint32_t y, color_t recolor);
 void scroll_up(uint32_t bypx);
 
 void flush_buffer();
+
+void clear_screen(uint8_t r, uint8_t g, uint8_t b);
