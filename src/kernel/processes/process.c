@@ -167,6 +167,11 @@ int fork_process(registers_t* r, proc_t* p, thread_t* t) {
     proc_spinlock_lock(&__proclist_lock);
     process->proc_id = ++process_id_num;
     array_push_data(processes, process);
+    mmap_area_t* mmap = p->mem_maps;
+	while (mmap != NULL) {
+		++mmap->count;
+	}
+	process->mem_maps = p->mem_maps;
     proc_spinlock_unlock(&__proclist_lock);
 
     copy_registers(r, main_thread);
@@ -235,6 +240,7 @@ mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_s
     newmm->next = *lm;
     newmm->vastart = start_address;
     newmm->vaend = start_address + req_size;
+    newmm->count = 1;
     *lm = newmm;
     return newmm;
 }
@@ -277,6 +283,7 @@ mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount) {
     newmm->next = *lm;
     newmm->vastart = start_address + offset;
     newmm->vaend = start_address + req_size + offset;
+    newmm->count = 1;
     *lm = newmm;
     return newmm;
 }

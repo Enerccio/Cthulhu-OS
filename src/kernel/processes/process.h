@@ -47,7 +47,8 @@ typedef enum mmap_area_type {
 typedef struct mmap_area {
     uintptr_t  vastart;
     uintptr_t  vaend;
-    ma_type_t mtype;
+    ma_type_t  mtype;
+    uint64_t   count;
 
     struct mmap_area* next;
 } mmap_area_t;
