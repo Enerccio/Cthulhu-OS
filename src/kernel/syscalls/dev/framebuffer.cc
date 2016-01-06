@@ -79,7 +79,7 @@ ruint_t dev_fb_clear(registers_t* r, ruint_t red, ruint_t green, ruint_t blue) {
 	return DS_ERROR_SUCCESS;
 }
 
-ruint_t dev_fb_putpixel(registers_t* r, ruint_t* color, ruint_t x, ruint_t y) {
+ruint_t dev_fb_putpixel(registers_t* r, ruint_t color, ruint_t x, ruint_t y) {
 	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
 		return DS_ERROR_NOT_ALLOWED;
 	// TODO: add authorization
