@@ -29,9 +29,11 @@
 
 #include <sys/types.h>
 #include "../commons.h"
+#include "../interrupts/idt.h"
 
 #include <ds/array.h>
 #include <ds/random.h>
+#include <ds/llist.h>
 
 typedef struct file_descriptor {
     uint32_t fd_pid;
@@ -53,13 +55,13 @@ typedef struct mmap_area {
 typedef struct thread thread_t;
 
 typedef struct proc {
-    uint64_t     proc_id;
+    intmax_t     proc_id;
     uintptr_t    pml4;
     rg_t 		 proc_random;
 
     char**       environ;
-    char**       argc;
-    unsigned int argv;
+    char**       argv;
+    unsigned int argc;
 
     array_t*     fds;
     array_t*     threads;
@@ -74,6 +76,9 @@ struct thread {
     thread_t* prev_thread;
     uint16_t tickets;
 
+    list_t* borrowed_tickets;
+    list_t* lended_tickets;
+
     /* Userspace information */
     ruint_t last_rip, last_rsp, last_rax, last_rdi, last_rsi, last_rdx, last_rcx;
     ruint_t last_r8, last_r9, last_r10, last_r11;
@@ -82,13 +87,22 @@ struct thread {
     uintptr_t stack_bottom_address;
 };
 
+typedef struct borrowed_ticket {
+	thread_t* source;
+	thread_t* target;
+	uint16_t  tamount;
+	bool release_now;
+} borrowed_ticket_t;
+
 #define PER_PROCESS_TICKETS 0x1000
 #define BASE_STACK_SIZE 0x1000000
 
 extern array_t* processes;
 
-proc_t* create_process_structure(uintptr_t pml);
+proc_t* create_init_process_structure(uintptr_t pml);
 mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_size);
 mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount);
+borrowed_ticket_t* transfer_tickets(thread_t* from, thread_t* to, uint16_t tamount);
+int fork_process(registers_t* r, proc_t* p, thread_t* t);
 
 void initialize_processes();

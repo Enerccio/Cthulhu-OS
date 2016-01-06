@@ -160,30 +160,6 @@ typedef union pdpt {
     uint64_t*               array;
 } pdpt_t;
 
-typedef union pml4 {
-    struct {
-        uint64_t present    : 1;  // whether the page is present
-        uint64_t rw         : 1;  // 0 = writes are not allowed, 1 = writers are allowed
-        uint64_t us         : 1;  // 0 = CPL3 access is not allowed
-        uint64_t pwt        : 1;  // page-level write-through
-        uint64_t pcd        : 1;  // page-level cache disable
-        uint64_t accessed   : 1;  // whether it was accessed
-        uint64_t ignored    : 1;
-        uint64_t ps         : 1;  // must be 0 since this is page directory
-        uint64_t ignored2   : 4;
-        uint64_t address    : 50;
-        uint64_t reserved   : 1;
-        uint64_t xd         : 1;  // if A32_EFER.NXE = 1, execute-disable -> 1-can't be executed, must be 0 if not enabled
-    }                       flaggable;
-    struct {
-       uint64_t copy        : 8;
-       uint64_t do_not_copy : 55;
-       uint64_t copy2       : 1;
-    }                       copyinfo;
-    uint64_t                number;
-    uint64_t*               array;
-} pml4_t;
-
 typedef union cr3_page_entry
 {
    struct {

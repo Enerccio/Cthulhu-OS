@@ -40,7 +40,7 @@ uint64_t register_daemon_service(uint64_t process, const char* service, bool ove
         return DAEMON_NOT_REGISTERED;
     }
     table_set(dr_table, (void*)service, (void*)(uintptr_t)process);
-    uint64_t cdp = table_get(dr_table, (void*)service);
+    uint64_t cdp = (uint64_t)(uintptr_t)table_get(dr_table, (void*)service);
 
     proc_spinlock_unlock(&__daemon_registration_lock);
 

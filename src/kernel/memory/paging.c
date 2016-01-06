@@ -27,6 +27,7 @@
 #include "paging.h"
 #include "heap.h"
 #include "../cpus/ipi.h"
+#include "../cpus/cpu_mgmt.h"
 
 /** aligns the address to 0x1000 and then casts it to type */
 #define PALIGN(type, addr) ((type)ALIGN(addr))
@@ -224,10 +225,9 @@ static frame_info_t* get_frame_info(puint_t fa) {
 
     section_info_t* section = (section_info_t*)physical_to_virtual((puint_t)frame_pool);
     while (section != NULL) {
-        if (section->start_word >= fa && section->end_word < fa) {
+        if (section->start_word <= fa && section->end_word > fa) {
             uint32_t idx = (fa-section->start_word) / 0x1000;
             frame_info_t* fi = (frame_info_t*)physical_to_virtual((puint_t)section->frame_array);
-            proc_spinlock_unlock(&__frame_lock);
             return &fi[idx];
         } else {
             section = (section_info_t*)physical_to_virtual((puint_t)section->next_section);
@@ -254,12 +254,14 @@ static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
             return 0;
         pdpt_t pdpt;
         memset(&pdpt, 0, sizeof(pdpt_t));
+        proc_spinlock_lock(&__frame_lock);
         pdpt.number = get_free_frame();
+        proc_spinlock_unlock(&__frame_lock);
         pdpt.flaggable.present = 1;
         pdpt.flaggable.us = user;
         pdpt.flaggable.rw = 1;
         MMU_PML4(vaddress)[MMU_PML4_INDEX(vaddress)] = pdpt.number;
-        memset(MMU_PDPT(vaddress), 0, sizeof(uintptr_t)*512);
+        memset(MMU_PDPT(vaddress), 0, 0x1000);
     }
 
     uint64_t* pdir_addr = (uint64_t*) MMU_PDPT(vaddress)[MMU_PDPT_INDEX(
@@ -270,12 +272,14 @@ static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
             return 0;
         page_directory_t dir;
         memset(&dir, 0, sizeof(page_directory_t));
+        proc_spinlock_lock(&__frame_lock);
         dir.number = get_free_frame();
+        proc_spinlock_unlock(&__frame_lock);
         dir.flaggable.present = 1;
         dir.flaggable.us = user;
         dir.flaggable.rw = 1;
         MMU_PDPT(vaddress)[MMU_PDPT_INDEX(vaddress)] = dir.number;
-        memset(MMU_PD(vaddress), 0, sizeof(uintptr_t)*512);
+        memset(MMU_PD(vaddress), 0, 0x1000);
     }
 
     uint64_t* pt_addr = (uint64_t*) MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)];
@@ -285,12 +289,14 @@ static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
             return 0;
         page_table_t pt;
         memset(&pt, 0, sizeof(page_table_t));
+        proc_spinlock_lock(&__frame_lock);
         pt.number = get_free_frame();
+        proc_spinlock_unlock(&__frame_lock);
         pt.flaggable.present = 1;
         pt.flaggable.us = user;
         pt.flaggable.rw = 1;
         MMU_PD(vaddress)[MMU_PD_INDEX(vaddress)] = pt.number;
-        memset(MMU_PT(vaddress), 0, sizeof(uintptr_t)*512);
+        memset(MMU_PT(vaddress), 0, 0x1000);
     }
 
     return (puint_t*)&MMU_PT(vaddress)[MMU_PT_INDEX(vaddress)];
@@ -355,7 +361,7 @@ void free_page_structure(uintptr_t vaddress) {
 }
 
 void deallocate_start_memory() {
-    MMU_PML4(0)[MMU_PML4_INDEX(0)] = 0;
+    memset((void*)physical_to_virtual((uintptr_t)get_active_page()), 0, 256*sizeof(uintptr_t));
     broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, 0, 0x200000, NULL);
 }
 
@@ -697,7 +703,9 @@ void initialize_memory_mirror() {
 
             if (!PRESENT(pdpt_addr)) {
                 pdpt_t pdpt;
+                proc_spinlock_lock(&__frame_lock);
                 pdpt.number = get_free_frame();
+                proc_spinlock_unlock(&__frame_lock);
                 pdpt.flaggable.present = 1;
                 MMU_PML4(vaddress)[MMU_PML4_INDEX(vaddress)] = pdpt.number;
                 memset(MMU_PDPT(vaddress), 0, sizeof(uint64_t));
@@ -764,19 +772,28 @@ void initialize_physical_memory_allocation(struct multiboot_info* mboot_addr) {
  * If page is present, it does nothing.
  */
 static puint_t allocate_frame(puint_t* paddress, bool kernel, bool readonly) {
-    if (!PRESENT(*paddress)) {
-        page_t page;
-        memset(&page, 0, sizeof(page_t));
+	bool new;
+	page_t page;
+	memset(&page, 0, sizeof(page_t));
+	if (!PRESENT(*paddress)) {
+		new = true;
         proc_spinlock_lock(&__frame_lock);
         page.address = get_free_frame();
         proc_spinlock_unlock(&__frame_lock);
-        page.flaggable.present = 1;
-        page.flaggable.rw = readonly ? 0 : 1;
-        page.flaggable.us = kernel ? 0 : 1;
-        *paddress = page.address;
-        if (__mem_mirror_present)
-            memset((void*)physical_to_virtual(ALIGN(page.address)), 0xCC, 0x1000);
-    }
+	} else {
+		new = false;
+		page.address = ALIGN(*paddress);
+	}
+	page.flaggable.present = 1;
+	page.flaggable.rw = readonly ? 0 : 1;
+	page.flaggable.us = kernel ? 0 : 1;
+	*paddress = page.address;
+
+	if (new) {
+		if (__mem_mirror_present)
+			memset((void*)physical_to_virtual(ALIGN(page.address)), 0xCC, 0x1000);
+	}
+
     return ALIGN(*paddress);
 }
 
@@ -857,6 +874,12 @@ puint_t clone_ptable(puint_t source_ptable, puint_t target_ptable) {
     page_table_t sptable;
     page_table_t tptable;
 
+    if (!PRESENT(target_ptable)) {
+		proc_spinlock_lock(&__frame_lock);
+		target_ptable = get_free_frame();
+		proc_spinlock_unlock(&__frame_lock);
+	}
+
     sptable.number = source_ptable;
     tptable.number = target_ptable;
 
@@ -865,7 +888,7 @@ puint_t clone_ptable(puint_t source_ptable, puint_t target_ptable) {
     memset(vtptable, 0, 0x1000);
 
     for (uint16_t i=0; i<512; i++) {
-        if (vsptable[i] != 0) {
+        if (PRESENT(vsptable[i])) {
 
             page_t page;
             page.address = vsptable[i];
@@ -902,6 +925,12 @@ puint_t clone_pdir(puint_t source_pdir, puint_t target_pdir) {
     page_directory_t spdir;
     page_directory_t tpdir;
 
+    if (!PRESENT(target_pdir)) {
+		proc_spinlock_lock(&__frame_lock);
+		target_pdir = get_free_frame();
+		proc_spinlock_unlock(&__frame_lock);
+	}
+
     spdir.number = source_pdir;
     tpdir.number = target_pdir;
 
@@ -910,8 +939,8 @@ puint_t clone_pdir(puint_t source_pdir, puint_t target_pdir) {
     memset(vtpdir, 0, 0x1000);
 
     for (uint16_t i=0; i<512; i++) {
-        if (vspdir[i] != 0) {
-            vtpdir[i] = clone_ptable(vspdir[i], get_free_frame());
+        if (PRESENT(vspdir[i])) {
+            vtpdir[i] = clone_ptable(vspdir[i], vtpdir[i]);
         }
     }
 
@@ -926,6 +955,12 @@ puint_t clone_pdpt(puint_t source_pdpt, puint_t target_pdpt) {
     pdpt_t spdpt;
     pdpt_t tpdpt;
 
+    if (!PRESENT(target_pdpt)) {
+		proc_spinlock_lock(&__frame_lock);
+		target_pdpt = get_free_frame();
+		proc_spinlock_unlock(&__frame_lock);
+	}
+
     spdpt.number = source_pdpt;
     tpdpt.number = target_pdpt;
 
@@ -934,8 +969,8 @@ puint_t clone_pdpt(puint_t source_pdpt, puint_t target_pdpt) {
     memset(vtpdpt, 0, 0x1000);
 
     for (uint16_t i=0; i<512; i++) {
-        if (vspdpt[i] != 0) {
-            vtpdpt[i] = clone_pdir(vspdpt[i], get_free_frame());
+        if (PRESENT(vspdpt[i])) {
+            vtpdpt[i] = clone_pdir(vspdpt[i], vtpdpt[i]);
         }
     }
 
@@ -944,32 +979,11 @@ puint_t clone_pdpt(puint_t source_pdpt, puint_t target_pdpt) {
     return tpdpt.number;
 }
 
-puint_t clone_pml(puint_t source_pml, puint_t target_pml) {
-    pml4_t spml;
-    pml4_t tpml;
-
-    spml.number = source_pml;
-    tpml.number = target_pml;
-
-    uint64_t* vspml = (uint64_t*)physical_to_virtual(ALIGN(source_pml));
-    uint64_t* vtpml = (uint64_t*)physical_to_virtual(target_pml);
-    memset(vtpml, 0, 0x1000);
-
-    for (uint16_t i=0; i<512; i++) {
-        if (vspml[i] != 0) {
-            vtpml[i] = clone_pdpt(vspml[i], get_free_frame());
-        }
-    }
-
-    tpml.copyinfo.copy = spml.copyinfo.copy;
-    tpml.copyinfo.copy2 = spml.copyinfo.copy2;
-
-    return tpml.number;
-}
-
 puint_t clone_paging_structures() {
     puint_t active_page = get_active_page();
+    proc_spinlock_lock(&__frame_lock);
     puint_t target_page = get_free_frame();
+    proc_spinlock_unlock(&__frame_lock);
 
     cr3_page_entry_t apentry;
     cr3_page_entry_t tentry;
@@ -985,12 +999,12 @@ puint_t clone_paging_structures() {
     for (uint16_t i=0; i<512; i++) {
         if (i < 256) {
             // user pages
-            if (sent[i] != 0) {
-                tent[i] = clone_pml(sent[i], tent[i]);
+            if (PRESENT(sent[i])) {
+                tent[i] = clone_pdpt(sent[i], tent[i]);
             }
         } else {
             // kernel pages
-            sent[i] = tent[i];
+            tent[i] = sent[i];
         }
     }
 

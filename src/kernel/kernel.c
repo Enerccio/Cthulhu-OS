@@ -50,13 +50,14 @@
 
 extern volatile uint64_t clock_ms;
 extern struct multiboot_info multiboot_info;
-
-ruint_t kernel_tmp_heap_start;
-
 extern bool __ports_initialized;
 extern bool __print_initialized;
 extern bool multiprocessing_ready;
 extern bool scheduler_enabled;
+
+extern void* get_active_page();
+
+ruint_t kernel_tmp_heap_start;
 
 void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     __ports_initialized = false;
@@ -142,7 +143,10 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     }
 
     log_msg("Loading init.");
-    proc_t* initp = create_process_structure((uintptr_t)get_active_page());
+    proc_t* initp = create_init_process_structure((uintptr_t)get_active_page());
+    initp->argc = 0;
+    initp->argv = NULL;
+    initp->environ = NULL;
 
     int32_t err;
     if ((err=load_elf_exec((uintptr_t)get_data(pe->element.file),initp)) != ELF_LOAD_SUCCESS) {

@@ -26,10 +26,9 @@
  */
 
 #include <ny/nyarlathotep.h>
-
-#include <stdbool.h>
-#include <stdnoreturn.h>
+#include <sys/unistd.h>
 
 int main(void) {
-    while (true) ;
+	pid_t myprocess = fork();
+    while (1) ;
 }

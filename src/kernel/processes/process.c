@@ -28,8 +28,12 @@
 #include "process.h"
 
 #include "../interrupts/clock.h"
+#include "../utils/rsod.h"
+#include "../memory/paging.h"
+#include "scheduler.h"
 
 #include <stdatomic.h>
+#include <errno.h>
 
 ruint_t __proclist_lock;
 ruint_t process_id_num;
@@ -39,9 +43,11 @@ array_t* processes;
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
 
-// TODO: add memory failure checks
-proc_t* create_process_structure(uintptr_t pml) {
+proc_t* create_init_process_structure(uintptr_t pml) {
 	proc_t* process = malloc(sizeof(proc_t));
+	if (process == NULL) {
+		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+	}
 
 	proc_spinlock_lock(&__proclist_lock);
 	process->proc_id = ++process_id_num;
@@ -49,19 +55,147 @@ proc_t* create_process_structure(uintptr_t pml) {
 	proc_spinlock_unlock(&__proclist_lock);
 
 	process->fds = create_array();
+	if (process->fds == NULL) {
+		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+	}
 	process->threads = create_array();
+	if (process->threads == NULL) {
+		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+	}
 	process->pml4 = pml;
 	process->mem_maps = NULL;
 	process->proc_random = rg_create_random_generator(get_unix_time());
 
 	thread_t* main_thread = malloc(sizeof(thread_t));
+	if (main_thread == NULL) {
+		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+	}
 	memset(main_thread, 0, sizeof(thread_t));
 	main_thread->parent_process = process;
 	main_thread->tickets = PER_PROCESS_TICKETS;
 	main_thread->tId = __atomic_add_fetch(&thread_id_num, 1, __ATOMIC_SEQ_CST);
+	main_thread->borrowed_tickets = create_list();
+	if (main_thread->borrowed_tickets == NULL) {
+		proc_spinlock_unlock(&__proclist_lock);
+		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+	}
+	main_thread->lended_tickets = create_list();
+	if (main_thread->lended_tickets == NULL) {
+		proc_spinlock_unlock(&__proclist_lock);
+		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+	}
 	array_push_data(process->threads, main_thread);
 
     return process;
+}
+
+int fork_process(registers_t* r, proc_t* p, thread_t* t) {
+	proc_t* process = malloc(sizeof(proc_t));
+	if (process == NULL) {
+		return ENOMEM;
+	}
+
+	process->fds = create_array();
+	if (process->fds == NULL) {
+		return ENOMEM;
+	}
+	for (uint32_t i=0; i<array_get_size(p->fds); i++) {
+		fd_t* fe = (fd_t*)array_get_at(p->fds, i);
+		fd_t* nfe = malloc(sizeof(fd_t));
+		if (nfe == NULL) {
+			for (uint32_t i=0; i<array_get_size(p->fds); i++)
+				free(array_get_at(p->fds, i));
+			destroy_array(process->fds);
+			free(process);
+			return ENOMEM;
+		}
+		memcpy(nfe, fe, sizeof(fd_t));
+		array_push_data(p->fds, nfe);
+	}
+	process->threads = create_array();
+	if (process->threads == NULL) {
+		for (uint32_t i=0; i<array_get_size(p->fds); i++)
+			free(array_get_at(p->fds, i));
+		destroy_array(process->fds);
+		free(process);
+		return ENOMEM;
+	}
+	process->pml4 = clone_paging_structures();
+	process->mem_maps = NULL;
+	process->proc_random = rg_create_random_generator(get_unix_time());
+
+	thread_t* main_thread = malloc(sizeof(thread_t));
+	if (main_thread == NULL) {
+		destroy_array(process->threads);
+		for (uint32_t i=0; i<array_get_size(p->fds); i++)
+			free(array_get_at(p->fds, i));
+		destroy_array(process->fds);
+		free(process);
+		return ENOMEM;
+	}
+	memset(main_thread, 0, sizeof(thread_t));
+	main_thread->parent_process = process;
+	main_thread->tickets = PER_PROCESS_TICKETS;
+	main_thread->tId = __atomic_add_fetch(&thread_id_num, 1, __ATOMIC_SEQ_CST);
+	main_thread->next_thread = NULL;
+	main_thread->prev_thread = NULL;
+	main_thread->borrowed_tickets = create_list();
+	if (main_thread->borrowed_tickets == NULL) {
+		free(main_thread);
+		destroy_array(process->threads);
+		for (uint32_t i=0; i<array_get_size(p->fds); i++)
+			free(array_get_at(p->fds, i));
+		destroy_array(process->fds);
+		free(process);
+		proc_spinlock_unlock(&__proclist_lock);
+		return ENOMEM;
+	}
+	main_thread->lended_tickets = create_list();
+	if (main_thread->lended_tickets == NULL) {
+		free_list(main_thread->borrowed_tickets);
+		free(main_thread);
+		destroy_array(process->threads);
+		for (uint32_t i=0; i<array_get_size(p->fds); i++)
+			free(array_get_at(p->fds, i));
+		destroy_array(process->fds);
+		free(process);
+		proc_spinlock_unlock(&__proclist_lock);
+		return ENOMEM;
+	}
+	array_push_data(process->threads, main_thread);
+
+	proc_spinlock_lock(&__proclist_lock);
+	process->proc_id = ++process_id_num;
+	array_push_data(processes, process);
+	proc_spinlock_unlock(&__proclist_lock);
+
+	copy_registers(r, main_thread);
+
+	// TODO: add split option?
+	main_thread->last_rax = process->proc_id;
+	enschedule_best(main_thread);
+	return 0;
+}
+
+borrowed_ticket_t* transfer_tickets(thread_t* from, thread_t* to, uint16_t tamount) {
+	if (tamount > from->tickets)
+		tamount = from->tickets;
+	if (tamount == 0)
+		return NULL;
+
+	borrowed_ticket_t* bt = malloc(sizeof(borrowed_ticket_t));
+	bt->source = from;
+	bt->target = to;
+	bt->tamount = tamount;
+	bt->release_now = false;
+
+	list_push_right(from->lended_tickets, bt);
+	list_push_right(to->borrowed_tickets, bt);
+
+	from->tickets -= tamount;
+	to->tickets += tamount;
+
+	return bt;
 }
 
 void initialize_processes() {

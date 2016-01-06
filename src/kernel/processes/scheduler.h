@@ -37,7 +37,10 @@
 
 void attemp_to_run_scheduler(registers_t* r);
 void schedule(registers_t* r);
-void enschedule(thread_t* p, cpu_t* cpu);
-void enschedule_to_self(thread_t* p);
+void enschedule(thread_t* t, cpu_t* cpu);
+void enschedule_best(thread_t* t);
+void enschedule_to_self(thread_t* t);
+
+void copy_registers(registers_t* r, thread_t* t);
 
 void initialize_scheduler();
