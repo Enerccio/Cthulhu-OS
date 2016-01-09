@@ -171,5 +171,5 @@ void initialize_system_calls() {
     // dev syscalls
     register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_HEIGHT, make_syscall_0(dev_fb_get_height, false, false));
     register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_WIDTH, make_syscall_0(dev_fb_get_width, false, false));
-    register_syscall(true, DEV_SYS_IVFS_GET_PATH_ELEMENT, make_syscall_3(get_initramfs_entry, true, false));
+    register_syscall(true, DEV_SYS_IVFS_GET_PATH_ELEMENT, make_syscall_2(get_initramfs_entry, false, false));
 }

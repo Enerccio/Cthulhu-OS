@@ -41,7 +41,7 @@ typedef struct file_descriptor {
 } fd_t;
 
 typedef enum mmap_area_type {
-    program_data, stack_data, heap_data
+    program_data, stack_data, heap_data, nondealloc_map, kernel_allocated_heap_data
 } ma_type_t;
 
 typedef struct mmap_area {
@@ -49,6 +49,7 @@ typedef struct mmap_area {
     uintptr_t  vaend;
     ma_type_t  mtype;
     uint64_t   count;
+    ruint_t	   __lock;
 
     struct mmap_area* next;
 } mmap_area_t;
@@ -57,6 +58,7 @@ typedef struct thread thread_t;
 
 typedef struct proc {
     intmax_t     proc_id;
+    struct proc* parent;
     uintptr_t    pml4;
     rg_t         proc_random;
 
@@ -107,5 +109,9 @@ mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_s
 mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount);
 borrowed_ticket_t* transfer_tickets(thread_t* from, thread_t* to, uint16_t tamount);
 int fork_process(registers_t* r, proc_t* p, thread_t* t);
+
+uintptr_t map_virtual_virtual(uintptr_t vastart, uintptr_t vaend, bool readonly);
+uintptr_t map_physical_virtual(puint_t vastart, puint_t vaend, bool readonly);
+void* proc_alloc(size_t size);
 
 void initialize_processes();

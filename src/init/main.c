@@ -28,8 +28,29 @@
 #include <ny/nyarlathotep.h>
 #include <sys/unistd.h>
 
+
+
 int main(void) {
 	pid_t pid = getpid();
+
+	ifs_file_t f;
+	get_file("init/dorder", &f);
+
+	char* contents = malloc(f.entry.num_ent_or_size+1);
+	memcpy(contents, f.file_contents, f.entry.num_ent_or_size);
+	contents[f.entry.num_ent_or_size] = 0;
+
+	char* daemon_path = strtok(contents, "\n");
+	while (daemon_path != NULL) {
+		if (strlen(daemon_path)==0)
+			break;
+		if (fork() != pid) {
+
+			break; // sentinel break
+		} else {
+			daemon_path = strtok(NULL, "\n");
+		}
+	}
 
     while (1) ;
 }

@@ -29,10 +29,10 @@
 
 int get_directory(const char* path, ifs_directory_t* dir) {
 	int status;
-	dev_sys_3arg_e(DEV_SYS_IVFS_GET_PATH_ELEMENT, path, &dir->entry, &status);
+	status =  dev_sys_2arg(DEV_SYS_IVFS_GET_PATH_ELEMENT, (ruint_t)path, (ruint_t)&dir->entry);
 	if (status != E_IFS_ACTION_SUCCESS)
 		return status;
-	if (dir->entry.type != dir) {
+	if (dir->entry.type != et_dir) {
 		return E_IFS_NOT_A_DECTYPE;
 	}
 	return E_IFS_ACTION_SUCCESS;
@@ -40,10 +40,10 @@ int get_directory(const char* path, ifs_directory_t* dir) {
 
 int get_file(const char* path, ifs_file_t* file) {
 	int status;
-	dev_sys_3arg_e(DEV_SYS_IVFS_GET_PATH_ELEMENT, path, &file->entry, &status);
+	status = dev_sys_2arg(DEV_SYS_IVFS_GET_PATH_ELEMENT, (ruint_t)path, (ruint_t)&file->entry);
 	if (status != E_IFS_ACTION_SUCCESS)
 		return status;
-	if (file->entry.type != file) {
+	if (file->entry.type != et_file) {
 		return E_IFS_NOT_A_DECTYPE;
 	}
 	return E_IFS_ACTION_SUCCESS;

@@ -80,6 +80,7 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     process->pml4 = pml;
     process->mem_maps = NULL;
     process->proc_random = rg_create_random_generator(get_unix_time());
+    process->parent = NULL;
 
     thread_t* main_thread = malloc(sizeof(thread_t));
     if (main_thread == NULL) {
@@ -99,6 +100,9 @@ proc_t* create_init_process_structure(uintptr_t pml) {
         proc_spinlock_unlock(&__proclist_lock);
         error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
+    main_thread->last_rdi = (ruint_t)(uintptr_t)process->argc;
+    main_thread->last_rsi = (ruint_t)(uintptr_t)process->argv;
+    main_thread->last_rdx = (ruint_t)(uintptr_t)process->environ;
     array_push_data(process->threads, main_thread);
 
     return process;
@@ -138,6 +142,7 @@ int fork_process(registers_t* r, proc_t* p, thread_t* t) {
     process->pml4 = clone_paging_structures();
     process->mem_maps = NULL;
     process->proc_random = rg_create_random_generator(get_unix_time());
+    process->parent = p;
 
     thread_t* main_thread = malloc(sizeof(thread_t));
     if (main_thread == NULL) {
@@ -185,6 +190,7 @@ int fork_process(registers_t* r, proc_t* p, thread_t* t) {
     mmap_area_t* mmap = p->mem_maps;
 	while (mmap != NULL) {
 		++mmap->count;
+		mmap = mmap->next;
 	}
 	process->mem_maps = p->mem_maps;
     proc_spinlock_unlock(&__proclist_lock);
@@ -256,6 +262,7 @@ mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_s
     newmm->vastart = start_address;
     newmm->vaend = start_address + req_size;
     newmm->count = 1;
+    newmm->__lock = 0;
     *lm = newmm;
     return newmm;
 }
@@ -299,6 +306,69 @@ mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount) {
     newmm->vastart = start_address + offset;
     newmm->vaend = start_address + req_size + offset;
     newmm->count = 1;
+    newmm->__lock = 0;
     *lm = newmm;
     return newmm;
+}
+
+uintptr_t map_virtual_virtual(uintptr_t vastart, uintptr_t vaend, bool readonly) {
+	uintptr_t vaoffset = vastart % 0x1000;
+	vastart = ALIGN_DOWN(vastart, 0x1000);
+	vaend = ALIGN_UP(vaend, 0x1000);
+
+	cpu_t* cpu = get_current_cput();
+	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&cpu->__cpu_sched_lock);
+	proc_spinlock_lock(&__thread_modifier);
+
+	proc_t* proc = cpu->threads->parent_process;
+
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+
+	mmap_area_t* hole = find_va_hole(proc, vaend-vastart, 0x1000);
+	hole->mtype = kernel_allocated_heap_data;
+	map_range(vastart, vaend, hole->vastart, hole->vaend, true, readonly, false);
+	return hole->vastart+vaoffset;
+}
+
+uintptr_t map_physical_virtual(puint_t vastart, puint_t vaend, bool readonly) {
+	uintptr_t vaoffset = vastart % 0x1000;
+	vastart = ALIGN_DOWN(vastart, 0x1000);
+	vaend = ALIGN_UP(vaend, 0x1000);
+
+	cpu_t* cpu = get_current_cput();
+	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&cpu->__cpu_sched_lock);
+	proc_spinlock_lock(&__thread_modifier);
+
+	proc_t* proc = cpu->threads->parent_process;
+
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+
+	mmap_area_t* hole = find_va_hole(proc, vaend-vastart, 0x1000);
+	hole->mtype = nondealloc_map;
+	map_range(vastart, vaend, hole->vastart, hole->vaend, false, readonly, false);
+	return hole->vastart+vaoffset;
+}
+
+void* proc_alloc(size_t size) {
+	cpu_t* cpu = get_current_cput();
+	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&cpu->__cpu_sched_lock);
+	proc_spinlock_lock(&__thread_modifier);
+
+	proc_t* proc = cpu->threads->parent_process;
+
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+
+	mmap_area_t* hole = find_va_hole(proc, size, 16);
+	hole->mtype = kernel_allocated_heap_data;
+	allocate(hole->vastart, size, false, false);
+	return (void*)hole->vastart;
 }

@@ -831,6 +831,39 @@ void allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
     }
 }
 
+// only works within same cr3!
+void map_range(uintptr_t start, uintptr_t end, uintptr_t tostart, uintptr_t toend, bool virtual_memory,
+		bool readonly, bool kernel) {
+	uintptr_t offs=0;
+	for (; offs<(end-start); offs+=0x1000) {
+		uintptr_t smem = start+offs;
+		uintptr_t tmem = tostart+offs;
+
+		puint_t frame;
+		if (virtual_memory) {
+			frame = ALIGN(*get_page(smem, true));
+			proc_spinlock_lock(&__frame_lock);
+			frame_info_t* fi = get_frame_info(frame);
+			if (fi != NULL) {
+				++fi->usage_count;
+			}
+			proc_spinlock_unlock(&__frame_lock);
+		} else {
+			frame = smem;
+		}
+
+		page_t page;
+		memset(&page, 0, sizeof(page_t));
+		page.address = ALIGN(frame);
+		page.flaggable.present = 1;
+		page.flaggable.rw = readonly ? 0 : 1;
+		page.flaggable.us = kernel ? 0 : 1;
+		*get_page(tmem, true) = page.address;
+	}
+
+	broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, toend, NULL);
+}
+
 /**
  * Deallocates memory from address from with amount amount.
  *

@@ -129,8 +129,42 @@ ruint_t dev_fb_get_width(registers_t* r) {
 }
 
 #include "../rlyeh/rlyeh.h"
-ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt, ruint_t e) {
-	int* errror = (int*)(uintptr_t)e;
+
+static volatile bool initramfs_exists = true;
+
+ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
+	if (!initramfs_exists) {
+		return E_IFS_INITRAMFS_GONE;
+	}
 	const char* path = (const char*)(uintptr_t)p;
 	initramfs_entry_t* entry = (initramfs_entry_t*)(uintptr_t)strpnt;
+
+	path_element_t* pe = get_path(path);
+
+	if (pe->type == PE_DIR) {
+		entry->type = et_dir;
+		strncpy(entry->name, pe->name, 255);
+		entry->num_ent_or_size = array_get_size(pe->element.dir->path_el_array);
+
+		ifs_directory_t* de = ((ifs_directory_t*)entry);
+		de->entries = proc_alloc(entry->num_ent_or_size * 8);
+		size_t len;
+		for (uint32_t i=0; i<entry->num_ent_or_size; i++) {
+			path_element_t* child_pe = (path_element_t*)array_get_at(pe->element.dir->path_el_array, i);
+
+			de->entries[i] = proc_alloc((len = strlen(child_pe->name))+1);
+			memcpy(de->entries[i], child_pe->name, len+1);
+		}
+	} else {
+		entry->type = et_file;
+		strncpy(entry->name, pe->name, 255);
+		entry->num_ent_or_size = pe->element.file->size;
+		((ifs_file_t*)entry)->file_contents = (char*)
+				map_physical_virtual((puint_t)get_data(pe->element.file)
+					-ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS),
+					(puint_t)((uintptr_t)get_data(pe->element.file))+entry->num_ent_or_size
+					-ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS), true);
+	}
+
+	return E_IFS_ACTION_SUCCESS;
 }

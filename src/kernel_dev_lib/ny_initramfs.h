@@ -28,14 +28,16 @@
 #pragma once
 
 #include "ny_stddef.h"
+#include "ny_commons.h"
 #include "devsys.h"
 
-#define E_IFS_ACTION_SUCCESS 0
-#define E_IFS_PATH_INCORRECT 1
-#define E_IFS_NOT_A_DECTYPE  2
+#define E_IFS_INITRAMFS_GONE -1
+#define E_IFS_ACTION_SUCCESS  0
+#define E_IFS_PATH_INCORRECT  1
+#define E_IFS_NOT_A_DECTYPE   2
 
 typedef enum entry_type {
-	dir, file
+	et_dir, et_file
 } entry_type_t;
 
 typedef struct initramfs_entry {
