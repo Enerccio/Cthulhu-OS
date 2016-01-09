@@ -26,50 +26,10 @@
  */
 
 #include <ny/nyarlathotep.h>
+#include <sys/unistd.h>
 
 int main(void) {
-	framebuffer_clear_screen(0, 0, 0);
-
-	framebuffer_putpixel(100, 100);
-
-	sg_set_fg_color(0xFF, 0, 0);
-	sg_line_t l;
-	l.start.x = 50;
-	l.start.y = 50;
-	l.end.x = 500;
-	l.end.y = 75;
-	sg_draw_line(l);
-
-	sg_set_fg_color(0, 0xFF, 0);
-	sg_set_bg_color(0, 0, 0xFF);
-	sg_rectangle_t rect;
-	rect.xy.x = 200;
-	rect.xy.y = 150;
-	rect.w = 50;
-	rect.h = 125;
-	sg_draw_rect(rect, outline);
-
-	rect.xy.x = 300;
-	rect.xy.y = 150;
-	sg_draw_rect(rect, fill_fg_bg);
-
-	rect.xy.x = 200;
-	rect.xy.y = 350;
-	sg_draw_rect(rect, fill_fg_fg);
-
-	rect.xy.x = 300;
-	rect.xy.y = 350;
-	sg_draw_rect(rect, fill_bg_bg);
-
-	rect.xy.x = 500;
-	rect.xy.y = 250;
-	sg_draw_rect(rect, fill_inside_fg);
-
-	rect.xy.x = 500;
-	rect.xy.y = 250;
-	sg_draw_rect(rect, fill_inside_bg);
-
-	framebuffer_update();
+	pid_t pid = getpid();
 
     while (1) ;
 }

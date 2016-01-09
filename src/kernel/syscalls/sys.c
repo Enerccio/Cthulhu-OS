@@ -166,13 +166,10 @@ void initialize_system_calls() {
     register_syscall(false, SYS_MEMDEALLOC, make_syscall_2(deallocate_memory, false, false));
     register_syscall(false, SYS_GET_TID, make_syscall_0(get_tid, false, false));
     register_syscall(false, SYS_FORK, make_syscall_2(fork, true, false));
+    register_syscall(false, SYS_GET_PID, make_syscall_0(get_pid, false, false));
 
     // dev syscalls
     register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_HEIGHT, make_syscall_0(dev_fb_get_height, false, false));
     register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_WIDTH, make_syscall_0(dev_fb_get_width, false, false));
-    register_syscall(true, DEV_SYS_FRAMEBUFFER_UPDATE, make_syscall_0(dev_fb_update, false, false));
-    register_syscall(true, DEV_SYS_FRAMEBUFFER_WRITE, make_syscall_5(dev_fb_write, false, false));
-    // TODO: read
-    register_syscall(true, DEV_SYS_FRAMEBUFFER_CLEAR, make_syscall_3(dev_fb_clear, false, false));
-    register_syscall(true, DEV_SYS_FRAMEBUFFER_PUTPIXEL, make_syscall_3(dev_fb_putpixel, false, false));
+    register_syscall(true, DEV_SYS_IVFS_GET_PATH_ELEMENT, make_syscall_3(get_initramfs_entry, true, false));
 }

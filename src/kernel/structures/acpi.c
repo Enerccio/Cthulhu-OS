@@ -39,6 +39,7 @@ FADT*   fadt;
 uint8_t acpi_version;
 
 extern void* ebda;
+extern int century_register;
 
 /**
  * Adds all bytes of target address together to one number.
@@ -254,6 +255,8 @@ void init_table_acpi() {
 
     if (valid_fadt((FADT*)fadt_address)) {
         fadt = (FADT*)fadt_address;
+        century_register = fadt->Century;
+        vlog_msg("FADT century register: %d", century_register);
     } else {
         log_warn("No FADT Table detected");
     }

@@ -34,7 +34,7 @@
 #define SYS_MEMDEALLOC     2
 #define SYS_GET_TID        3
 #define SYS_FORK           4
-
+#define SYS_GET_PID		   5
 
 typedef ruint_t (*syscall_0)(registers_t*);
 typedef ruint_t (*syscall_1)(registers_t*, ruint_t);

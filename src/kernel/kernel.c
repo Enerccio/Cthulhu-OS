@@ -96,7 +96,7 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     log_msg("CPU status queried.");
 
     reinitialize_gdt();
-    vlog_msg("GDT reinitialized to %llxh", (uintptr_t)&gdt);
+    vlog_msg("GDT reinitialized to %lxh", (uintptr_t)&gdt);
 
     initialize_interrupts();
     log_msg("Interrupt table initialized");
@@ -105,7 +105,7 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     log_msg("Preliminary interrupt handlers set up");
 
     initialize_clock();
-    vlog_msg("Kernel clock initialized, current time in unix time %llu", get_unix_time());
+    vlog_msg("Kernel clock initialized, current time in unix time %lu", get_unix_time());
 
     if (array_get_size(cpus) > 1) {
         initialize_mp(get_local_apic_id());

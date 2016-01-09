@@ -73,6 +73,21 @@ ruint_t get_tid(registers_t* r) {
 	return tid;
 }
 
+ruint_t get_pid(registers_t* r) {
+	cpu_t* cpu = get_current_cput();
+
+	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&__thread_modifier);
+
+	thread_t* ct = cpu->threads;
+	pid_t pid = ct->parent_process->proc_id;
+
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+
+	return pid;
+}
+
 ruint_t fork(registers_t* r, ruint_t contcall, ruint_t ecptr) {
 	ruint_t* ec = (ruint_t*)(uintptr_t)ecptr;
 
@@ -94,4 +109,28 @@ ruint_t fork(registers_t* r, ruint_t contcall, ruint_t ecptr) {
 	return pid;
 }
 
-#include "dev/framebuffer.cc"
+#include "../grx/grx.h"
+#include "../grx/image.h"
+
+ruint_t dev_fb_get_height(registers_t* r) {
+	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
+		return DS_ERROR_NOT_ALLOWED;
+	// TODO: add authorization
+
+	return grx_get_height();
+}
+
+ruint_t dev_fb_get_width(registers_t* r) {
+	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
+		return DS_ERROR_NOT_ALLOWED;
+	// TODO: add authorization
+
+	return grx_get_width();
+}
+
+#include "../rlyeh/rlyeh.h"
+ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt, ruint_t e) {
+	int* errror = (int*)(uintptr_t)e;
+	const char* path = (const char*)(uintptr_t)p;
+	initramfs_entry_t* entry = (initramfs_entry_t*)(uintptr_t)strpnt;
+}

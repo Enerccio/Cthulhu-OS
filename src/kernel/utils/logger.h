@@ -51,16 +51,16 @@ void log_err(const char* message);
 /**
  * Logs advance message with MESSAGE level.
  */
-void vlog_msg(const char* message, ...);
+void vlog_msg(const char* message, ...) __attribute__ ((format (printf, 1, 2)));
 
 /**
  * Logs advance message with WARN level.
  */
-void vlog_warn(const char* message, ...);
+void vlog_warn(const char* message, ...) __attribute__ ((format (printf, 1, 2)));
 
 /**
  * Logs advance message with ERROR level.
  */
-void vlog_err(const char* message, ...);
+void vlog_err(const char* message, ...) __attribute__ ((format (printf, 1, 2)));
 
 void initialize_logger();

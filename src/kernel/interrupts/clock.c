@@ -28,7 +28,7 @@
 #include "../interrupts/clock.h"
 #include "../processes/scheduler.h"
 
-#define CURRENT_YEAR        2015                            // Change this each year!
+#define CURRENT_YEAR        2016                            // Change this each year!
 int century_register = 0x00;                                // Set by ACPI table parsing code if possible
 unsigned char second;
 unsigned char minute;
@@ -182,6 +182,10 @@ void initialize_clock() {
 
     if(century_register != 0) {
         century = get_RTC_register(century_register);
+        vlog_msg("CMOS century info: %u", century);
+    } else {
+    	century = 20;
+    	vlog_msg("Computed century info: %u", century);
     }
 
     do {

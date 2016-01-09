@@ -31,7 +31,8 @@
 #include "devsys.h"
 
 #define E_IFS_ACTION_SUCCESS 0
-#define E_IFS_NOT_A_DECTYPE  1
+#define E_IFS_PATH_INCORRECT 1
+#define E_IFS_NOT_A_DECTYPE  2
 
 typedef enum entry_type {
 	dir, file
@@ -50,6 +51,8 @@ typedef struct ifs_directory {
 
 typedef struct ifs_file {
 	initramfs_entry_t entry;
+	char* file_contents;
 } ifs_file_t;
 
 int get_directory(const char* path, ifs_directory_t* dir);
+int get_file(const char* path, ifs_file_t* file);

@@ -27,3 +27,24 @@
 
 #include "ny_initramfs.h"
 
+int get_directory(const char* path, ifs_directory_t* dir) {
+	int status;
+	dev_sys_3arg_e(DEV_SYS_IVFS_GET_PATH_ELEMENT, path, &dir->entry, &status);
+	if (status != E_IFS_ACTION_SUCCESS)
+		return status;
+	if (dir->entry.type != dir) {
+		return E_IFS_NOT_A_DECTYPE;
+	}
+	return E_IFS_ACTION_SUCCESS;
+}
+
+int get_file(const char* path, ifs_file_t* file) {
+	int status;
+	dev_sys_3arg_e(DEV_SYS_IVFS_GET_PATH_ELEMENT, path, &file->entry, &status);
+	if (status != E_IFS_ACTION_SUCCESS)
+		return status;
+	if (file->entry.type != file) {
+		return E_IFS_NOT_A_DECTYPE;
+	}
+	return E_IFS_ACTION_SUCCESS;
+}
