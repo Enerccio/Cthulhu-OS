@@ -945,8 +945,6 @@ puint_t clone_ptable(puint_t source_ptable, puint_t target_ptable) {
                 ++frame_info->usage_count;
                 if (frame_info->cow_count == 0)
                     ++frame_info->cow_count;
-                else
-                	debug_break;
                 ++frame_info->cow_count;
 
                 page_t page;

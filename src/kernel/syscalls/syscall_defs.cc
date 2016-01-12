@@ -188,7 +188,6 @@ ruint_t initramfs_execve(registers_t* r, ruint_t pathv, ruint_t argvv, ruint_t a
 		return -1;
 	}
 
-	debug_break;
 	int error = sys_execve(get_data(pe->element.file), argc, argv, envp, r);
 	if (error != 0) {
 		*errno = error;
