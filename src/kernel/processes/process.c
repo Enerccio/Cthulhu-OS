@@ -31,6 +31,7 @@
 #include "../utils/rsod.h"
 #include "../memory/paging.h"
 #include "scheduler.h"
+#include "../loader/elf.h"
 
 #include <stdatomic.h>
 #include <errno.h>
@@ -262,7 +263,6 @@ mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_s
     newmm->vastart = start_address;
     newmm->vaend = start_address + req_size;
     newmm->count = 1;
-    newmm->__lock = 0;
     *lm = newmm;
     return newmm;
 }
@@ -306,7 +306,6 @@ mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount) {
     newmm->vastart = start_address + offset;
     newmm->vaend = start_address + req_size + offset;
     newmm->count = 1;
-    newmm->__lock = 0;
     *lm = newmm;
     return newmm;
 }
@@ -362,13 +361,207 @@ void* proc_alloc(size_t size) {
 	proc_spinlock_lock(&__thread_modifier);
 
 	proc_t* proc = cpu->threads->parent_process;
+	void* addr = proc_alloc_direct(proc, size);
+
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+	return addr;
+}
+
+void* proc_alloc_direct(proc_t* proc, size_t size) {
+	mmap_area_t* hole = find_va_hole(proc, size, 16);
+	hole->mtype = kernel_allocated_heap_data;
+	allocate(hole->vastart, size, false, false);
+	return (void*)hole->vastart;
+}
+
+static int cpy_array(int count, char*** a) {
+	char** array = *a;
+	char** na = malloc(8*(count+1));
+	if (na == NULL)
+		return ENOMEM;
+
+	int i = 0;
+	for (; i<count; i++) {
+		char* cpy = malloc(strlen(array[i])+1);
+		if (cpy == NULL) {
+			for (int j=0; j<i; j++) {
+				free(na[j]);
+			}
+			free(na);
+			return ENOMEM;
+		}
+		memcpy(cpy, array[i], strlen(array[i])+1);
+		na[i] = cpy;
+	}
+	na[count] = NULL;
+	*a = na;
+	return 0;
+}
+
+static int cpy_array_user(int count, char*** a, proc_t* p) {
+	char** array = *a;
+	char** na = proc_alloc_direct(p, 8*(count+1));
+	if (na == NULL)
+		return ENOMEM;
+
+	int i = 0;
+	for (; i<count; i++) {
+		char* cpy = proc_alloc_direct(p, strlen(array[i])+1);
+		if (cpy == NULL) {
+			return ENOMEM;
+		}
+		memcpy(cpy, array[i], strlen(array[i])+1);
+		na[i] = cpy;
+	}
+	na[count] = NULL;
+	*a = na;
+	return 0;
+}
+
+void free_proc_memory(proc_t* proc) {
+	mmap_area_t* mm = proc->mem_maps;
+	while (mm != NULL) {
+		uint64_t use_count = __atomic_sub_fetch(&mm->count, 1, __ATOMIC_SEQ_CST);
+		switch (mm->mtype) {
+		case program_data:
+		case stack_data:
+		case heap_data:
+		case kernel_allocated_heap_data: {
+			deallocate(mm->vastart, mm->vaend-mm->vastart);
+		} break;
+		case nondealloc_map:
+			break;
+		}
+		mmap_area_t* mmn = mm->next;
+		if (use_count == 0) {
+			free(mm);
+		}
+		mm = mmn;
+	}
+}
+
+static void free_array(int count, char** a) {
+	for (int i=0; i<count; i++) {
+		free(a[i]);
+	}
+	free(a);
+}
+
+int sys_execve(uint8_t* image_data, int argc, char** argv, char** envp, registers_t* r) {
+	int envc = 0;
+	char** envt = envp;
+	while (*envt != NULL) {
+		++envc;
+		++envt;
+	}
+
+	int err;
+	if ((err = cpy_array(argc, &argv)) != 0)
+		return err;
+	if ((err = cpy_array(envc, &envp)) != 0) {
+		free_array(argc, argv);
+		return err;
+	}
+	// envp and argv are now kernel structures
+
+	cpu_t* cpu = get_current_cput();
+	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&cpu->__cpu_sched_lock);
+	proc_spinlock_lock(&__thread_modifier);
+
+	proc_t* p = cpu->threads->parent_process;
+	thread_t* main_thread = cpu->threads;
+	free_proc_memory(p);
+	p->mem_maps = NULL;
+
+	for (uint32_t tid=0; tid<array_get_size(p->threads); tid++) {
+		thread_t* t = array_get_at(p->threads, tid);
+		if (t != main_thread) {
+			// TODO: add freeing threads
+			// TODO: add ticket merging
+			free(t);
+		}
+	}
+
+	array_clean(p->threads);
+	array_push_data(p->threads, main_thread);
+
+	err = load_elf_exec((uintptr_t)image_data, p);
+	if (err == ELF_ERROR_ENOMEM) {
+		err = ENOMEM;
+	} else if (err != 0) {
+		err = EINVAL;
+	}
+
+	if (err != 0) {
+		// TODO: add abort
+		proc_spinlock_unlock(&__thread_modifier);
+		proc_spinlock_unlock(&cpu->__cpu_lock);
+		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+		return err;
+	}
+
+	char** argvu = argv;
+	char** envpu = envp;
+	if ((err = cpy_array_user(argc, &argvu, p)) != 0) {
+		// TODO: add abort
+		proc_spinlock_unlock(&__thread_modifier);
+		proc_spinlock_unlock(&cpu->__cpu_lock);
+		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+		return err;
+	}
+	if ((err = cpy_array_user(envc, &envpu, p)) != 0) {
+		// TODO: add abort
+		proc_spinlock_unlock(&__thread_modifier);
+		proc_spinlock_unlock(&cpu->__cpu_lock);
+		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+		return err;
+	}
+
+	p->argc = argc;
+	p->argv = argvu;
+	p->environ = envp;
+
+	main_thread->last_r12 = 0;
+	main_thread->last_r11 = 0;
+	main_thread->last_r10 = 0;
+	main_thread->last_r9 = 0;
+	main_thread->last_r8 = 0;
+	main_thread->last_rax = 0;
+	main_thread->last_rbx = 0;
+	main_thread->last_rcx = 0;
+	main_thread->last_rdx = 0;
+	main_thread->last_rdi = 0;
+	main_thread->last_rsi = 0;
+	main_thread->last_rbp = 0;
+
+	cpu->threads = main_thread;
+
+	// TODO: do check tickets etc
+
+	// TODO: remove up when do proper cleanup
+
+	main_thread->tickets = PER_PROCESS_TICKETS;
+	free_list(main_thread->borrowed_tickets);
+	free_list(main_thread->lended_tickets);
+
+	main_thread->borrowed_tickets = create_list();
+	main_thread->lended_tickets = create_list();
+
+	main_thread->last_rdi = (ruint_t)(uintptr_t)p->argc;
+	main_thread->last_rsi = (ruint_t)(uintptr_t)p->argv;
+	main_thread->last_rdx = (ruint_t)(uintptr_t)p->environ;
+
+	registers_copy(main_thread, r);
+
+	free_array(argc, argv);
+	free_array(envc, envp);
 
 	proc_spinlock_unlock(&__thread_modifier);
 	proc_spinlock_unlock(&cpu->__cpu_lock);
 	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 
-	mmap_area_t* hole = find_va_hole(proc, size, 16);
-	hole->mtype = kernel_allocated_heap_data;
-	allocate(hole->vastart, size, false, false);
-	return (void*)hole->vastart;
+	return 0;
 }

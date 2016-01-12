@@ -49,10 +49,16 @@ void ipi_received(ruint_t ecode, registers_t* registers) {
     case IPI_WAKE_UP_FROM_WUA:
         registers->rax = cpu->apic_message; // unlocking from wait_until_activation if message was nonzero
         break;
-    case IPI_INVALIDATE_PAGE:
-        for (uintptr_t i=cpu->apic_message; i<cpu->apic_message2; i+=0x1000)
-            invalidate_address(i);
-        break;
+    case IPI_INVALIDATE_PAGE: {
+			uintptr_t active_page = get_active_page();
+			uintptr_t target_page = __atomic_load_n(&cpu->apic_message_cpu->current_address_space,
+					__ATOMIC_SEQ_CST);
+			if (active_page == target_page) {
+				for (uintptr_t i=cpu->apic_message; i<cpu->apic_message2; i+=0x1000)
+					invalidate_address(i);
+			}
+		}
+    	break;
     case IPI_INVLD_PML: {
         uintptr_t active_page = get_active_page();
         if (active_page == cpu->apic_message) {
@@ -86,6 +92,7 @@ void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message
         cpu->apic_message_type = message_type;
         cpu->apic_message = message;
         cpu->apic_message2 = message2;
+        cpu->apic_message_cpu = cpu;
         ipi_received(0, internalcall);
         proc_spinlock_unlock(&cpu->__ipi_lock);
         return;
@@ -103,6 +110,7 @@ void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message
     cpu->apic_message_type = message_type;
     cpu->apic_message = message;
     cpu->apic_message2 = message2;
+    cpu->apic_message_cpu = get_current_cput();
 
     send_ipi_to(cpu->apic_id, 0xFF, 0, false);
 
@@ -129,6 +137,7 @@ void send_ipi_nowait(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message,
         cpu->apic_message_type = message_type;
         cpu->apic_message = message;
         cpu->apic_message2 = message2;
+        cpu->apic_message_cpu = get_current_cput();
         ipi_received(0, internalcall);
         proc_spinlock_unlock(&cpu->__ipi_lock);
         return;

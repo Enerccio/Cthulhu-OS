@@ -168,3 +168,32 @@ ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 
 	return E_IFS_ACTION_SUCCESS;
 }
+
+ruint_t initramfs_execve(registers_t* r, ruint_t pathv, ruint_t argvv, ruint_t argcv,
+		ruint_t envpv, ruint_t errnov) {
+	int* errno = (int*)errnov;
+
+	if (!initramfs_exists) {
+		*errno = ENOENT;
+		return -1;
+	}
+	char* path = (char*)pathv;
+	char** argv = (char**)argvv;
+	int argc = (int)argcv;
+	char** envp = (char**)envpv;
+
+	path_element_t* pe = get_path(path);
+	if (pe == NULL || pe->type == PE_DIR) {
+		*errno = ENOENT;
+		return -1;
+	}
+
+	debug_break;
+	int error = sys_execve(get_data(pe->element.file), argc, argv, envp, r);
+	if (error != 0) {
+		*errno = error;
+		return -1;
+	}
+
+	return 0;
+}

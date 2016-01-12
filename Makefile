@@ -2,9 +2,9 @@ MODE ?= debug
 
 .PHONY: clean kernel-clean kernel lib all nyarlathotep nyarlathotep-clean
 
-all: lib lds nyarlathotep kernel init
+all: lib lds nyarlathotep kernel init framebuffer
 
-clean: lds-clean kernel-clean nyarlathotep-clean init-clean
+clean: lds-clean kernel-clean nyarlathotep-clean init-clean framebuffer-clean
 
 lds-clean:
 	$(MAKE) clean -C libds MODE=$(MODE)
@@ -17,6 +17,9 @@ nyarlathotep-clean:
 
 init-clean:
 	$(MAKE) clean -C src/init MODE=$(MODE)
+	
+framebuffer-clean:
+	$(MAKE) clean -C src/services/framebuffer MODE=$(MODE)
 
 lib:
 	bash build_kclib.sh $(MODE)
@@ -32,3 +35,6 @@ nyarlathotep:
 	
 init:
 	$(MAKE) -C src/init MODE=$(MODE)
+
+framebuffer:
+	$(MAKE) -C src/services/framebuffer MODE=$(MODE)

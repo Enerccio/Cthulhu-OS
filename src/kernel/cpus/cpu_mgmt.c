@@ -43,6 +43,7 @@ extern void wait_until_activated(ruint_t wait_code);
 extern void load_gdt(gdt_ptr_t* gdt, uint16_t tssid);
 extern gdt_ptr_t gdt;
 extern void kp_halt();
+extern uintptr_t get_active_page();
 
 #define AP_INIT_LOAD_ADDRESS (2)
 #define INIT_IPI_FLAGS (5<<8)
@@ -264,6 +265,7 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
     cpu->__message_clear_lock = 0;
     cpu->apic_message_handled = 0;
     cpu->total_tickets = 0;
+    cpu->current_address_space = get_active_page();
     cpu->stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_INIT_STACK_SIZE));
     cpu->handler_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_HANDLER_STACK_SIZE));
     cpu->pf_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_PF_STACK_SIZE));

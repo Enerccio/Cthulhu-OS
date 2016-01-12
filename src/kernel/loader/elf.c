@@ -265,15 +265,15 @@ int32_t load_elf_exec(uintptr_t elf_file_data, proc_t* process) {
 
     // TODO: support alloc size
     size_t ssize = BASE_STACK_SIZE;
-    mmap_area_t* mmap_area = find_va_hole(process, ssize+0x2000, 0x1000);
+    mmap_area_t* mmap_area = find_va_hole(process, ssize, 0x1000);
     if (mmap_area == NULL) {
         return ELF_ERROR_ENOMEM;
     }
     mmap_area->mtype = stack_data;
-    allocate(mmap_area->vastart+0x1000, ssize, false, false);
-    memset((void*)mmap_area->vastart+0x1000, 0, ssize);
-    thread->stack_bottom_address = mmap_area->vastart+0x1000;
-    thread->stack_top_address = mmap_area->vaend-0x1000;
+    allocate(mmap_area->vastart, ssize, false, false);
+    memset((void*)mmap_area->vastart, 0, ssize);
+    thread->stack_bottom_address = mmap_area->vastart;
+    thread->stack_top_address = mmap_area->vaend;
     thread->last_rsp = thread->stack_top_address;
 
     return ELF_LOAD_SUCCESS;

@@ -126,13 +126,14 @@ continue:
     jmp after_pages_set
     ALIGN 0x1000
 _gpInitial_PML4:   ; Page Map Level 4
-    dq   _gpInitial_PDP + 3   ; Identity Map Low 4Mb
-    times 509 dq 0
-    dq   _gpInitial_PML4 + 3  ; recursive mapping "trick"
-    dq   _gpInitial_PDP + 3   ; Also Map to 0xFFFF8000 00000000
-_gpInitial_PDP:      ; Page Directory Pointer Table
+    dq   _gpInitial_PDP1 + 3   ; Identity Map Low 4Mb
+    times 510 dq 0
+    dq   _gpInitial_PDP2 + 3   ; Also Map to 0xFFFF8000 00000000
+_gpInitial_PDP1:      ; Page Directory Pointer Table
     dq _gpInitial_PD + 3
-    times 509 dq 0
+    times 511 dq 0
+_gpInitial_PDP2:      ; Page Directory Pointer Table
+    times 510 dq 0
     dq _gpInitial_PD + 3
     dq 0
 _gpInitial_PD:      ; Page Directory

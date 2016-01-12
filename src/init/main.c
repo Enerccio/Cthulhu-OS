@@ -46,7 +46,19 @@ int main(void) {
 			break;
 		if (fork() != pid) {
 
-			break; // sentinel break
+			char** args = malloc(16);
+			char* arg = malloc(strlen(daemon_path)+1);
+			memcpy(arg, daemon_path, strlen(daemon_path)+1);
+
+			args[0] = arg;
+			args[1] = NULL;
+
+			char** envp = malloc(8);
+			envp[0] = NULL;
+
+			execve_ifs(daemon_path, args, envp);
+
+			while (1) ; // sentinel break, TODO: add abort
 		} else {
 			daemon_path = strtok(NULL, "\n");
 		}

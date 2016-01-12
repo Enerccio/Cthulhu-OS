@@ -54,9 +54,8 @@ typedef int8_t cmpresult_t;
 
 typedef void* aligned_ptr_t;
 
-#define RESERVED_KBLOCK_REVERSE_MAPPINGS (510UL)
-#define RESERVED_KBLOCK_RAM_MAPPINGS     (509UL)
-#define RESERVED_KBLOCK_KHEAP_MAPPINGS   (508UL)
+#define RESERVED_KBLOCK_RAM_MAPPINGS     (510UL)
+#define RESERVED_KBLOCK_KHEAP_MAPPINGS   (509UL)
 
 #define ADDRESS_OFFSET(offset) (0xFFFF000000000000UL + (offset<<39))
 

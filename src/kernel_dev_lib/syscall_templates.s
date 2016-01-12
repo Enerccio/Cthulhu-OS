@@ -1,4 +1,5 @@
 [GLOBAL dev_sys_0arg]
+[GLOBAL dev_sys_0arg_e]
 ; 0 argument dev syscall
 ;
 ; extern uint64_t dev_sys_0arg(uint64_t syscallnum)
@@ -14,6 +15,7 @@ dev_sys_0arg_e:
     ret
 
 [GLOBAL dev_sys_1arg]
+[GLOBAL dev_sys_1arg_e]
 ; 1 argument dev syscall
 ;
 ; extern uint64_t dev_sys_1arg(uint64_t syscallnum, void* arg1)
@@ -30,6 +32,7 @@ dev_sys_1arg_e:
     ret
 
 [GLOBAL dev_sys_2arg]
+[GLOBAL dev_sys_2arg_e]
 ; 2 argument dev syscall
 ;
 ; extern uint64_t dev_sys_2arg(uint64_t syscallnum, void* arg1, void* arg2)
@@ -47,6 +50,7 @@ dev_sys_2arg_e:
     ret
 
 [GLOBAL dev_sys_3arg]
+[GLOBAL dev_sys_3arg_e]
 ; 3 argument dev syscall
 ;
 ; extern uint64_t dev_sys_3arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3)
@@ -66,6 +70,7 @@ dev_sys_3arg_e:
 
 
 [GLOBAL dev_sys_4arg]
+[GLOBAL dev_sys_4arg_e]
 ; 4 argument dev syscall
 ;
 ; extern uint64_t dev_sys_4arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4)

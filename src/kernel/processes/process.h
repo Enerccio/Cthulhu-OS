@@ -49,8 +49,6 @@ typedef struct mmap_area {
     uintptr_t  vaend;
     ma_type_t  mtype;
     uint64_t   count;
-    ruint_t	   __lock;
-
     struct mmap_area* next;
 } mmap_area_t;
 
@@ -110,8 +108,12 @@ mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount);
 borrowed_ticket_t* transfer_tickets(thread_t* from, thread_t* to, uint16_t tamount);
 int fork_process(registers_t* r, proc_t* p, thread_t* t);
 
+int sys_execve(uint8_t* image_data, int argc, char** argv, char** envp, registers_t* r);
+
 uintptr_t map_virtual_virtual(uintptr_t vastart, uintptr_t vaend, bool readonly);
 uintptr_t map_physical_virtual(puint_t vastart, puint_t vaend, bool readonly);
+
 void* proc_alloc(size_t size);
+void* proc_alloc_direct(proc_t* proc, size_t size);
 
 void initialize_processes();

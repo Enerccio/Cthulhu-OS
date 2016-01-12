@@ -42,5 +42,6 @@ void enschedule_best(thread_t* t);
 void enschedule_to_self(thread_t* t);
 
 void copy_registers(registers_t* r, thread_t* t);
+void registers_copy(thread_t* t, registers_t* r);
 
 void initialize_scheduler();

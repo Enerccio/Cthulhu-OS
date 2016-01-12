@@ -48,6 +48,7 @@ typedef struct cpu {
     size_t    insert_id;
     ruint_t   processor_id;
     uint8_t   apic_id;
+    uintptr_t current_address_space;
 
     volatile ruint_t __cpu_lock;
     volatile ruint_t __ipi_lock;
@@ -56,6 +57,7 @@ typedef struct cpu {
     volatile ruint_t apic_message2;
     volatile bool apic_message_handled;
     volatile uint8_t apic_message_type;
+    volatile struct cpu* apic_message_cpu;
 
     /* scheduler info */
     volatile ruint_t __cpu_sched_lock;

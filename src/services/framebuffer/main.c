@@ -19,43 +19,15 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * ny_initramfs.c
- *  Created on: Jan 6, 2016
+ * main.c
+ *  Created on: Jan 2, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#include "ny_initramfs.h"
+#include <ny/nyarlathotep.h>
+#include <sys/unistd.h>
 
-int get_directory(const char* path, ifs_directory_t* dir) {
-	int status;
-	status =  dev_sys_2arg(DEV_SYS_IVFS_GET_PATH_ELEMENT, (ruint_t)path, (ruint_t)&dir->entry);
-	if (status != E_IFS_ACTION_SUCCESS)
-		return status;
-	if (dir->entry.type != et_dir) {
-		return E_IFS_NOT_A_DECTYPE;
-	}
-	return E_IFS_ACTION_SUCCESS;
-}
-
-int get_file(const char* path, ifs_file_t* file) {
-	int status;
-	status = dev_sys_2arg(DEV_SYS_IVFS_GET_PATH_ELEMENT, (ruint_t)path, (ruint_t)&file->entry);
-	if (status != E_IFS_ACTION_SUCCESS)
-		return status;
-	if (file->entry.type != et_file) {
-		return E_IFS_NOT_A_DECTYPE;
-	}
-	return E_IFS_ACTION_SUCCESS;
-}
-
-int execve_ifs(const char* ifs_path, char** argv, char** envp) {
-	int argc = 0;
-	char** argt = argv;
-	while (*argt != NULL) {
-		++argc;
-		++argt;
-	}
-	return (int)dev_sys_4arg_e(DEV_SYS_IVFS_EXECVE, (ruint_t)ifs_path, (ruint_t)argv,
-			(ruint_t)argc, (ruint_t)envp, (ruint_t*)&errno);
+int main(int argc, char** argv) {
+    while (1) ;
 }
