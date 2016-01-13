@@ -162,8 +162,8 @@ void initialize_system_calls() {
     register_interrupt_handler(0x80, system_call_handler);
     register_interrupt_handler(0x81, dev_system_call_handler);
 
-    register_syscall(false, SYS_MEMALLOC, make_syscall_1(allocate_memory, false, false));
-    register_syscall(false, SYS_MEMDEALLOC, make_syscall_2(deallocate_memory, false, false));
+    register_syscall(false, SYS_ALLOCATE, make_syscall_1(allocate_memory, false, false));
+    register_syscall(false, SYS_DEALLOCATE, make_syscall_2(deallocate_memory, false, false));
     register_syscall(false, SYS_GET_TID, make_syscall_0(get_tid, false, false));
     register_syscall(false, SYS_FORK, make_syscall_2(fork, true, false));
     register_syscall(false, SYS_GET_PID, make_syscall_0(get_pid, false, false));

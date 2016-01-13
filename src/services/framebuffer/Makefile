@@ -35,4 +35,4 @@ clean:
 	$(AS) $(NASMFLAGS) $< -o $@
 	
 framebuffer: $(OBJ) 
-	$(CC) $(LDFLAGS) $< -o ${TARGETPATH}$@ -lnyarlathotep 
+	$(CC) $(LDFLAGS) $< -o ${TARGETPATH}$@ -lnyarlathotep -lcthulhu

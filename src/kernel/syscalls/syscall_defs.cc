@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <ny/devsys.h>
+#include <cthulhu/ct_sys.h>
 
 ruint_t allocate_memory(registers_t* r, ruint_t size) {
     cpu_t* cpu = get_current_cput();
