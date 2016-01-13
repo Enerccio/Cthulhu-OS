@@ -19,16 +19,18 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * main.c
- *  Created on: Jan 2, 2016
+ * framebuffer.h
+ *  Created on: Jan 13, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#include "framebuffer.h"
+#pragma once
 
-int main() {
-	init_framebuffer();
+#include <ny/nyarlathotep.h>
+#include <sys/unistd.h>
 
-    while (1) ;
-}
+extern uint32_t fw;
+extern uint32_t fh;
+
+void init_framebuffer();

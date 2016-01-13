@@ -117,4 +117,4 @@ azathoth.img: $(OBJ) kclib memory utils ports processes structures syscalls cpus
 		$(wildcard ports/*.o) $(wildcard processes/*.o) $(wildcard structures/*.o) \
 		$(wildcard syscalls/*.o) $(wildcard cpus/*.o) $(wildcard interrupts/*.o)\
 		$(wildcard grx/*.o) $(wildcard rlyeh/*.o) $(wildcard loader/*.o) \
-		$(LDFLAGS) -L../kclib/usr/lib -lc -lgcc -L../../osroot/usr/lib -lds
+		$(LDFLAGS) -L../kclib/usr/lib -lc -lgcc -L../../build/usr/lib -lds

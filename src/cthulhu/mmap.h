@@ -19,16 +19,18 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * main.c
- *  Created on: Jan 2, 2016
+ * mmap.h
+ *  Created on: Jan 13, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#include "framebuffer.h"
+#pragma once
 
-int main() {
-	init_framebuffer();
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    while (1) ;
+#ifdef __cplusplus
 }
+#endif
