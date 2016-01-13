@@ -83,7 +83,7 @@ struct thread {
     /* Userspace information */
     ruint_t last_rip, last_rsp, last_rax, last_rdi, last_rsi, last_rdx, last_rcx;
     ruint_t last_r8, last_r9, last_r10, last_r11;
-    ruint_t last_rbx, last_rbp, last_r12, last_r13, last_r14, last_r15;
+    ruint_t last_rbx, last_rbp, last_r12, last_r13, last_r14, last_r15, last_rflags;
     uintptr_t stack_top_address;
     uintptr_t stack_bottom_address;
 };

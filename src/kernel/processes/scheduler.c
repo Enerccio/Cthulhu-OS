@@ -105,7 +105,7 @@ void copy_registers(registers_t* r, thread_t* t) {
     t->last_r13 = r->r13;
     t->last_r14 = r->r14;
     t->last_r15 = r->r15;
-
+    t->last_rflags = r->rflags;
 }
 
 void registers_copy(thread_t* t, registers_t* r) {
@@ -126,6 +126,7 @@ void registers_copy(thread_t* t, registers_t* r) {
     r->r13 = t->last_r13;
     r->r14 = t->last_r14;
     r->r15 = t->last_r15;
+    r->rflags = t->last_rflags;
 }
 
 // TODO add switching threads
@@ -196,16 +197,12 @@ void schedule(registers_t* r) {
     pml4 = (uintptr_t)get_active_page();
     __atomic_store_n(&cpu->current_address_space, pml4, __ATOMIC_SEQ_CST);
 
-    // TODO: add flags for io
-    ruint_t flags = INTERRUPT_FLAG;
-
     if (r != NULL) {
         r->cs = 24 | 0x0003; // user space code
         r->ss = 32 | 0x0003; // user space data
         // TODO: add thread locals
         r->ds = 32 | 0x0003; // user space data
         r->es = 32 | 0x0003; // user space data
-        r->rflags = flags;
 
         registers_copy(cpu->threads, r);
     }
@@ -215,6 +212,8 @@ void schedule(registers_t* r) {
     proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 
     if (r == NULL) {
+    	// TODO: add flags for io
+    	ruint_t flags = INTERRUPT_FLAG;
         switch_to_usermode(cpu->threads->last_rdi,
                 cpu->threads->last_rip, cpu->threads->last_rsp, flags,
                 cpu->threads->last_rsi,
