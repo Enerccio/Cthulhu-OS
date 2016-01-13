@@ -522,7 +522,7 @@ int sys_execve(uint8_t* image_data, int argc, char** argv, char** envp, register
 
 	p->argc = argc;
 	p->argv = argvu;
-	p->environ = envp;
+	p->environ = envpu;
 
 	main_thread->last_r12 = 0;
 	main_thread->last_r11 = 0;

@@ -35,8 +35,8 @@ FLAGS       equ  MBALIGN | MEMINFO | GRAPHINFO
 MAGIC       equ  0x1BADB002             ; 'magic number' lets bootloader find the header
 CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum of above, to prove we are multiboot
 
-extern Realm64
-extern APRealm64
+extern bsp_entry_64
+extern ap_entry_64
 
 section .mboot
 align 16
@@ -83,12 +83,11 @@ GDT64:                           ; Global Descriptor Table (64-bit).
 
 [GLOBAL _start]
 _start:
-    ;mov dword [0x7E00], 0
     jmp azathoth_loader
 azathoth_loader:
     push ebx
     push ebp
-query_cpuid:
+.query_cpuid:
     pushfd               ; Store the FLAGS-register.
     pop eax              ; Restore the A-register.
     mov ecx, eax         ; Set the C-register to the A-register.
@@ -100,46 +99,57 @@ query_cpuid:
     push ecx             ; Store the C-register.
     popfd                ; Restore the FLAGS-register.
     xor eax, ecx         ; Do a XOR-operation on the A-register and the C-register.
-    jz nocpuid           ; The zero flag is set, no CPUID.
+    jz .nocpuid          ; The zero flag is set, no CPUID.
     mov eax, 0x80000000  ; Set the A-register to 0x80000000.
     cpuid                ; CPU identification.
     cmp eax, 0x80000001  ; Compare the A-register with 0x80000001.
-    jb nolongmode
-    mov eax, 0x80000001    ; Set the A-register to 0x80000001.
-    cpuid                  ; CPU identification.
-    test edx, 1 << 29      ; Test if the LM-bit, which is bit 29, is set in the D-register.
-    jz nolongmode
+    jb .nolongmode
+    mov eax, 0x80000001  ; Set the A-register to 0x80000001.
+    cpuid                ; CPU identification.
+    test edx, 1 << 29    ; Test if the LM-bit, which is bit 29, is set in the D-register.
+    jz .nolongmode
     mov eax, 0
-    jmp test_cpuid
-nocpuid:
+    jmp .test_cpuid
+.nocpuid:
     mov eax, -1
-    jmp test_cpuid
-nolongmode:
+    jmp .test_cpuid
+.nolongmode:
     mov eax, 1
-test_cpuid:
+.test_cpuid:
     mov ecx, eax
-    jecxz continue
-    jmp loop
-continue:
+    jecxz .continue
+.loop:
+    hlt
+    jmp .loop
+.continue:
     pop ebp
     pop ebx
     jmp after_pages_set
     ALIGN 0x1000
-_gpInitial_PML4:   ; Page Map Level 4
-    dq   _gpInitial_PDP1 + 3   ; Identity Map Low 4Mb
+_gpInitial_PML4:                        ; Page Map Level 4
+    dq   _gpInitial_PDP_MIRROR + 3      ; Identity Map Low 4Mb
     times 510 dq 0
-    dq   _gpInitial_PDP2 + 3   ; Also Map to 0xFFFF8000 00000000
-_gpInitial_PDP1:      ; Page Directory Pointer Table
-    dq _gpInitial_PD + 3
+    dq   _gpInitial_PDP_KS + 3          ; Also Map to 0xFFFF8000 00000000
+_gpInitial_PDP_MIRROR:                  ; Page Directory Pointer Table Mirror
+    dq _gpInitial_PD_MIRROR + 3
     times 511 dq 0
-_gpInitial_PDP2:      ; Page Directory Pointer Table
+_gpInitial_PDP_KS:                      ; Page Directory Pointer Table Kernel Section
     times 510 dq 0
-    dq _gpInitial_PD + 3
+    dq _gpInitial_PD_KS + 3
     dq 0
-_gpInitial_PD:      ; Page Directory
-    dq _gpInitial_PT1 + 3
+_gpInitial_PD_MIRROR:                   ; Page Directory Mirror
+    dq _gpInitial_PT_MIRROR + 3
     times 511 dq 0
-_gpInitial_PT1:      ; Page Table 1
+_gpInitial_PD_KS:                       ; Page Directory Kernel Section
+    dq _gpInitial_PT_KS + 3
+    times 511 dq 0
+_gpInitial_PT_MIRROR:                   ; Page Table Mirrpr
+    %assign i 0
+    %rep 512
+    dq   i*4096+3
+    %assign i i+1
+    %endrep
+_gpInitial_PT_KS:                       ; Page Table Kernel Section
     %assign i 0
     %rep 512
     dq   i*4096+3
@@ -168,14 +178,18 @@ after_pages_set:
     mov ds, ax
     mov gs, ax
     mov fs, ax
-    jmp GDT64.Code:Trampoline    ; Set the code segment and enter 64-bit long mode.
+    jmp GDT64.Code:trampoline    ; Set the code segment and enter 64-bit long mode.
 [BITS 32]
-loop:
-    jmp loop
+.loop:
+    hlt
+    jmp .loop
 [BITS 64]
-Trampoline:
-    mov rax, Realm64
+trampoline:
+    mov rax, bsp_entry_64
     jmp rax
+.loop:
+    hlt
+    jmp .loop
 
 %define PHYSADDR 0x2000
 
@@ -221,9 +235,9 @@ Gdt32:                           ; Global Descriptor Table (32-bit).
 section .mp_entry
 cpu_boot_entry:
     cli
-    jmp 0x0:.realMode - cpu_boot_entry + PHYSADDR
+    jmp 0x0:.real_mode - cpu_boot_entry + PHYSADDR
 
-.realMode:
+.real_mode:
     mov esp, ecx
     mov ebp, esp
     lgdt [word Gdt32.Pointer - Gdt32 + 0x1000]  ; load GDT register with start address of Global Descriptor Table
@@ -234,7 +248,9 @@ cpu_boot_entry:
     ; Perform far jump to selector 08h (offset into GDT, pointing at a 32bit PM code segment descriptor)
     ; to load CS with proper PM32 descriptor)
     jmp 08h:ap_protected_mode - cpu_boot_entry + PHYSADDR
+.loop:
     hlt
+    jmp .loop
 
 [BITS 32]
 ap_protected_mode:
@@ -244,10 +260,9 @@ ap_protected_mode:
     mov ds, ax
     mov gs, ax
     mov fs, ax
-    mov eax, ap_protected_mode_ra
+    mov eax, .ap_protected_mode_ra
     jmp eax
-
-ap_protected_mode_ra:
+.ap_protected_mode_ra:
     mov edi, _gpInitial_PML4
     mov cr3, edi                 ; Set control register 3 to the destination index.
     mov eax, cr4                 ; Set the A-register to control register 4.
@@ -270,11 +285,15 @@ ap_protected_mode_ra:
     mov ds, ax
     mov gs, ax
     mov fs, ax
-    jmp GDT64.Code:AP_Trampoline    ; Set the code segment and enter 64-bit long mode.
+    jmp GDT64.Code:ap_trampoline    ; Set the code segment and enter 64-bit long mode.
 [BITS 32]
 .loop:
+    hlt
     jmp .loop
 [BITS 64]
-AP_Trampoline:
-    mov rax, APRealm64
+ap_trampoline:
+    mov rax, ap_entry_64
     jmp rax
+.loop:
+    hlt
+    jmp .loop

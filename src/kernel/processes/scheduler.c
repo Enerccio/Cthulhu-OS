@@ -105,6 +105,7 @@ void copy_registers(registers_t* r, thread_t* t) {
     t->last_r13 = r->r13;
     t->last_r14 = r->r14;
     t->last_r15 = r->r15;
+
 }
 
 void registers_copy(thread_t* t, registers_t* r) {
@@ -206,23 +207,7 @@ void schedule(registers_t* r) {
         r->es = 32 | 0x0003; // user space data
         r->rflags = flags;
 
-        r->rip = cpu->threads->last_rip;
-        r->uesp = cpu->threads->last_rsp;
-        r->rbp = cpu->threads->last_rbp;
-        r->rax = cpu->threads->last_rax;
-        r->rbx = cpu->threads->last_rbx;
-        r->rcx = cpu->threads->last_rcx;
-        r->rdx = cpu->threads->last_rdx;
-        r->rsi = cpu->threads->last_rsi;
-        r->rdi = cpu->threads->last_rdi;
-        r->r8 = cpu->threads->last_r8;
-        r->r9 = cpu->threads->last_r9;
-        r->r10 = cpu->threads->last_r10;
-        r->r11 = cpu->threads->last_r11;
-        r->r12 = cpu->threads->last_r12;
-        r->r13 = cpu->threads->last_r13;
-        r->r14 = cpu->threads->last_r14;
-        r->r15 = cpu->threads->last_r15;
+        registers_copy(cpu->threads, r);
     }
 
     proc_spinlock_unlock(&__thread_modifier);

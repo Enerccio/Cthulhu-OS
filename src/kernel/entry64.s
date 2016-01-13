@@ -31,8 +31,8 @@ resb 0x5000
 stack_top64:
 
 section .text
-[GLOBAL Realm64]
-Realm64:
+[GLOBAL bsp_entry_64]
+bsp_entry_64:
     mov rsp, stack_top64
     mov rdi, rbx
     mov rsi, heap
@@ -40,12 +40,12 @@ Realm64:
     extern kernel_main
     call kernel_main
     cli
-.hang64:
+.hang_bsp:
     hlt
-    jmp .hang64
+    jmp .hang_bsp
 
-[GLOBAL APRealm64]
-APRealm64:
+[GLOBAL ap_entry_64]
+ap_entry_64:
     mov rbx, (0xFEE00000 + 2 * 0x10) + (0xFFFF000000000000 + (509<<39))
     mov rax, [rbx]
     shr rax, 24
@@ -68,9 +68,9 @@ APRealm64:
     extern ap_main
     call ap_main
     cli
-.hangap:
+.hang_ap:
     hlt
-    jmp .hangap
+    jmp .hang_ap
 
 section .temp_heap_storage, nobits
 align 16

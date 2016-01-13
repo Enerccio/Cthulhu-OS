@@ -347,7 +347,7 @@ void free_page_structure(uintptr_t vaddress) {
 }
 
 void deallocate_start_memory() {
-    memset((void*)physical_to_virtual((uintptr_t)get_active_page()), 0, 256*sizeof(uintptr_t));
+	memset((void*)physical_to_virtual((uintptr_t)get_active_page()), 0, 256*sizeof(uintptr_t));
     broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, 0, 0x200000, NULL);
 }
 
