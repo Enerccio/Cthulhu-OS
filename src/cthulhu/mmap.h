@@ -27,17 +27,16 @@
 
 #pragma once
 
+#include "ct_commons.h"
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <errno.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-
-#include "ct_commons.h"
 
 typedef enum memmap_type {
 	kernel_address, file

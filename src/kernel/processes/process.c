@@ -109,101 +109,6 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     return process;
 }
 
-int fork_process(registers_t* r, proc_t* p, thread_t* t) {
-    proc_t* process = malloc(sizeof(proc_t));
-    if (process == NULL) {
-        return ENOMEM;
-    }
-
-    process->fds = create_array();
-    if (process->fds == NULL) {
-        return ENOMEM;
-    }
-    for (uint32_t i=0; i<array_get_size(p->fds); i++) {
-        fd_t* fe = (fd_t*)array_get_at(p->fds, i);
-        fd_t* nfe = malloc(sizeof(fd_t));
-        if (nfe == NULL) {
-            for (uint32_t i=0; i<array_get_size(p->fds); i++)
-                free(array_get_at(p->fds, i));
-            destroy_array(process->fds);
-            free(process);
-            return ENOMEM;
-        }
-        memcpy(nfe, fe, sizeof(fd_t));
-        array_push_data(p->fds, nfe);
-    }
-    process->threads = create_array();
-    if (process->threads == NULL) {
-        for (uint32_t i=0; i<array_get_size(p->fds); i++)
-            free(array_get_at(p->fds, i));
-        destroy_array(process->fds);
-        free(process);
-        return ENOMEM;
-    }
-    process->pml4 = clone_paging_structures();
-    process->mem_maps = NULL;
-    process->proc_random = rg_create_random_generator(get_unix_time());
-    process->parent = p;
-
-    thread_t* main_thread = malloc(sizeof(thread_t));
-    if (main_thread == NULL) {
-        destroy_array(process->threads);
-        for (uint32_t i=0; i<array_get_size(p->fds); i++)
-            free(array_get_at(p->fds, i));
-        destroy_array(process->fds);
-        free(process);
-        return ENOMEM;
-    }
-    memset(main_thread, 0, sizeof(thread_t));
-    main_thread->parent_process = process;
-    main_thread->tickets = PER_PROCESS_TICKETS;
-    main_thread->tId = __atomic_add_fetch(&thread_id_num, 1, __ATOMIC_SEQ_CST);
-    main_thread->next_thread = NULL;
-    main_thread->prev_thread = NULL;
-    main_thread->borrowed_tickets = create_list();
-    if (main_thread->borrowed_tickets == NULL) {
-        free(main_thread);
-        destroy_array(process->threads);
-        for (uint32_t i=0; i<array_get_size(p->fds); i++)
-            free(array_get_at(p->fds, i));
-        destroy_array(process->fds);
-        free(process);
-        proc_spinlock_unlock(&__proclist_lock);
-        return ENOMEM;
-    }
-    main_thread->lended_tickets = create_list();
-    if (main_thread->lended_tickets == NULL) {
-        free_list(main_thread->borrowed_tickets);
-        free(main_thread);
-        destroy_array(process->threads);
-        for (uint32_t i=0; i<array_get_size(p->fds); i++)
-            free(array_get_at(p->fds, i));
-        destroy_array(process->fds);
-        free(process);
-        proc_spinlock_unlock(&__proclist_lock);
-        return ENOMEM;
-    }
-    array_push_data(process->threads, main_thread);
-
-    proc_spinlock_lock(&__proclist_lock);
-    process->proc_id = ++process_id_num;
-    array_push_data(processes, process);
-    mmap_area_t* mmap = p->mem_maps;
-    while (mmap != NULL) {
-        ++mmap->count;
-        mmap = mmap->next;
-    }
-    process->mem_maps = p->mem_maps;
-    proc_spinlock_unlock(&__proclist_lock);
-
-    copy_registers(r, main_thread);
-
-    // TODO: add split option?
-    main_thread->last_rax = process->proc_id;
-    enschedule_best(main_thread);
-    return 0;
-}
-
 borrowed_ticket_t* transfer_tickets(thread_t* from, thread_t* to, uint16_t tamount) {
     if (tamount > from->tickets)
         tamount = from->tickets;
@@ -449,119 +354,141 @@ static void free_array(int count, char** a) {
     free(a);
 }
 
-int sys_execve(uint8_t* image_data, int argc, char** argv, char** envp, registers_t* r) {
-    int envc = 0;
-    char** envt = envp;
-    while (*envt != NULL) {
-        ++envc;
-        ++envt;
-    }
+int create_process_base(uint8_t* image_data, int argc, char** argv, char** envp, registers_t* r) {
+	int envc = 0;
+	char** envt = envp;
+	while (*envt != NULL) {
+		++envc;
+		++envt;
+	}
 
-    int err;
-    if ((err = cpy_array(argc, &argv)) != 0)
-        return err;
-    if ((err = cpy_array(envc, &envp)) != 0) {
-        free_array(argc, argv);
-        return err;
-    }
-    // envp and argv are now kernel structures
+	int err;
+	if ((err = cpy_array(argc, &argv)) != 0)
+		return err;
+	if ((err = cpy_array(envc, &envp)) != 0) {
+		free_array(argc, argv);
+		return err;
+	}
+	// envp and argv are now kernel structures
 
-    cpu_t* cpu = get_current_cput();
-    proc_spinlock_lock(&cpu->__cpu_lock);
-    proc_spinlock_lock(&cpu->__cpu_sched_lock);
-    proc_spinlock_lock(&__thread_modifier);
+	proc_t* process = malloc(sizeof(proc_t));
+	if (process == NULL) {
+		return ENOMEM;
+	}
 
-    proc_t* p = cpu->threads->parent_process;
-    thread_t* main_thread = cpu->threads;
-    free_proc_memory(p);
-    p->mem_maps = NULL;
+	process->fds = create_array();
+	if (process->fds == NULL) {
+		free(process);
+		return ENOMEM;
+	}
 
-    for (uint32_t tid=0; tid<array_get_size(p->threads); tid++) {
-        thread_t* t = array_get_at(p->threads, tid);
-        if (t != main_thread) {
-            // TODO: add freeing threads
-            // TODO: add ticket merging
-            free(t);
-        }
-    }
+	process->threads = create_array();
+	if (process->fds == NULL) {
+		destroy_array(process->fds);
+		free(process);
+		return ENOMEM;
+	}
 
-    array_clean(p->threads);
-    array_push_data(p->threads, main_thread);
+	process->pml4 = clone_paging_structures();
+	process->mem_maps = NULL;
+	process->proc_random = rg_create_random_generator(get_unix_time());
+	process->parent = NULL;
 
-    err = load_elf_exec((uintptr_t)image_data, p);
-    if (err == ELF_ERROR_ENOMEM) {
-        err = ENOMEM;
-    } else if (err != 0) {
-        err = EINVAL;
-    }
+	thread_t* main_thread = malloc(sizeof(thread_t));
+	if (main_thread == NULL) {
+		destroy_array(process->threads);
+		destroy_array(process->fds);
+		free(process);
+		return ENOMEM;
+	}
+	memset(main_thread, 0, sizeof(thread_t));
+	main_thread->parent_process = process;
+	main_thread->tickets = PER_PROCESS_TICKETS;
+	main_thread->tId = __atomic_add_fetch(&thread_id_num, 1, __ATOMIC_SEQ_CST);
+	main_thread->borrowed_tickets = create_list();
+	if (main_thread->borrowed_tickets == NULL) {
+		free(main_thread);
+		destroy_array(process->threads);
+		destroy_array(process->fds);
+		free(process);
+		return ENOMEM;
+	}
+	main_thread->lended_tickets = create_list();
+	if (main_thread->lended_tickets == NULL) {
+		free_list(main_thread->borrowed_tickets);
+		free(main_thread);
+		destroy_array(process->threads);
+		destroy_array(process->fds);
+		free(process);
+		return ENOMEM;
+	}
 
-    if (err != 0) {
-        // TODO: add abort
-        proc_spinlock_unlock(&__thread_modifier);
-        proc_spinlock_unlock(&cpu->__cpu_lock);
-        proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-        return err;
-    }
+	err = load_elf_exec((uintptr_t)image_data, process);
+	if (err == ELF_ERROR_ENOMEM) {
+		err = ENOMEM;
+	} else if (err != 0) {
+		err = EINVAL;
+	}
 
-    char** argvu = argv;
-    char** envpu = envp;
-    if ((err = cpy_array_user(argc, &argvu, p)) != 0) {
-        // TODO: add abort
-        proc_spinlock_unlock(&__thread_modifier);
-        proc_spinlock_unlock(&cpu->__cpu_lock);
-        proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-        return err;
-    }
-    if ((err = cpy_array_user(envc, &envpu, p)) != 0) {
-        // TODO: add abort
-        proc_spinlock_unlock(&__thread_modifier);
-        proc_spinlock_unlock(&cpu->__cpu_lock);
-        proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-        return err;
-    }
+	if (err != 0) {
+		free_list(main_thread->borrowed_tickets);
+		free(main_thread);
+		destroy_array(process->threads);
+		destroy_array(process->fds);
+		free(process);
+		return err;
+	}
 
-    p->argc = argc;
-    p->argv = argvu;
-    p->environ = envpu;
+	char** argvu = argv;
+	char** envpu = envp;
+	if ((err = cpy_array_user(argc, &argvu, process)) != 0) {
+		free_list(main_thread->borrowed_tickets);
+		free(main_thread);
+		destroy_array(process->threads);
+		destroy_array(process->fds);
+		free(process);
+		return err;
+	}
+	if ((err = cpy_array_user(envc, &envpu, process)) != 0) {
+		free_list(main_thread->borrowed_tickets);
+		free(main_thread);
+		destroy_array(process->threads);
+		destroy_array(process->fds);
+		free(process);
+		return err;
+	}
 
-    main_thread->last_r12 = 0;
-    main_thread->last_r11 = 0;
-    main_thread->last_r10 = 0;
-    main_thread->last_r9 = 0;
-    main_thread->last_r8 = 0;
-    main_thread->last_rax = 0;
-    main_thread->last_rbx = 0;
-    main_thread->last_rcx = 0;
-    main_thread->last_rdx = 0;
-    main_thread->last_rdi = 0;
-    main_thread->last_rsi = 0;
-    main_thread->last_rbp = 0;
+	process->argc = argc;
+	process->argv = argvu;
+	process->environ = envpu;
 
-    cpu->threads = main_thread;
+	main_thread->last_r12 = 0;
+	main_thread->last_r11 = 0;
+	main_thread->last_r10 = 0;
+	main_thread->last_r9 = 0;
+	main_thread->last_r8 = 0;
+	main_thread->last_rax = 0;
+	main_thread->last_rbx = 0;
+	main_thread->last_rcx = 0;
+	main_thread->last_rdx = 0;
+	main_thread->last_rdi = 0;
+	main_thread->last_rsi = 0;
+	main_thread->last_rbp = 0;
 
-    // TODO: do check tickets etc
+	proc_spinlock_lock(&__proclist_lock);
+	process->proc_id = ++process_id_num;
+	array_push_data(processes, process);
+	proc_spinlock_unlock(&__proclist_lock);
 
-    // TODO: remove up when do proper cleanup
+	main_thread->last_rdi = (ruint_t)(uintptr_t)process->argc;
+	main_thread->last_rsi = (ruint_t)(uintptr_t)process->argv;
+	main_thread->last_rdx = (ruint_t)(uintptr_t)process->environ;
 
-    main_thread->tickets = PER_PROCESS_TICKETS;
-    free_list(main_thread->borrowed_tickets);
-    free_list(main_thread->lended_tickets);
+	free_array(argc, argv);
+	free_array(envc, envp);
 
-    main_thread->borrowed_tickets = create_list();
-    main_thread->lended_tickets = create_list();
-
-    main_thread->last_rdi = (ruint_t)(uintptr_t)p->argc;
-    main_thread->last_rsi = (ruint_t)(uintptr_t)p->argv;
-    main_thread->last_rdx = (ruint_t)(uintptr_t)p->environ;
-
-    registers_copy(main_thread, r);
-
-    free_array(argc, argv);
-    free_array(envc, envp);
-
-    proc_spinlock_unlock(&__thread_modifier);
-    proc_spinlock_unlock(&cpu->__cpu_lock);
-    proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-
-    return 0;
+	// TODO: add split option?
+	main_thread->last_rax = process->proc_id;
+	enschedule_best(main_thread);
+	return 0;
 }

@@ -19,20 +19,19 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * messages.h
+ * process.c
  *  Created on: Jan 13, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#pragma once
+#include "process.h"
 
-#include "ct_commons.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
+pid_t getpid() {
+	int error = 0;
+	pid_t pid = (pid_t) sys_0arg_e(SYS_GET_PID, &error);
+	if (error != 0) {
+		errno = error;
+	}
+	return pid;
 }
-#endif

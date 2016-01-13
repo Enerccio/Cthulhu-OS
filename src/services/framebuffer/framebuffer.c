@@ -43,24 +43,6 @@ bool init_framebuffer() {
 
     uint64_t fbitsize = fw*fh;
     uint64_t fbsize = fbitsize*4;
-    uintptr_t fb_kernel_address = (uintptr_t) framebuffer_kernel_address();
-    uintptr_t fb_bitmap_address = (uintptr_t) framebuffer_bitmap_address();
-
-    framebuffer = (uint32_t*) mmap_kernel_address(fb_kernel_address, fb_kernel_address+fbsize);
-    if (framebuffer == NULL) {
-    	// TODO: handle error
-    	return false;
-    }
-    framebuffer_bitmap = (uint8_t*) mmap_kernel_address(fb_bitmap_address, fb_bitmap_address+fbitsize);
-    if (framebuffer_bitmap == NULL) {
-		// TODO: handle error
-    	// TODO: munmap
-		return false;
-	}
 
     return true;
-}
-
-void flip() {
-	framebuffer_update();
 }

@@ -19,7 +19,7 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * __mmap.h
+ * framebuffer.h
  *  Created on: Jan 13, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
@@ -27,7 +27,13 @@
 
 #pragma once
 
-#include <sys/mman_commons.h>
+#include <cthulhu/messages.h>
 
-void* mmap(void* addr, size_t len, int prot, int flags,
-    int fildes, off_t off);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#ifdef __cplusplus
+}
+#endif

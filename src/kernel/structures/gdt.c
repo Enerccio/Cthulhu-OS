@@ -73,8 +73,8 @@ void reinitialize_gdt() {
         cpu_t* cpu = array_get_at(cpus, i);
         tsd = (tss_descriptor_t*)&gdt.descriptors[itc];
         itc += 2;
-        tss_t* tss = malloc(sizeof(tss_t));
-        memset(tss, 0, sizeof(tss_t));
+        cputss_t* tss = malloc(sizeof(cputss_t));
+        memset(tss, 0, sizeof(cputss_t));
 
         tss->rsp0 = (uintptr_t)cpu->stack;
         tss->ist1 = (uintptr_t)cpu->handler_stack;
@@ -87,7 +87,7 @@ void reinitialize_gdt() {
         tsd->descriptor.base2316 = (tss_point >> 16) & 0xFF;
         tsd->descriptor.base3124 = (tss_point >> 24) & 0xFF;
         tsd->base6332 = (tss_point >> 32) & 0xFFFFFFFF;
-        tsd->descriptor.limit0015 = sizeof(tss_t);
+        tsd->descriptor.limit0015 = sizeof(cputss_t);
         tsd->descriptor.s = 0;
         tsd->descriptor.dpl = 0;
         tsd->descriptor.g = 0;

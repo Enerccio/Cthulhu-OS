@@ -30,7 +30,6 @@
 #include "ny_stddef.h"
 #include "ny_commons.h"
 #include "devsys.h"
-#include <stdnoreturn.h>
 
 #define E_IFS_INITRAMFS_GONE -1
 #define E_IFS_ACTION_SUCCESS  0
@@ -59,4 +58,3 @@ typedef struct ifs_file {
 
 int get_directory(const char* path, ifs_directory_t* dir);
 int get_file(const char* path, ifs_file_t* file);
-int execve_ifs(const char* ifs_path, char** argv, char** envp);

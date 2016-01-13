@@ -29,7 +29,6 @@ all: install-headers libcthulhu.a
 install-headers:
 	-mkdir ${INCPATH}/cthulhu
 	cp *.h ${INCPATH}/cthulhu -r
-	cp sys/*.h ${INCPATH}/sys -r
 
 clean: 
 	-rm -f $(OBJ)

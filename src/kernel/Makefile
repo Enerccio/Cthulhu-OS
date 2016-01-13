@@ -32,8 +32,8 @@ clean: kclib-clean memory-clean utils-clean ports-clean processes-clean structur
 	-rm ${TARGETPATH}azathoth.img
 
 %.o : %.c 
-	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../kclib/usr/include"-c $<
-	$(CC) $(CFLAGS) $(CPPFLAGS) -I"../kclib/usr/include" -c $< -o $@
+	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../../build/usr/include"-c $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -I"../kclib/usr/include" -I"../../build/usr/include" -c $< -o $@
 
 %_o.o : %.s 
 	$(AS) $(NASMFLAGS) $< -o $@

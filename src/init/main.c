@@ -26,7 +26,6 @@
  */
 
 #include <ny/nyarlathotep.h>
-#include <sys/unistd.h>
 
 
 
@@ -44,24 +43,20 @@ int main(void) {
     while (daemon_path != NULL) {
         if (strlen(daemon_path)==0)
             break;
-        if (fork() != pid) {
 
-            char** args = malloc(16);
-            char* arg = malloc(strlen(daemon_path)+1);
-            memcpy(arg, daemon_path, strlen(daemon_path)+1);
 
-            args[0] = arg;
-            args[1] = NULL;
+		char** args = malloc(16);
+		char* arg = malloc(strlen(daemon_path)+1);
+		memcpy(arg, daemon_path, strlen(daemon_path)+1);
 
-            char** envp = malloc(8);
-            envp[0] = NULL;
+		args[0] = arg;
+		args[1] = NULL;
 
-            execve_ifs(daemon_path, args, envp);
+		char** envp = malloc(8);
+		envp[0] = NULL;
 
-            while (1) ; // sentinel break, TODO: add abort
-        } else {
-            daemon_path = strtok(NULL, "\n");
-        }
+		//execve_ifs(daemon_path, args, envp);
+        daemon_path = strtok(NULL, "\n");
     }
 
     while (1) ;

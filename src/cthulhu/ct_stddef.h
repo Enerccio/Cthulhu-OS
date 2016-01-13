@@ -30,6 +30,6 @@
 #include <stddef.h>
 #include <limits.h>
 #include <stdint.h>
-#include <sys/types.h>
+#include <sys/external.h>
 #include <stdlib.h>
 #include <errno.h>

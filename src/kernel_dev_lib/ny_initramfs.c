@@ -49,6 +49,7 @@ int get_file(const char* path, ifs_file_t* file) {
     return E_IFS_ACTION_SUCCESS;
 }
 
+/*
 int execve_ifs(const char* ifs_path, char** argv, char** envp) {
     int argc = 0;
     char** argt = argv;
@@ -59,3 +60,4 @@ int execve_ifs(const char* ifs_path, char** argv, char** envp) {
     return (int)dev_sys_4arg_e(DEV_SYS_IVFS_EXECVE, (ruint_t)ifs_path, (ruint_t)argv,
             (ruint_t)argc, (ruint_t)envp, (ruint_t*)&errno);
 }
+*/

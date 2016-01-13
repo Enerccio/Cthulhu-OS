@@ -29,7 +29,7 @@
 
 #include "../commons.h"
 
-typedef struct __attribute__((packed)) tss {
+typedef struct __attribute__((packed)) cputss {
     uint32_t reserved;
     uintptr_t rsp0;
     uintptr_t rsp1;
@@ -45,4 +45,4 @@ typedef struct __attribute__((packed)) tss {
     uint64_t r1;
     uint16_t r2;
     uint16_t io_map_base_address;
-} tss_t;
+} cputss_t;

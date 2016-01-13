@@ -19,28 +19,22 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * mmap.c
+ * process.h
  *  Created on: Jan 13, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#include "mmap.h"
-#include <sys/__mmap.h>
+#pragma once
 
-void* mmap_kernel_address(uintptr_t kernel_address_start, uintptr_t kernel_address_end) {
-	memmap_ka_t ka_request;
-	ka_request.header.memmap_type = kernel_address;
-	ka_request.header.adressing.requires_static_address = false;
-	ka_request.from = kernel_address_start;
-	ka_request.amount = kernel_address_end-kernel_address_start;
-	memmap(&ka_request.header);
-	return (void*)ka_request.header.adressing.asked_address;
-}
+#include "ct_commons.h"
 
-void memmap(struct memmap* mmap) {
-	int error = (int)sys_1arg(SYS_MEMMAP, mmap);
-	if (error != 0) {
-		errno = error;
-	}
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+pid_t getpid();
+
+#ifdef __cplusplus
 }
+#endif

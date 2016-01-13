@@ -34,15 +34,3 @@ int32_t framebuffer_width() {
 int32_t framebuffer_height() {
     return dev_sys_0arg(DEV_SYS_FRAMEBUFFER_GET_HEIGHT);
 }
-
-uintptr_t framebuffer_kernel_address() {
-	return (uintptr_t)dev_sys_0arg(DEV_SYS_FRAMEBUFFER_GET_KERNEL_ADDRESS);
-}
-
-uintptr_t framebuffer_bitmap_address() {
-	return (uintptr_t)dev_sys_0arg(DEV_SYS_FRAMEBUFFER_GET_BITMAP_ADDRESS);
-}
-
-void framebuffer_update() {
-	dev_sys_0arg(DEV_SYS_FRAMEBUFFER_UPDATE);
-}

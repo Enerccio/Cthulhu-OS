@@ -89,35 +89,6 @@ ruint_t get_pid(registers_t* r) {
 	return pid;
 }
 
-ruint_t fork(registers_t* r, ruint_t contcall, ruint_t ecptr) {
-	ruint_t* ec = (ruint_t*)(uintptr_t)ecptr;
-
-	cpu_t* cpu = get_current_cput();
-
-	proc_spinlock_lock(&cpu->__cpu_lock);
-	proc_spinlock_lock(&__thread_modifier);
-
-	thread_t* ct = cpu->threads;
-	pid_t pid = ct->parent_process->proc_id;
-
-	proc_spinlock_unlock(&__thread_modifier);
-	proc_spinlock_unlock(&cpu->__cpu_lock);
-
-	int errc = fork_process(r, ct->parent_process, ct);
-	if (errc != 0) {
-		*ec = errc;
-	}
-	return pid;
-}
-
-#include "sys_mmap.h"
-ruint_t mem_map(registers_t* r, ruint_t mmap_structure) {
-	struct memmap* mmap = (struct memmap*)mmap_structure;
-
-
-	return 0;
-}
-
 #include "../grx/grx.h"
 #include "../grx/image.h"
 
@@ -135,32 +106,6 @@ ruint_t dev_fb_get_width(registers_t* r) {
 	// TODO: add authorization
 
 	return grx_get_width();
-}
-
-ruint_t dev_fb_get_ka(registers_t* r) {
-	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
-		return DS_ERROR_NOT_ALLOWED;
-	// TODO: add authorization
-
-	extern uint32_t* local_fb;
-	return (ruint_t)(uintptr_t)local_fb;
-}
-
-ruint_t dev_fb_get_ba(registers_t* r) {
-	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
-		return DS_ERROR_NOT_ALLOWED;
-	// TODO: add authorization
-
-	extern uint8_t* local_fb_changes;
-	return (ruint_t)(uintptr_t)local_fb_changes;
-}
-
-ruint_t dev_fb_update(registers_t* r) {
-	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
-		return DS_ERROR_NOT_ALLOWED;
-	// TODO: add authorization
-
-	flush_buffer();
 }
 
 #include "../rlyeh/rlyeh.h"
@@ -204,6 +149,7 @@ ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 	return E_IFS_ACTION_SUCCESS;
 }
 
+/*
 ruint_t initramfs_execve(registers_t* r, ruint_t pathv, ruint_t argvv, ruint_t argcv,
 		ruint_t envpv, ruint_t errnov) {
 	int* errno = (int*)errnov;
@@ -231,3 +177,4 @@ ruint_t initramfs_execve(registers_t* r, ruint_t pathv, ruint_t argvv, ruint_t a
 
 	return 0;
 }
+*/
