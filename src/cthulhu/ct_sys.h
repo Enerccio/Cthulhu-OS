@@ -34,3 +34,4 @@
 #define SYS_GET_PID         5
 #define SYS_SEND_MESSAGE    6
 #define SYS_RECEIVE_MESSAGE 7
+#define SYS_MEMMAP			8

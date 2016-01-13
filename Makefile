@@ -1,10 +1,10 @@
 MODE ?= debug
 
-.PHONY: clean kernel-clean kernel lib all nyarlathotep nyarlathotep-clean cthulhu cthulhu-clean lds lds-clean lds-u lds-u-clean
+.PHONY: clean kernel-clean kernel lib all nyarlathotep nyarlathotep-clean cthulhu cthulhu-clean lds lds-clean lds-u lds-u-clean framebuffer-install-headers
 
-all: lib lds nyarlathotep kernel cthulhu lds-u init framebuffer
+all: lib kernel init framebuffer 
 
-clean: lds-clean kernel-clean nyarlathotep-clean cthulhu-clean lds-u init-clean framebuffer-clean
+clean: kernel-clean framebuffer-clean init-clean
 
 lds-clean:
 	$(MAKE) clean -C libds MODE=$(MODE) SYSROOT=../osroot
@@ -21,11 +21,14 @@ nyarlathotep-clean:
 cthulhu-clean:
 	$(MAKE) clean -C src/cthulhu MODE=$(MODE)
 
-init-clean: lds-u-clean nyarlathotep-clean cthulhu-clean
+init-clean: lds-u-clean nyarlathotep-clean cthulhu-clean framebuffer-clean
 	$(MAKE) clean -C src/init MODE=$(MODE)
 	
 framebuffer-clean: lds-u-clean nyarlathotep-clean cthulhu-clean
 	$(MAKE) clean -C src/services/framebuffer MODE=$(MODE)
+
+framebuffer-install-headers:
+	$(MAKE) install-headers -C src/services/framebuffer MODE=$(MODE) SYSROOT=../../../osroot
 
 lib:
 	bash build_kclib.sh $(MODE)
@@ -33,7 +36,8 @@ lib:
 lds:
 	$(MAKE) -C libds MODE=$(MODE) CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar CFLAGS_FOR_TARGET=-mcmodel=kernel SYSROOT=../build
 
-lds-u:
+lds-u: 
+	$(MAKE) clean -C libds MODE=$(MODE) SYSROOT=../build
 	$(MAKE) -C libds MODE=$(MODE) CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar SYSROOT=../osroot
 	
 kernel: lib lds nyarlathotep cthulhu 
@@ -45,7 +49,7 @@ nyarlathotep:
 cthulhu:
 	$(MAKE) -C src/cthulhu MODE=$(MODE)
 	
-init: lds-u nyarlathotep cthulhu 
+init: lds-u nyarlathotep cthulhu framebuffer-install-headers
 	$(MAKE) -C src/init MODE=$(MODE)
 
 framebuffer: lds-u nyarlathotep cthulhu 

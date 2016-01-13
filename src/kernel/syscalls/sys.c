@@ -167,10 +167,14 @@ void initialize_system_calls() {
     register_syscall(false, SYS_GET_TID, make_syscall_0(get_tid, false, false));
     register_syscall(false, SYS_FORK, make_syscall_2(fork, true, false));
     register_syscall(false, SYS_GET_PID, make_syscall_0(get_pid, false, false));
+    register_syscall(false, SYS_MEMMAP, make_syscall_1(mem_map, false, false));
 
     // dev syscalls
     register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_HEIGHT, make_syscall_0(dev_fb_get_height, false, false));
     register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_WIDTH, make_syscall_0(dev_fb_get_width, false, false));
+    register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_KERNEL_ADDRESS, make_syscall_0(dev_fb_get_ka, false, false));
+    register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_BITMAP_ADDRESS, make_syscall_0(dev_fb_get_ba, false, false));
+    register_syscall(true, DEV_SYS_FRAMEBUFFER_UPDATE, make_syscall_0(dev_fb_update, false, false));
     register_syscall(true, DEV_SYS_IVFS_GET_PATH_ELEMENT, make_syscall_2(get_initramfs_entry, false, false));
     register_syscall(true, DEV_SYS_IVFS_EXECVE, make_syscall_5(initramfs_execve, true, true));
 }

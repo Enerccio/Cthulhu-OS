@@ -1,5 +1,9 @@
 TARGETPATH ?= ../../../build/
 
+SYSROOT ?= ../../osroot
+PREFIX ?= /usr
+INCPATH ?= ${SYSROOT}${PREFIX}/include
+
 include confbase.mk
 include $(MODE).mk
 
@@ -18,7 +22,7 @@ CC := x86_64-fhtagn-gcc
 LD := x86_64-fhtagn-ld
 AS := nasm
 
-.PHONY: all clean 
+.PHONY: all clean install-headers
 
 all: framebuffer
 
@@ -37,3 +41,7 @@ clean:
 framebuffer: $(OBJ) 
 	echo $(OBJ)
 	$(CC) $(LDFLAGS) $^ -o ${TARGETPATH}$@ -lnyarlathotep -lcthulhu
+	
+install-headers:
+	-mkdir ${INCPATH}/framebuffer
+	cp framebuffer/*.h ${INCPATH}/framebuffer -r 

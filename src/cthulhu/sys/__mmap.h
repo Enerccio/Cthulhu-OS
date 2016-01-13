@@ -19,48 +19,15 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * framebuffer.c
+ * __mmap.h
  *  Created on: Jan 13, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#include "framebuffer.h"
+#pragma once
 
-uint32_t fw;
-uint32_t fh;
+#include <sys/mman_commons.h>
 
-uint32_t* framebuffer;
-uint8_t*  framebuffer_bitmap;
-
-bool init_framebuffer() {
-
-    fw = framebuffer_width();
-    fh = framebuffer_height();
-
-    if (fw <= 0 || fh <= 0)
-    	return false;
-
-    uint64_t fbitsize = fw*fh;
-    uint64_t fbsize = fbitsize*4;
-    uintptr_t fb_kernel_address = (uintptr_t) framebuffer_kernel_address();
-    uintptr_t fb_bitmap_address = (uintptr_t) framebuffer_bitmap_address();
-
-    framebuffer = (uint32_t*) mmap_kernel_address(fb_kernel_address, fb_kernel_address+fbsize);
-    if (framebuffer == NULL) {
-    	// TODO: handle error
-    	return false;
-    }
-    framebuffer_bitmap = (uint8_t*) mmap_kernel_address(fb_bitmap_address, fb_bitmap_address+fbitsize);
-    if (framebuffer_bitmap == NULL) {
-		// TODO: handle error
-    	// TODO: munmap
-		return false;
-	}
-
-    return true;
-}
-
-void flip() {
-	framebuffer_update();
-}
+void* mmap(void* addr, size_t len, int prot, int flags,
+    int fildes, off_t off);

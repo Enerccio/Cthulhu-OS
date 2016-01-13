@@ -110,6 +110,14 @@ ruint_t fork(registers_t* r, ruint_t contcall, ruint_t ecptr) {
 	return pid;
 }
 
+#include "sys_mmap.h"
+ruint_t mem_map(registers_t* r, ruint_t mmap_structure) {
+	struct memmap* mmap = (struct memmap*)mmap_structure;
+
+
+	return 0;
+}
+
 #include "../grx/grx.h"
 #include "../grx/image.h"
 
@@ -127,6 +135,32 @@ ruint_t dev_fb_get_width(registers_t* r) {
 	// TODO: add authorization
 
 	return grx_get_width();
+}
+
+ruint_t dev_fb_get_ka(registers_t* r) {
+	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
+		return DS_ERROR_NOT_ALLOWED;
+	// TODO: add authorization
+
+	extern uint32_t* local_fb;
+	return (ruint_t)(uintptr_t)local_fb;
+}
+
+ruint_t dev_fb_get_ba(registers_t* r) {
+	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
+		return DS_ERROR_NOT_ALLOWED;
+	// TODO: add authorization
+
+	extern uint8_t* local_fb_changes;
+	return (ruint_t)(uintptr_t)local_fb_changes;
+}
+
+ruint_t dev_fb_update(registers_t* r) {
+	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
+		return DS_ERROR_NOT_ALLOWED;
+	// TODO: add authorization
+
+	flush_buffer();
 }
 
 #include "../rlyeh/rlyeh.h"

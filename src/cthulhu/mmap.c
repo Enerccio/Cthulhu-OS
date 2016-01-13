@@ -19,48 +19,28 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * framebuffer.c
+ * mmap.c
  *  Created on: Jan 13, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#include "framebuffer.h"
+#include "mmap.h"
+#include <sys/__mmap.h>
 
-uint32_t fw;
-uint32_t fh;
-
-uint32_t* framebuffer;
-uint8_t*  framebuffer_bitmap;
-
-bool init_framebuffer() {
-
-    fw = framebuffer_width();
-    fh = framebuffer_height();
-
-    if (fw <= 0 || fh <= 0)
-    	return false;
-
-    uint64_t fbitsize = fw*fh;
-    uint64_t fbsize = fbitsize*4;
-    uintptr_t fb_kernel_address = (uintptr_t) framebuffer_kernel_address();
-    uintptr_t fb_bitmap_address = (uintptr_t) framebuffer_bitmap_address();
-
-    framebuffer = (uint32_t*) mmap_kernel_address(fb_kernel_address, fb_kernel_address+fbsize);
-    if (framebuffer == NULL) {
-    	// TODO: handle error
-    	return false;
-    }
-    framebuffer_bitmap = (uint8_t*) mmap_kernel_address(fb_bitmap_address, fb_bitmap_address+fbitsize);
-    if (framebuffer_bitmap == NULL) {
-		// TODO: handle error
-    	// TODO: munmap
-		return false;
-	}
-
-    return true;
+void* mmap_kernel_address(uintptr_t kernel_address_start, uintptr_t kernel_address_end) {
+	memmap_ka_t ka_request;
+	ka_request.header.memmap_type = kernel_address;
+	ka_request.header.adressing.requires_static_address = false;
+	ka_request.from = kernel_address_start;
+	ka_request.amount = kernel_address_end-kernel_address_start;
+	memmap(&ka_request.header);
+	return (void*)ka_request.header.adressing.asked_address;
 }
 
-void flip() {
-	framebuffer_update();
+void memmap(struct memmap* mmap) {
+	int error = (int)sys_1arg(SYS_MEMMAP, mmap);
+	if (error != 0) {
+		errno = error;
+	}
 }

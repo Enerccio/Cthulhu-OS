@@ -31,3 +31,6 @@
 
 int32_t framebuffer_width();
 int32_t framebuffer_height();
+uintptr_t framebuffer_kernel_address();
+uintptr_t framebuffer_bitmap_address();
+void framebuffer_update();

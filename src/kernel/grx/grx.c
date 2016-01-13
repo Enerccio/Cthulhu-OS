@@ -56,8 +56,8 @@ color_t ega[16] = {
 image_t* clear_screen_blit;
 
 static uint8_t* framebuffer;
-static uint32_t* local_fb;
-static uint8_t* local_fb_changes;
+uint32_t* local_fb;
+uint8_t* local_fb_changes;
 static uint32_t w, h, fbpitch, bpp;
 static color_t gray;
 static uint8_t rmask, bmask, gmask;

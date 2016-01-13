@@ -22,23 +22,26 @@ CC := x86_64-fhtagn-gcc
 AR := x86_64-fhtagn-ar
 AS := nasm
 
-.PHONY: all clean 
+.PHONY: all clean install-headers  
 
-all: libcthulhu.a
+all: install-headers libcthulhu.a
+
+install-headers:
+	-mkdir ${INCPATH}/cthulhu
+	cp *.h ${INCPATH}/cthulhu -r
+	cp sys/*.h ${INCPATH}/sys -r
 
 clean: 
 	-rm -f $(OBJ)
 	-rm -f $(wildcard *.d)
 	-rm ${LIBPATH}/libcthulhu.a
 	
-%.o : %.c 
+%.o : %.c install-headers
 	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/usr/include" -c $<
 	$(CC) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/usr/include" -c $< -o $@
 
 %_o.o : %.s 
 	$(AS) $(NASMFLAGS) $< -o $@
 	
-libcthulhu.a: $(OBJ)
-	-mkdir ${INCPATH}/cthulhu
-	cp *.h ${INCPATH}/cthulhu -r 
+libcthulhu.a: $(OBJ)  
 	$(AR) ${ARFLAGS} -rcs ${LIBPATH}/$@ $(OBJ)

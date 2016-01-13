@@ -27,10 +27,14 @@
 
 #pragma once
 
+#include <framebuffer/framebuffer.h>
 #include <ny/nyarlathotep.h>
-#include <sys/unistd.h>
+#include <cthulhu/mmap.h>
+
+#include <stdbool.h>
 
 extern uint32_t fw;
 extern uint32_t fh;
 
-void init_framebuffer();
+bool init_framebuffer();
+void flip();

@@ -28,7 +28,11 @@
 #include "framebuffer.h"
 
 int main() {
-    init_framebuffer();
+    if (!init_framebuffer()) {
+    	// TODO: add cleanup
+
+    	while (1) ;
+    }
 
     while (1) ;
 }
