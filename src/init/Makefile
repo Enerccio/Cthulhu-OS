@@ -35,4 +35,4 @@ clean:
 	$(AS) $(NASMFLAGS) $< -o $@
 	
 init: $(OBJ) 
-	$(CC) $(LDFLAGS) $< -o ${TARGETPATH}$@ -lnyarlathotep  -lcthulhu
+	$(CC) $(LDFLAGS) $^ -o ${TARGETPATH}$@ -lnyarlathotep  -lcthulhu

@@ -109,23 +109,23 @@ void copy_registers(registers_t* r, thread_t* t) {
 }
 
 void registers_copy(thread_t* t, registers_t* r) {
-	r->rip = t->last_rip;
-	r->uesp = t->last_rsp;
-	r->rbp = t->last_rbp;
-	r->rax = t->last_rax;
-	r->rbx = t->last_rbx;
-	r->rcx = t->last_rcx;
-	r->rdx = t->last_rdx;
-	r->rsi = t->last_rsi;
-	r->rdi = t->last_rdi;
-	r->r8 = t->last_r8;
-	r->r9 = t->last_r9;
-	r->r10 = t->last_r10;
-	r->r11 = t->last_r11;
-	r->r12 = t->last_r12;
-	r->r13 = t->last_r13;
-	r->r14 = t->last_r14;
-	r->r15 = t->last_r15;
+    r->rip = t->last_rip;
+    r->uesp = t->last_rsp;
+    r->rbp = t->last_rbp;
+    r->rax = t->last_rax;
+    r->rbx = t->last_rbx;
+    r->rcx = t->last_rcx;
+    r->rdx = t->last_rdx;
+    r->rsi = t->last_rsi;
+    r->rdi = t->last_rdi;
+    r->r8 = t->last_r8;
+    r->r9 = t->last_r9;
+    r->r10 = t->last_r10;
+    r->r11 = t->last_r11;
+    r->r12 = t->last_r12;
+    r->r13 = t->last_r13;
+    r->r14 = t->last_r14;
+    r->r15 = t->last_r15;
 }
 
 // TODO add switching threads
@@ -189,12 +189,12 @@ void schedule(registers_t* r) {
     }
 
     uintptr_t pml4 = (uintptr_t)get_active_page();
-	if (cpu->threads->parent_process->pml4 != pml4) {
-		set_active_page((void*)cpu->threads->parent_process->pml4);
-	}
+    if (cpu->threads->parent_process->pml4 != pml4) {
+        set_active_page((void*)cpu->threads->parent_process->pml4);
+    }
 
-	pml4 = (uintptr_t)get_active_page();
-	__atomic_store_n(&cpu->current_address_space, pml4, __ATOMIC_SEQ_CST);
+    pml4 = (uintptr_t)get_active_page();
+    __atomic_store_n(&cpu->current_address_space, pml4, __ATOMIC_SEQ_CST);
 
     // TODO: add flags for io
     ruint_t flags = INTERRUPT_FLAG;

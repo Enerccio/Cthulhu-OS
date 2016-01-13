@@ -28,9 +28,9 @@
 #include "nyarlathotep.h"
 
 int32_t framebuffer_width() {
-	return dev_sys_0arg(DEV_SYS_FRAMEBUFFER_GET_WIDTH);
+    return dev_sys_0arg(DEV_SYS_FRAMEBUFFER_GET_WIDTH);
 }
 
 int32_t framebuffer_height() {
-	return dev_sys_0arg(DEV_SYS_FRAMEBUFFER_GET_HEIGHT);
+    return dev_sys_0arg(DEV_SYS_FRAMEBUFFER_GET_HEIGHT);
 }

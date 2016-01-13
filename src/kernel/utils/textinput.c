@@ -167,8 +167,8 @@ void kd_cclear(uint8_t back_color) {
         cursor_y = 0;
         move_cursor();
     } else {
-    	color_t bc = ega[back_color];
-    	clear_screen(bc.r, bc.g, bc.b);
+        color_t bc = ega[back_color];
+        clear_screen(bc.r, bc.g, bc.b);
         flush_buffer();
     }
 }

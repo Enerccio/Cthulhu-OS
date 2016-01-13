@@ -28,34 +28,34 @@
 #include "ny_initramfs.h"
 
 int get_directory(const char* path, ifs_directory_t* dir) {
-	int status;
-	status =  dev_sys_2arg(DEV_SYS_IVFS_GET_PATH_ELEMENT, (ruint_t)path, (ruint_t)&dir->entry);
-	if (status != E_IFS_ACTION_SUCCESS)
-		return status;
-	if (dir->entry.type != et_dir) {
-		return E_IFS_NOT_A_DECTYPE;
-	}
-	return E_IFS_ACTION_SUCCESS;
+    int status;
+    status =  dev_sys_2arg(DEV_SYS_IVFS_GET_PATH_ELEMENT, (ruint_t)path, (ruint_t)&dir->entry);
+    if (status != E_IFS_ACTION_SUCCESS)
+        return status;
+    if (dir->entry.type != et_dir) {
+        return E_IFS_NOT_A_DECTYPE;
+    }
+    return E_IFS_ACTION_SUCCESS;
 }
 
 int get_file(const char* path, ifs_file_t* file) {
-	int status;
-	status = dev_sys_2arg(DEV_SYS_IVFS_GET_PATH_ELEMENT, (ruint_t)path, (ruint_t)&file->entry);
-	if (status != E_IFS_ACTION_SUCCESS)
-		return status;
-	if (file->entry.type != et_file) {
-		return E_IFS_NOT_A_DECTYPE;
-	}
-	return E_IFS_ACTION_SUCCESS;
+    int status;
+    status = dev_sys_2arg(DEV_SYS_IVFS_GET_PATH_ELEMENT, (ruint_t)path, (ruint_t)&file->entry);
+    if (status != E_IFS_ACTION_SUCCESS)
+        return status;
+    if (file->entry.type != et_file) {
+        return E_IFS_NOT_A_DECTYPE;
+    }
+    return E_IFS_ACTION_SUCCESS;
 }
 
 int execve_ifs(const char* ifs_path, char** argv, char** envp) {
-	int argc = 0;
-	char** argt = argv;
-	while (*argt != NULL) {
-		++argc;
-		++argt;
-	}
-	return (int)dev_sys_4arg_e(DEV_SYS_IVFS_EXECVE, (ruint_t)ifs_path, (ruint_t)argv,
-			(ruint_t)argc, (ruint_t)envp, (ruint_t*)&errno);
+    int argc = 0;
+    char** argt = argv;
+    while (*argt != NULL) {
+        ++argc;
+        ++argt;
+    }
+    return (int)dev_sys_4arg_e(DEV_SYS_IVFS_EXECVE, (ruint_t)ifs_path, (ruint_t)argv,
+            (ruint_t)argc, (ruint_t)envp, (ruint_t*)&errno);
 }

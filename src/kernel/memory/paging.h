@@ -253,4 +253,4 @@ void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool 
 void mem_change_type(uintptr_t start, size_t len, int change_type, bool new_value, bool invalidate_others);
 
 void map_range(uintptr_t start, uintptr_t end, uintptr_t tostart, uintptr_t fromstart, bool virtual_memory,
-		bool readonly, bool kernel);
+        bool readonly, bool kernel);

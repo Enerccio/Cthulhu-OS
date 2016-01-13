@@ -38,23 +38,23 @@
 #define E_IFS_NOT_A_DECTYPE   2
 
 typedef enum entry_type {
-	et_dir, et_file
+    et_dir, et_file
 } entry_type_t;
 
 typedef struct initramfs_entry {
-	entry_type_t type;
-	size_t       num_ent_or_size;
-	char         name[256];
+    entry_type_t type;
+    size_t       num_ent_or_size;
+    char         name[256];
 } initramfs_entry_t;
 
 typedef struct ifs_directory {
-	initramfs_entry_t entry;
-	char** entries;
+    initramfs_entry_t entry;
+    char** entries;
 } ifs_directory_t;
 
 typedef struct ifs_file {
-	initramfs_entry_t entry;
-	char* file_contents;
+    initramfs_entry_t entry;
+    char* file_contents;
 } ifs_file_t;
 
 int get_directory(const char* path, ifs_directory_t* dir);

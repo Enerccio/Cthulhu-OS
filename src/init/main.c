@@ -31,38 +31,38 @@
 
 
 int main(void) {
-	pid_t pid = getpid();
+    pid_t pid = getpid();
 
-	ifs_file_t f;
-	get_file("init/dorder", &f);
+    ifs_file_t f;
+    get_file("init/dorder", &f);
 
-	char* contents = malloc(f.entry.num_ent_or_size+1);
-	memcpy(contents, f.file_contents, f.entry.num_ent_or_size);
-	contents[f.entry.num_ent_or_size] = 0;
+    char* contents = malloc(f.entry.num_ent_or_size+1);
+    memcpy(contents, f.file_contents, f.entry.num_ent_or_size);
+    contents[f.entry.num_ent_or_size] = 0;
 
-	char* daemon_path = strtok(contents, "\n");
-	while (daemon_path != NULL) {
-		if (strlen(daemon_path)==0)
-			break;
-		if (fork() != pid) {
+    char* daemon_path = strtok(contents, "\n");
+    while (daemon_path != NULL) {
+        if (strlen(daemon_path)==0)
+            break;
+        if (fork() != pid) {
 
-			char** args = malloc(16);
-			char* arg = malloc(strlen(daemon_path)+1);
-			memcpy(arg, daemon_path, strlen(daemon_path)+1);
+            char** args = malloc(16);
+            char* arg = malloc(strlen(daemon_path)+1);
+            memcpy(arg, daemon_path, strlen(daemon_path)+1);
 
-			args[0] = arg;
-			args[1] = NULL;
+            args[0] = arg;
+            args[1] = NULL;
 
-			char** envp = malloc(8);
-			envp[0] = NULL;
+            char** envp = malloc(8);
+            envp[0] = NULL;
 
-			execve_ifs(daemon_path, args, envp);
+            execve_ifs(daemon_path, args, envp);
 
-			while (1) ; // sentinel break, TODO: add abort
-		} else {
-			daemon_path = strtok(NULL, "\n");
-		}
-	}
+            while (1) ; // sentinel break, TODO: add abort
+        } else {
+            daemon_path = strtok(NULL, "\n");
+        }
+    }
 
     while (1) ;
 }

@@ -83,7 +83,7 @@ void ss_exception(ruint_t ecode, registers_t* registers) {
 }
 
 void gp_exception(ruint_t ecode, registers_t* registers) {
-	error(ERROR_KERNEL_GENERAL_PROTECTION_EXC, registers->rip, ecode, registers);
+    error(ERROR_KERNEL_GENERAL_PROTECTION_EXC, registers->rip, ecode, registers);
 }
 
 void pf_exception(ruint_t ecode, registers_t* registers) {

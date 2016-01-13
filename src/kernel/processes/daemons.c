@@ -48,21 +48,21 @@ pid_t register_daemon_service(pid_t process, const char* service, bool overwrite
 }
 
 bool daemon_registered(const char* service) {
-	proc_spinlock_lock(&__daemon_registration_lock);
-	bool daemon_registered = table_contains(dr_table, (void*)service);
-	proc_spinlock_unlock(&__daemon_registration_lock);
-	return daemon_registered;
+    proc_spinlock_lock(&__daemon_registration_lock);
+    bool daemon_registered = table_contains(dr_table, (void*)service);
+    proc_spinlock_unlock(&__daemon_registration_lock);
+    return daemon_registered;
 }
 
 bool is_daemon_process(pid_t process, const char* service) {
-	proc_spinlock_lock(&__daemon_registration_lock);
-	if (!table_contains(dr_table, (void*)service)) {
-		proc_spinlock_unlock(&__daemon_registration_lock);
-		return false;
-	}
-	bool daemon_process = ((pid_t)((uintptr_t)table_get(dr_table, (void*)service))) == process;
-	proc_spinlock_unlock(&__daemon_registration_lock);
-	return daemon_process;
+    proc_spinlock_lock(&__daemon_registration_lock);
+    if (!table_contains(dr_table, (void*)service)) {
+        proc_spinlock_unlock(&__daemon_registration_lock);
+        return false;
+    }
+    bool daemon_process = ((pid_t)((uintptr_t)table_get(dr_table, (void*)service))) == process;
+    proc_spinlock_unlock(&__daemon_registration_lock);
+    return daemon_process;
 }
 
 void initialize_daemon_services() {

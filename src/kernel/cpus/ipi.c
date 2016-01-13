@@ -50,15 +50,15 @@ void ipi_received(ruint_t ecode, registers_t* registers) {
         registers->rax = cpu->apic_message; // unlocking from wait_until_activation if message was nonzero
         break;
     case IPI_INVALIDATE_PAGE: {
-			uintptr_t active_page = get_active_page();
-			uintptr_t target_page = __atomic_load_n(&cpu->apic_message_cpu->current_address_space,
-					__ATOMIC_SEQ_CST);
-			if (active_page == target_page) {
-				for (uintptr_t i=cpu->apic_message; i<cpu->apic_message2; i+=0x1000)
-					invalidate_address(i);
-			}
-		}
-    	break;
+            uintptr_t active_page = get_active_page();
+            uintptr_t target_page = __atomic_load_n(&cpu->apic_message_cpu->current_address_space,
+                    __ATOMIC_SEQ_CST);
+            if (active_page == target_page) {
+                for (uintptr_t i=cpu->apic_message; i<cpu->apic_message2; i+=0x1000)
+                    invalidate_address(i);
+            }
+        }
+        break;
     case IPI_INVLD_PML: {
         uintptr_t active_page = get_active_page();
         if (active_page == cpu->apic_message) {

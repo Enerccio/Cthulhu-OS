@@ -27,10 +27,10 @@
 
 #pragma once
 
-#define SYS_ALLOCATE     	1
-#define SYS_DEALLOCATE   	2
-#define SYS_GET_TID 		3
-#define SYS_FORK		 	4
-#define SYS_GET_PID		 	5
+#define SYS_ALLOCATE        1
+#define SYS_DEALLOCATE      2
+#define SYS_GET_TID         3
+#define SYS_FORK            4
+#define SYS_GET_PID         5
 #define SYS_SEND_MESSAGE    6
 #define SYS_RECEIVE_MESSAGE 7

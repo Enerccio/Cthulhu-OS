@@ -184,8 +184,8 @@ void initialize_clock() {
         century = get_RTC_register(century_register);
         vlog_msg("CMOS century info: %u", century);
     } else {
-    	century = 20;
-    	vlog_msg("Computed century info: %u", century);
+        century = 20;
+        vlog_msg("Computed century info: %u", century);
     }
 
     do {

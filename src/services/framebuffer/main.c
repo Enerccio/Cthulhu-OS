@@ -28,7 +28,7 @@
 #include "framebuffer.h"
 
 int main() {
-	init_framebuffer();
+    init_framebuffer();
 
     while (1) ;
 }

@@ -32,7 +32,7 @@ uint32_t fh;
 
 void init_framebuffer() {
 
-	fw = framebuffer_width();
-	fh = framebuffer_height();
+    fw = framebuffer_width();
+    fh = framebuffer_height();
 
 }
