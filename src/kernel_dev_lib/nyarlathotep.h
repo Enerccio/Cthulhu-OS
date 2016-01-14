@@ -35,6 +35,7 @@ extern "C" {
 #include "ny_stddef.h"
 #include "ny_commons.h"
 
+#include "ny_service.h"
 #include "ny_framebuffer.h"
 #include "ny_initramfs.h"
 

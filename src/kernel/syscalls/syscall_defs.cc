@@ -108,6 +108,19 @@ ruint_t dev_fb_get_width(registers_t* r) {
 	return grx_get_width();
 }
 
+// services
+#include "../processes/daemons.h"
+ruint_t get_service_status(registers_t* r, ruint_t sname) {
+	const char* name = (const char*) sname;
+	if (name >= 0xFFFF800000000000) {
+		return false;
+	}
+	return daemon_registered(name);
+}
+
+// ipc
+
+
 #include "../rlyeh/rlyeh.h"
 
 static volatile bool initramfs_exists = true;

@@ -211,4 +211,5 @@ void initialize_system_calls() {
     register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_HEIGHT, make_syscall_0(dev_fb_get_height, false, false, false));
     register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_WIDTH, make_syscall_0(dev_fb_get_width, false, false, false));
     register_syscall(true, DEV_SYS_IVFS_GET_PATH_ELEMENT, make_syscall_2(get_initramfs_entry, false, false, true));
+    register_syscall(true, DEV_SYS_SERVICE_EXISTS, make_syscall_1(get_service_status, false, false, true));
 }

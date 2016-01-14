@@ -26,6 +26,7 @@
  */
 
 #include "process.h"
+#include "messages.h"
 
 pid_t getpid() {
 	int error = 0;

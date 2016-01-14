@@ -19,29 +19,14 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * ipc.h
- *  Created on: Jan 3, 2016
+ * ny_service.c
+ *  Created on: Jan 14, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#pragma once
+#include "ny_service.h"
 
-#include "../commons.h"
-#include "daemons.h"
-
-#include <cthulhuos/messages.h>
-
-typedef struct message {
-	message_main_type_t mtype;
-
-    uint64_t sender_process;
-    tid_t    sender_thread;
-    uint64_t receiver_process;
-
-    message_header_t* message_contents;
-
-    /** Used for message managing */
-    ruint_t __message_lock;
-    uint32_t __message_ref_count;
-} message_t;
+bool service_exists(const char* service) {
+	return dev_sys_1arg(DEV_SYS_SERVICE_EXISTS, (ruint_t)service);
+}
