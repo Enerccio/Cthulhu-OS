@@ -26,14 +26,12 @@
  */
 
 #include <ny/nyarlathotep.h>
-
+#include <cthulhu/process.h>
 
 
 int main(void) {
-    pid_t pid = getpid();
-
     ifs_file_t f;
-    get_file("init/dorder", &f);
+    get_file("conf/init/rlyeh_load_order", &f);
 
     char* contents = malloc(f.entry.num_ent_or_size+1);
     memcpy(contents, f.file_contents, f.entry.num_ent_or_size);

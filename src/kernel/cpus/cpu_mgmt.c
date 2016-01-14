@@ -271,6 +271,7 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
     cpu->pf_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_PF_STACK_SIZE));
     cpu->df_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_DF_STACK_SIZE));
     cpu->ipi_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_IPI_STACK_SIZE));
+    cpu->pf_handler.handler = NULL;
     cpu->threads = NULL;
     return cpu;
 }

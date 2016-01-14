@@ -36,6 +36,7 @@
 // These are provided internally by daemons
 // other daemons register their own services by their name and then inform these daemon
 //  services by their name and they communicate
+#define SERVICE_DDM "::device-driver-manager"
 #define SERVICE_VFS "::service::internal::vfs"
 #define SERVICE_PORT "::service::internal::port"
 #define SERVICE_KEYBOARD "::service::internal::keyboard"

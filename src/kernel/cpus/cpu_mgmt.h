@@ -35,8 +35,11 @@
 #include <string.h>
 #include <ds/random.h>
 #include <ds/array.h>
+#include <setjmp.h>
 
 #include "../processes/process.h"
+
+typedef void (*jmp_handler_t)(jmp_buf b, void* fa, ruint_t errno);
 
 typedef struct cpu {
     void*    stack;
@@ -65,6 +68,11 @@ typedef struct cpu {
     thread_t* threads; // head thread is being executed
 
     volatile bool started;
+
+    struct {
+    	jmp_handler_t handler;
+    	jmp_buf		  jmp;
+    } pf_handler;
 } cpu_t;
 
 #define WAIT_NO_WAIT              (0)

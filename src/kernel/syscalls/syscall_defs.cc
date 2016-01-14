@@ -119,6 +119,13 @@ ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 	const char* path = (const char*)(uintptr_t)p;
 	initramfs_entry_t* entry = (initramfs_entry_t*)(uintptr_t)strpnt;
 
+	if (p >= 0xFFFF800000000000) {
+		return E_EINVAL;
+	}
+	if (strpnt >= 0xFFFF800000000000) {
+		return E_EINVAL;
+	}
+
 	path_element_t* pe = get_path(path);
 
 	if (pe->type == PE_DIR) {

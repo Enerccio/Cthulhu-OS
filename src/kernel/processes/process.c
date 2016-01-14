@@ -141,6 +141,9 @@ mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_s
     mmap_area_t** lm = &proc->mem_maps;
     uintptr_t x1, x2, y1, y2;
 
+    if (start_address < 0x1000)
+    	return NULL;
+
     while (*lm != NULL) {
         mmap_area_t* mmap = *lm;
 
@@ -177,7 +180,7 @@ mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_s
 
 mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount) {
     mmap_area_t** lm = &proc->mem_maps;
-    uintptr_t start_address = 0;
+    uintptr_t start_address = 0x1000;
     uintptr_t hole = 0;
 
     if (*lm == NULL)

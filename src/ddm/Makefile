@@ -1,4 +1,4 @@
-TARGETPATH ?= ../../../build/
+TARGETPATH ?= ../../build/
 
 SYSROOT ?= ../../osroot
 PREFIX ?= /usr
@@ -22,9 +22,9 @@ CC := x86_64-fhtagn-gcc
 LD := x86_64-fhtagn-ld
 AS := nasm
 
-.PHONY: all clean install-headers
+.PHONY: all clean
 
-all: framebuffer
+all: ddm
 
 clean: 
 	-rm -f $(OBJ)
@@ -38,9 +38,5 @@ clean:
 %_o.o : %.s 
 	$(AS) $(NASMFLAGS) $< -o $@
 	
-framebuffer: $(OBJ) 
+ddm: $(OBJ) 
 	$(CC) $(LDFLAGS) $^ -o ${TARGETPATH}$@ -lnyarlathotep -lcthulhu
-	
-install-headers:
-	-mkdir ${INCPATH}/framebuffer
-	cp framebuffer/*.h ${INCPATH}/framebuffer -r 

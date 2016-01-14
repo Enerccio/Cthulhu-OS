@@ -54,7 +54,7 @@ void idt_set_gate(uint8_t gn, uintptr_t funcall) {
     gate->offset3263 = (funcall>>32) & 0xFFFFFFFF;
     gate->selector = 8; // CODE descriptor, see GDT64.Code
     gate->flags.p = 1;
-    gate->flags.ist = 1;
+    gate->flags.ist = 0;
     gate->flags.type = 14 & 0b1111;
     gate->flags.dpl = 0;
 

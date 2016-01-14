@@ -19,43 +19,13 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * ny_initramfs.h
- *  Created on: Dec 30, 2015
+ * main.c
+ *  Created on: Jan 2, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#pragma once
 
-#include "ny_stddef.h"
-#include "ny_commons.h"
-#include "devsys.h"
-
-#define	E_EINVAL			 -2
-#define E_IFS_INITRAMFS_GONE -1
-#define E_IFS_ACTION_SUCCESS  0
-#define E_IFS_PATH_INCORRECT  1
-#define E_IFS_NOT_A_DECTYPE   2
-
-typedef enum entry_type {
-    et_dir, et_file
-} entry_type_t;
-
-typedef struct initramfs_entry {
-    entry_type_t type;
-    size_t       num_ent_or_size;
-    char         name[256];
-} initramfs_entry_t;
-
-typedef struct ifs_directory {
-    initramfs_entry_t entry;
-    char** entries;
-} ifs_directory_t;
-
-typedef struct ifs_file {
-    initramfs_entry_t entry;
-    char* file_contents;
-} ifs_file_t;
-
-int get_directory(const char* path, ifs_directory_t* dir);
-int get_file(const char* path, ifs_file_t* file);
+int main() {
+    while (1) ;
+}

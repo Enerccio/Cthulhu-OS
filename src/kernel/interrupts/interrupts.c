@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include "../interrupts/interrupts.h"
 #include "../memory/paging.h"
+#include "../cpus/cpu_mgmt.h"
 
 extern void* get_faulting_address();
 extern void kp_halt();
@@ -90,6 +91,10 @@ void pf_exception(ruint_t ecode, registers_t* registers) {
     void* fa = get_faulting_address();
     if (registers->cs == 0x8) {
         // kernel page fault
+    	cpu_t* cpu = get_current_cput();
+    	if (cpu->pf_handler.handler != NULL) {
+    		cpu->pf_handler.handler(cpu->pf_handler.jmp, fa, ecode);
+    	}
         // TODO: add swap
         error(ERROR_KERNEL_PAGE_FAULT_IN_NONPAGED_AREA, (ruint_t)fa, ecode, (void*)registers->rip);
     } else {
