@@ -44,10 +44,13 @@ lds-u:
 kernel: lib lds nyarlathotep cthulhu 
 	$(MAKE) -C src/kernel MODE=$(MODE)
 
-nyarlathotep:
+nyarlathotep: cthulhu-install-headers
 	$(MAKE) -C src/kernel_dev_lib MODE=$(MODE)
 	
-cthulhu:
+cthulhu-install-headers:
+	$(MAKE) install-headers -C src/cthulhu MODE=$(MODE)
+	
+cthulhu: cthulhu-install-headers
 	$(MAKE) -C src/cthulhu MODE=$(MODE)
 	
 init: lds-u nyarlathotep cthulhu framebuffer-install-headers

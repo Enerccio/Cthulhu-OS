@@ -264,7 +264,6 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
     cpu->__cpu_sched_lock = 0;
     cpu->__message_clear_lock = 0;
     cpu->apic_message_handled = 0;
-    cpu->total_tickets = 0;
     cpu->current_address_space = get_active_page();
     cpu->stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_INIT_STACK_SIZE));
     cpu->handler_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_HANDLER_STACK_SIZE));
@@ -272,7 +271,12 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
     cpu->df_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_DF_STACK_SIZE));
     cpu->ipi_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_IPI_STACK_SIZE));
     cpu->pf_handler.handler = NULL;
-    cpu->threads = NULL;
+    cpu->ct = NULL;
+    cpu->priority_0 = create_queue();
+    cpu->priority_1 = create_queue();
+    cpu->priority_2 = create_queue();
+    cpu->priority_3 = create_queue();
+    cpu->priority_4 = create_queue();
     return cpu;
 }
 

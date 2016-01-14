@@ -48,10 +48,11 @@ typedef enum create_process_mode {
 } create_process_mode_t;
 typedef struct create_process_message {
 	const char*  path;
-	const char** argv;
-	const char** envv;
+	char** argv;
+	char** envp;
 	int argc;
 	create_process_mode_t mode;
+	uint8_t		 process_priority;
 
 	// TODO: add more later
 } create_process_message_t;
@@ -60,9 +61,6 @@ typedef enum message_type { system_message, simple_message, large_message } mess
 
 typedef struct message_header {
 	message_type_h mtype;
-	message_main_type_t mmtype;
-	pid_t process_id;
-	bool gift_tickets;
 	bool await_reply;
 } message_header_t;
 

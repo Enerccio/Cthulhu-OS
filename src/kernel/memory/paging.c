@@ -1057,6 +1057,32 @@ puint_t clone_paging_structures() {
     return tentry.number;
 }
 
+puint_t create_pml4() {
+	puint_t active_page = get_active_page();
+	proc_spinlock_lock(&__frame_lock);
+	puint_t target_page = get_free_frame();
+	proc_spinlock_unlock(&__frame_lock);
+
+	cr3_page_entry_t apentry;
+	cr3_page_entry_t tentry;
+
+	apentry.number = active_page;
+	tentry.pml = target_page;
+	tentry.copyinfo.copy = apentry.copyinfo.copy;
+
+	uint64_t* sent = (uint64_t*) physical_to_virtual(ALIGN(active_page));
+	uint64_t* tent = (uint64_t*) physical_to_virtual(target_page);
+	memset(tent, 0, 0x1000);
+
+	for (uint16_t i=0; i<512; i++) {
+		if (i >= 256) {
+			// kernel pages
+			tent[i] = sent[i];
+		}
+	}
+	return tentry.number;
+}
+
 // TODO: add swap?
 bool page_fault(uintptr_t address, ruint_t errcode) {
     if ((errcode & (1<<1)) != 0) {

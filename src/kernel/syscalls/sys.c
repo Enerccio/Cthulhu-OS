@@ -53,7 +53,6 @@ void register_syscall(bool system, uint8_t syscall_id, syscall_t syscall) {
 void check_address_range_handler(jmp_buf b, void* fa, ruint_t errco) {
 	uintptr_t faa = (uintptr_t)fa;
 	if (faa < 0xFFFF800000000000) {
-
 		longjmp(b, EINVAL);
 	}
 }
@@ -89,7 +88,7 @@ void do_sys_handler(registers_t* registers, syscall_t* sc) {
 												registers->rsi, registers->rdx, registers->rcx, registers->r9);
 				break;
 		}
-			}
+	}
 }
 
 void sys_handler(registers_t* registers, bool dev) {
@@ -138,60 +137,54 @@ void dev_system_call_handler(uintptr_t error_code, registers_t* r) {
     sys_handler(r, true);
 }
 
-syscall_t make_syscall_0(syscall_0 sfnc, bool e, bool sched_after, bool unsafe) {
+syscall_t make_syscall_0(syscall_0 sfnc, bool e, bool unsafe) {
     syscall_t syscall;
     syscall.args = 0;
-    syscall.schedule_after = sched_after;
     syscall.uses_error = e;
     syscall.syscall._0 = sfnc;
     syscall.unsafe = unsafe;
     return syscall;
 }
 
-syscall_t make_syscall_1(syscall_1 sfnc, bool e, bool sched_after, bool unsafe) {
+syscall_t make_syscall_1(syscall_1 sfnc, bool e, bool unsafe) {
     syscall_t syscall;
     syscall.args = 1;
-    syscall.schedule_after = sched_after;
     syscall.uses_error = e;
     syscall.syscall._1 = sfnc;
     syscall.unsafe = unsafe;
     return syscall;
 }
 
-syscall_t make_syscall_2(syscall_2 sfnc, bool e, bool sched_after, bool unsafe) {
+syscall_t make_syscall_2(syscall_2 sfnc, bool e, bool unsafe) {
     syscall_t syscall;
     syscall.args = 2;
-    syscall.schedule_after = sched_after;
     syscall.uses_error = e;
     syscall.syscall._2 = sfnc;
     syscall.unsafe = unsafe;
     return syscall;
 }
 
-syscall_t make_syscall_3(syscall_3 sfnc, bool e, bool sched_after, bool unsafe) {
+syscall_t make_syscall_3(syscall_3 sfnc, bool e, bool unsafe) {
     syscall_t syscall;
     syscall.args = 3;
-    syscall.schedule_after = sched_after;
     syscall.uses_error = e;
     syscall.syscall._3 = sfnc;
     syscall.unsafe = unsafe;
     return syscall;
 }
 
-syscall_t make_syscall_4(syscall_4 sfnc, bool e, bool sched_after, bool unsafe) {
+syscall_t make_syscall_4(syscall_4 sfnc, bool e, bool unsafe) {
     syscall_t syscall;
     syscall.args = 4;
-    syscall.schedule_after = sched_after;
     syscall.uses_error = e;
     syscall.syscall._4 = sfnc;
     syscall.unsafe = unsafe;
     return syscall;
 }
 
-syscall_t make_syscall_5(syscall_5 sfnc, bool e, bool sched_after, bool unsafe) {
+syscall_t make_syscall_5(syscall_5 sfnc, bool e, bool unsafe) {
     syscall_t syscall;
     syscall.args = 5;
-    syscall.schedule_after = sched_after;
     syscall.syscall._5 = sfnc;
     syscall.unsafe = unsafe;
     return syscall;
@@ -202,14 +195,16 @@ void initialize_system_calls() {
     register_interrupt_handler(0x80, system_call_handler);
     register_interrupt_handler(0x81, dev_system_call_handler);
 
-    register_syscall(false, SYS_ALLOCATE, make_syscall_1(allocate_memory, false, false, false));
-    register_syscall(false, SYS_DEALLOCATE, make_syscall_2(deallocate_memory, false, false, false));
-    register_syscall(false, SYS_GET_TID, make_syscall_0(get_tid, false, false, false));
-    register_syscall(false, SYS_GET_PID, make_syscall_0(get_pid, false, false, false));
+    register_syscall(false, SYS_ALLOCATE, make_syscall_1(allocate_memory, false, false));
+    register_syscall(false, SYS_DEALLOCATE, make_syscall_2(deallocate_memory, false, false));
+    register_syscall(false, SYS_GET_TID, make_syscall_0(get_tid, false, false));
+    register_syscall(false, SYS_GET_PID, make_syscall_0(get_pid, false, false));
+    register_syscall(false, SYS_SEND_MESSAGE, make_syscall_1(sys_send_message, false, true));
+    register_syscall(false, SYS_GET_CTHREAD_PRIORITY, make_syscall_0(get_ct_priority, false, false));
 
     // dev syscalls
-    register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_HEIGHT, make_syscall_0(dev_fb_get_height, false, false, false));
-    register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_WIDTH, make_syscall_0(dev_fb_get_width, false, false, false));
-    register_syscall(true, DEV_SYS_IVFS_GET_PATH_ELEMENT, make_syscall_2(get_initramfs_entry, false, false, true));
-    register_syscall(true, DEV_SYS_SERVICE_EXISTS, make_syscall_1(get_service_status, false, false, true));
+    register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_HEIGHT, make_syscall_0(dev_fb_get_height, false, false));
+    register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_WIDTH, make_syscall_0(dev_fb_get_width, false, false));
+    register_syscall(true, DEV_SYS_IVFS_GET_PATH_ELEMENT, make_syscall_2(get_initramfs_entry, false, true));
+    register_syscall(true, DEV_SYS_SERVICE_EXISTS, make_syscall_1(get_service_status, false, true));
 }

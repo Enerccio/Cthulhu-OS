@@ -242,6 +242,7 @@ void deallocate_start_memory();
 void deallocate_starting_address(uintptr_t address, size_t size);
 
 puint_t clone_paging_structures();
+puint_t create_pml4();
 
 bool page_fault(uintptr_t address, ruint_t errcode);
 

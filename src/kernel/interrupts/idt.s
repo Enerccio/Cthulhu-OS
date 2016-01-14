@@ -70,6 +70,7 @@ ISR_NOERRCODE 255
 [EXTERN isr_handler]
 
 isr_common_stub:
+    cli
     push rax
     xor rax, rax
     mov ax, gs

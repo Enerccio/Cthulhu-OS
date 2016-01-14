@@ -30,7 +30,7 @@
 #include "../commons.h"
 #include "daemons.h"
 
-#include <cthulhuos/messages.h>
+#include <cthulhu/messages.h>
 
 typedef struct message {
 	message_main_type_t mtype;

@@ -38,7 +38,6 @@ typedef ruint_t (*syscall_4)(registers_t*, ruint_t, ruint_t, ruint_t, ruint_t);
 typedef ruint_t (*syscall_5)(registers_t*, ruint_t, ruint_t, ruint_t, ruint_t, ruint_t);
 typedef struct syscall {
     bool present;
-    bool schedule_after;
     bool uses_error;
     bool unsafe;
     uint8_t args;
@@ -52,12 +51,12 @@ typedef struct syscall {
     } syscall;
 } syscall_t;
 
-syscall_t make_syscall_0(syscall_0 sfnc, bool e, bool sched_after, bool unsafe);
-syscall_t make_syscall_1(syscall_1 sfnc, bool e, bool sched_after, bool unsafe);
-syscall_t make_syscall_2(syscall_2 sfnc, bool e, bool sched_after, bool unsafe);
-syscall_t make_syscall_3(syscall_3 sfnc, bool e, bool sched_after, bool unsafe);
-syscall_t make_syscall_4(syscall_4 sfnc, bool e, bool sched_after, bool unsafe);
-syscall_t make_syscall_5(syscall_5 sfnc, bool e, bool sched_after, bool unsafe);
+syscall_t make_syscall_0(syscall_0 sfnc, bool e, bool unsafe);
+syscall_t make_syscall_1(syscall_1 sfnc, bool e, bool unsafe);
+syscall_t make_syscall_2(syscall_2 sfnc, bool e, bool unsafe);
+syscall_t make_syscall_3(syscall_3 sfnc, bool e, bool unsafe);
+syscall_t make_syscall_4(syscall_4 sfnc, bool e, bool unsafe);
+syscall_t make_syscall_5(syscall_5 sfnc, bool e, bool unsafe);
 
 void register_syscall(bool system, uint8_t syscall_id, syscall_t syscall);
 

@@ -158,7 +158,9 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
 
     enschedule_to_self(array_get_at(initp->threads, 0));
 
-    debug_break;
+    DISABLE_INTERRUPTS();
+    cpu_t* cpu = get_current_cput();
+    queue_push(cpu->priority_0, array_get_at(initp->threads, 0));
     scheduler_enabled = true;
     schedule(NULL);
 }

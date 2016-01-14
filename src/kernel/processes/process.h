@@ -66,6 +66,7 @@ typedef struct proc {
 
     array_t*     fds;
     array_t*     threads;
+    uint8_t	     priority;
 
     mmap_area_t* mem_maps;
 } proc_t;
@@ -73,12 +74,7 @@ typedef struct proc {
 struct thread {
     tid_t tId;
     proc_t*  parent_process;
-    thread_t* next_thread;
-    thread_t* prev_thread;
-    uint16_t tickets;
-
-    list_t* borrowed_tickets;
-    list_t* lended_tickets;
+    uint8_t	 priority;
 
     /* Userspace information */
     ruint_t last_rip, last_rsp, last_rax, last_rdi, last_rsi, last_rdx, last_rcx;
@@ -88,14 +84,6 @@ struct thread {
     uintptr_t stack_bottom_address;
 };
 
-typedef struct borrowed_ticket {
-    thread_t* source;
-    thread_t* target;
-    uint16_t  tamount;
-    bool release_now;
-} borrowed_ticket_t;
-
-#define PER_PROCESS_TICKETS 0x1000
 #define BASE_STACK_SIZE 0x1000000
 
 extern array_t* processes;
@@ -105,10 +93,9 @@ pid_t get_current_pid();
 proc_t* create_init_process_structure(uintptr_t pml);
 mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_size);
 mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount);
-borrowed_ticket_t* transfer_tickets(thread_t* from, thread_t* to, uint16_t tamount);
-int fork_process(registers_t* r, proc_t* p, thread_t* t);
 
-int sys_execve(uint8_t* image_data, int argc, char** argv, char** envp, registers_t* r);
+int create_process_base(uint8_t* image_data, int argc, char** argv, char** envp, proc_t** cpt,
+		uint8_t priority, registers_t* r);
 
 uintptr_t map_virtual_virtual(uintptr_t vastart, uintptr_t vaend, bool readonly);
 uintptr_t map_physical_virtual(puint_t vastart, puint_t vaend, bool readonly);

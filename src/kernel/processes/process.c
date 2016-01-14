@@ -43,6 +43,8 @@ array_t* processes;
 
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
+extern void set_active_page(void* address);
+extern void* get_active_page();
 extern ruint_t __thread_modifier;
 
 pid_t get_current_pid() {
@@ -51,7 +53,7 @@ pid_t get_current_pid() {
     proc_spinlock_lock(&cpu->__cpu_sched_lock);
     proc_spinlock_lock(&__thread_modifier);
 
-    pid_t pid = cpu->threads == NULL ? -1 : cpu->threads->parent_process->proc_id;
+    pid_t pid = cpu->ct == NULL ? -1 : cpu->ct->parent_process->proc_id;
 
     proc_spinlock_unlock(&__thread_modifier);
     proc_spinlock_unlock(&cpu->__cpu_lock);
@@ -82,6 +84,7 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     process->mem_maps = NULL;
     process->proc_random = rg_create_random_generator(get_unix_time());
     process->parent = NULL;
+    process->priority = 0;
 
     thread_t* main_thread = malloc(sizeof(thread_t));
     if (main_thread == NULL) {
@@ -89,45 +92,14 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     }
     memset(main_thread, 0, sizeof(thread_t));
     main_thread->parent_process = process;
-    main_thread->tickets = PER_PROCESS_TICKETS;
     main_thread->tId = __atomic_add_fetch(&thread_id_num, 1, __ATOMIC_SEQ_CST);
-    main_thread->borrowed_tickets = create_list();
-    if (main_thread->borrowed_tickets == NULL) {
-        proc_spinlock_unlock(&__proclist_lock);
-        error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
-    }
-    main_thread->lended_tickets = create_list();
-    if (main_thread->lended_tickets == NULL) {
-        proc_spinlock_unlock(&__proclist_lock);
-        error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
-    }
+    main_thread->priority = 0;
     main_thread->last_rdi = (ruint_t)(uintptr_t)process->argc;
     main_thread->last_rsi = (ruint_t)(uintptr_t)process->argv;
     main_thread->last_rdx = (ruint_t)(uintptr_t)process->environ;
     array_push_data(process->threads, main_thread);
 
     return process;
-}
-
-borrowed_ticket_t* transfer_tickets(thread_t* from, thread_t* to, uint16_t tamount) {
-    if (tamount > from->tickets)
-        tamount = from->tickets;
-    if (tamount == 0)
-        return NULL;
-
-    borrowed_ticket_t* bt = malloc(sizeof(borrowed_ticket_t));
-    bt->source = from;
-    bt->target = to;
-    bt->tamount = tamount;
-    bt->release_now = false;
-
-    list_push_right(from->lended_tickets, bt);
-    list_push_right(to->borrowed_tickets, bt);
-
-    from->tickets -= tamount;
-    to->tickets += tamount;
-
-    return bt;
 }
 
 void initialize_processes() {
@@ -228,7 +200,7 @@ uintptr_t map_virtual_virtual(uintptr_t vastart, uintptr_t vaend, bool readonly)
     proc_spinlock_lock(&cpu->__cpu_sched_lock);
     proc_spinlock_lock(&__thread_modifier);
 
-    proc_t* proc = cpu->threads->parent_process;
+    proc_t* proc = cpu->ct->parent_process;
 
     proc_spinlock_unlock(&__thread_modifier);
     proc_spinlock_unlock(&cpu->__cpu_lock);
@@ -250,7 +222,7 @@ uintptr_t map_physical_virtual(puint_t vastart, puint_t vaend, bool readonly) {
     proc_spinlock_lock(&cpu->__cpu_sched_lock);
     proc_spinlock_lock(&__thread_modifier);
 
-    proc_t* proc = cpu->threads->parent_process;
+    proc_t* proc = cpu->ct->parent_process;
 
     proc_spinlock_unlock(&__thread_modifier);
     proc_spinlock_unlock(&cpu->__cpu_lock);
@@ -268,7 +240,7 @@ void* proc_alloc(size_t size) {
     proc_spinlock_lock(&cpu->__cpu_sched_lock);
     proc_spinlock_lock(&__thread_modifier);
 
-    proc_t* proc = cpu->threads->parent_process;
+    proc_t* proc = cpu->ct->parent_process;
     void* addr = proc_alloc_direct(proc, size);
 
     proc_spinlock_unlock(&__thread_modifier);
@@ -357,7 +329,16 @@ static void free_array(int count, char** a) {
     free(a);
 }
 
-int create_process_base(uint8_t* image_data, int argc, char** argv, char** envp, registers_t* r) {
+int create_process_base(uint8_t* image_data, int argc, char** argv,
+		char** envp, proc_t** cpt, uint8_t asked_priority, registers_t* r) {
+	proc_spinlock_lock(&__thread_modifier);
+	uint8_t cpp = get_current_cput()->ct->parent_process->priority;
+	proc_spinlock_unlock(&__thread_modifier);
+
+	if (cpp > asked_priority) {
+		return EINVAL;
+	}
+
 	int envc = 0;
 	char** envt = envp;
 	while (*envt != NULL) {
@@ -392,39 +373,29 @@ int create_process_base(uint8_t* image_data, int argc, char** argv, char** envp,
 		return ENOMEM;
 	}
 
-	process->pml4 = clone_paging_structures();
 	process->mem_maps = NULL;
 	process->proc_random = rg_create_random_generator(get_unix_time());
 	process->parent = NULL;
+	process->priority = asked_priority;
+	process->pml4 = create_pml4();
+
+	uintptr_t opml4 = (uintptr_t)get_active_page();
+	set_active_page((void*)process->pml4);
 
 	thread_t* main_thread = malloc(sizeof(thread_t));
 	if (main_thread == NULL) {
 		destroy_array(process->threads);
 		destroy_array(process->fds);
 		free(process);
+		// TODO: free process address page
+		set_active_page((void*)opml4);
 		return ENOMEM;
 	}
 	memset(main_thread, 0, sizeof(thread_t));
 	main_thread->parent_process = process;
-	main_thread->tickets = PER_PROCESS_TICKETS;
 	main_thread->tId = __atomic_add_fetch(&thread_id_num, 1, __ATOMIC_SEQ_CST);
-	main_thread->borrowed_tickets = create_list();
-	if (main_thread->borrowed_tickets == NULL) {
-		free(main_thread);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-		return ENOMEM;
-	}
-	main_thread->lended_tickets = create_list();
-	if (main_thread->lended_tickets == NULL) {
-		free_list(main_thread->borrowed_tickets);
-		free(main_thread);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-		return ENOMEM;
-	}
+	main_thread->priority = asked_priority;
+	array_push_data(process->threads, main_thread);
 
 	err = load_elf_exec((uintptr_t)image_data, process);
 	if (err == ELF_ERROR_ENOMEM) {
@@ -434,30 +405,33 @@ int create_process_base(uint8_t* image_data, int argc, char** argv, char** envp,
 	}
 
 	if (err != 0) {
-		free_list(main_thread->borrowed_tickets);
 		free(main_thread);
 		destroy_array(process->threads);
 		destroy_array(process->fds);
 		free(process);
+		// TODO: free process address page
+		set_active_page((void*)opml4);
 		return err;
 	}
 
 	char** argvu = argv;
 	char** envpu = envp;
 	if ((err = cpy_array_user(argc, &argvu, process)) != 0) {
-		free_list(main_thread->borrowed_tickets);
 		free(main_thread);
 		destroy_array(process->threads);
 		destroy_array(process->fds);
 		free(process);
+		// TODO: free process address page
+		set_active_page((void*)opml4);
 		return err;
 	}
 	if ((err = cpy_array_user(envc, &envpu, process)) != 0) {
-		free_list(main_thread->borrowed_tickets);
 		free(main_thread);
 		destroy_array(process->threads);
 		destroy_array(process->fds);
 		free(process);
+		// TODO: free process address page
+		set_active_page((void*)opml4);
 		return err;
 	}
 
@@ -477,6 +451,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv, char** envp,
 	main_thread->last_rdi = 0;
 	main_thread->last_rsi = 0;
 	main_thread->last_rbp = 0;
+	main_thread->last_rflags = 0x200; // enable interrupts
 
 	proc_spinlock_lock(&__proclist_lock);
 	process->proc_id = ++process_id_num;
@@ -493,5 +468,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv, char** envp,
 	// TODO: add split option?
 	main_thread->last_rax = process->proc_id;
 	enschedule_best(main_thread);
+	*cpt = process;
+	set_active_page((void*)opml4);
 	return 0;
 }

@@ -1,6 +1,15 @@
 #include <errno.h>
 #include <ny/devsys.h>
 #include <cthulhu/ct_sys.h>
+#include <cthulhu/messages.h>
+
+#include "../rlyeh/rlyeh.h"
+#include "../grx/grx.h"
+#include "../grx/image.h"
+#include "../processes/ipc.h"
+#include "../processes/daemons.h"
+
+static volatile bool initramfs_exists = true;
 
 ruint_t allocate_memory(registers_t* r, ruint_t size) {
     cpu_t* cpu = get_current_cput();
@@ -8,7 +17,7 @@ ruint_t allocate_memory(registers_t* r, ruint_t size) {
     proc_spinlock_lock(&cpu->__cpu_lock);
     proc_spinlock_lock(&__thread_modifier);
 
-    thread_t* ct = cpu->threads;
+    thread_t* ct = cpu->ct;
 
     mmap_area_t* mmap_area = find_va_hole(ct->parent_process, size, 0x1000);
     if (mmap_area == 0) {
@@ -30,7 +39,7 @@ ruint_t deallocate_memory(registers_t* r, ruint_t from, ruint_t aamount) {
 	proc_spinlock_lock(&cpu->__cpu_lock);
 	proc_spinlock_lock(&__thread_modifier);
 
-	thread_t* ct = cpu->threads;
+	thread_t* ct = cpu->ct;
 	mmap_area_t** prev = &ct->parent_process->mem_maps;
 	mmap_area_t* mmap_area = ct->parent_process->mem_maps;
 	while (mmap_area != NULL) {
@@ -65,7 +74,7 @@ ruint_t get_tid(registers_t* r) {
 	proc_spinlock_lock(&cpu->__cpu_lock);
 	proc_spinlock_lock(&__thread_modifier);
 
-	thread_t* ct = cpu->threads;
+	thread_t* ct = cpu->ct;
 	tid_t tid = ct->tId;
 
 	proc_spinlock_unlock(&__thread_modifier);
@@ -80,7 +89,7 @@ ruint_t get_pid(registers_t* r) {
 	proc_spinlock_lock(&cpu->__cpu_lock);
 	proc_spinlock_lock(&__thread_modifier);
 
-	thread_t* ct = cpu->threads;
+	thread_t* ct = cpu->ct;
 	pid_t pid = ct->parent_process->proc_id;
 
 	proc_spinlock_unlock(&__thread_modifier);
@@ -89,8 +98,20 @@ ruint_t get_pid(registers_t* r) {
 	return pid;
 }
 
-#include "../grx/grx.h"
-#include "../grx/image.h"
+ruint_t get_ct_priority(registers_t* r) {
+	cpu_t* cpu = get_current_cput();
+
+	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&__thread_modifier);
+
+	thread_t* ct = cpu->ct;
+	uint8_t cp = ct->parent_process->priority;
+
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+
+	return cp;
+}
 
 ruint_t dev_fb_get_height(registers_t* r) {
 	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
@@ -108,23 +129,75 @@ ruint_t dev_fb_get_width(registers_t* r) {
 	return grx_get_width();
 }
 
+// ipc
+int __create_initramfs_process(system_message_t* sm, registers_t* r) {
+	if (!initramfs_exists) {
+		return ENOENT;
+	}
+
+	char* path = (char*)sm->message_contents.cpm.path;
+	if (((uintptr_t)path) >= 0xFFFF800000000000 )
+		return EINVAL;
+	char** argv = sm->message_contents.cpm.argv;
+	if (((uintptr_t)argv) >= 0xFFFF800000000000 )
+		return EINVAL;
+	int argc = sm->message_contents.cpm.argc;
+	char** envp = sm->message_contents.cpm.envp;
+	if (((uintptr_t)envp) >= 0xFFFF800000000000 )
+		return EINVAL;
+
+	path_element_t* pe = get_path(path);
+	if (pe == NULL || pe->type == PE_DIR) {
+		return ENOENT;
+	}
+
+	proc_t* process;
+	int rv = create_process_base(get_data(pe->element.file), argc, argv, envp,
+			&process, sm->message_contents.cpm.process_priority, r);
+	if (rv == 0) {
+
+	}
+
+	return rv;
+}
+
+int __create_process(system_message_t* sm, registers_t* r) {
+	if (sm->message_contents.cpm.mode == initramfs) {
+		return __create_initramfs_process(sm, r);
+	}
+	return EINVAL;
+}
+
+int __system_message(system_message_t* sm, registers_t* r) {
+	int rv = EINVAL;
+	if (sm->message_type == create_process) {
+		rv = __create_process(sm, r);
+	}
+	return rv;
+}
+
+ruint_t sys_send_message(registers_t* r, ruint_t message) {
+	if (message >= 0xFFFF800000000000) {
+		return (ruint_t)EINVAL;
+	}
+
+	message_header_t* mh = (message_header_t*)message;
+	if (mh->mtype == system_message) {
+		return __system_message((system_message_t*)mh, r);
+	}
+	return 0;
+}
+
 // services
-#include "../processes/daemons.h"
 ruint_t get_service_status(registers_t* r, ruint_t sname) {
 	const char* name = (const char*) sname;
-	if (name >= 0xFFFF800000000000) {
+	if (sname >= 0xFFFF800000000000) {
 		return false;
 	}
 	return daemon_registered(name);
 }
 
-// ipc
-
-
-#include "../rlyeh/rlyeh.h"
-
-static volatile bool initramfs_exists = true;
-
+// initramfs
 ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 	if (!initramfs_exists) {
 		return E_IFS_INITRAMFS_GONE;
@@ -168,33 +241,3 @@ ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 
 	return E_IFS_ACTION_SUCCESS;
 }
-
-/*
-ruint_t initramfs_execve(registers_t* r, ruint_t pathv, ruint_t argvv, ruint_t argcv,
-		ruint_t envpv, ruint_t errnov) {
-	int* errno = (int*)errnov;
-
-	if (!initramfs_exists) {
-		*errno = ENOENT;
-		return -1;
-	}
-	char* path = (char*)pathv;
-	char** argv = (char**)argvv;
-	int argc = (int)argcv;
-	char** envp = (char**)envpv;
-
-	path_element_t* pe = get_path(path);
-	if (pe == NULL || pe->type == PE_DIR) {
-		*errno = ENOENT;
-		return -1;
-	}
-
-	int error = sys_execve(get_data(pe->element.file), argc, argv, envp, r);
-	if (error != 0) {
-		*errno = error;
-		return -1;
-	}
-
-	return 0;
-}
-*/

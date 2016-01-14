@@ -53,7 +53,7 @@ int main(void) {
 		char** envp = malloc(8);
 		envp[0] = NULL;
 
-		//execve_ifs(daemon_path, args, envp);
+		execve_ifs(daemon_path, args, envp, 0);
         daemon_path = strtok(NULL, "\n");
     }
 

@@ -26,6 +26,7 @@
  */
 
 #include "ny_initramfs.h"
+#include <cthulhu/process.h>
 
 int get_directory(const char* path, ifs_directory_t* dir) {
     int status;
@@ -49,15 +50,23 @@ int get_file(const char* path, ifs_file_t* file) {
     return E_IFS_ACTION_SUCCESS;
 }
 
-/*
-int execve_ifs(const char* ifs_path, char** argv, char** envp) {
+static int __set_priority(system_message_t* sm, void* data) {
+	sm->message_contents.cpm.process_priority = (uint8_t)(uintptr_t)data;
+	sm->message_contents.cpm.mode = initramfs;
+	return 0;
+}
+
+int execve_ifs(const char* ifs_path, char** argv, char** envp, int priority) {
+	if (priority < 0 || priority >= 5)
+		return EINVAL;
+
     int argc = 0;
     char** argt = argv;
     while (*argt != NULL) {
         ++argc;
         ++argt;
     }
-    return (int)dev_sys_4arg_e(DEV_SYS_IVFS_EXECVE, (ruint_t)ifs_path, (ruint_t)argv,
-            (ruint_t)argc, (ruint_t)envp, (ruint_t*)&errno);
+
+    return create_process_s_cb(ifs_path, argc, argv, envp, false, __set_priority, (void*)(uintptr_t)priority);
 }
-*/
+

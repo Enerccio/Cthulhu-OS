@@ -33,9 +33,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <setjmp.h>
+
 #include <ds/random.h>
 #include <ds/array.h>
-#include <setjmp.h>
+#include <ds/queue.h>
 
 #include "../processes/process.h"
 
@@ -64,8 +66,13 @@ typedef struct cpu {
 
     /* scheduler info */
     volatile ruint_t __cpu_sched_lock;
-    uint64_t total_tickets;
-    thread_t* threads; // head thread is being executed
+    thread_t* ct; // head thread is being executed
+
+    queue_t* priority_0;
+    queue_t* priority_1;
+    queue_t* priority_2;
+    queue_t* priority_3;
+    queue_t* priority_4;
 
     volatile bool started;
 

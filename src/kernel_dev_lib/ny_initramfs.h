@@ -59,3 +59,4 @@ typedef struct ifs_file {
 
 int get_directory(const char* path, ifs_directory_t* dir);
 int get_file(const char* path, ifs_file_t* file);
+int execve_ifs(const char* ifs_path, char** argv, char** envp, int priority);
