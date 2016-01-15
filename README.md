@@ -21,19 +21,26 @@ The point is to have fun making a complete OS and then use it as replacement to 
 ### What are Cthulhu OS's requirements
 
 At the moment, Cthulhu OS only supports x86-64 architecture. Should work on both Intel and AMD,
-however, it was only tested on Intel. So far it was only tested on qemu/bochs, I do not recommend
+however, it was only tested on Intel. So far it was only tested on qemu, I do not recommend
 putting it on real hardware yet (not that it can do anything at the moment).
 
 ### What is the status of Cthulhu OS?
 
-Cthulhu OS is under heavy development. So far it has working long mode, paging memory, interrupt handling, symmetrical multiprocessing, interprocessor communication. What needs to be done (and probably more):
+Cthulhu OS is under heavy development. 
 
-* Loading initrd
-* Loading init and daemons
-* Userspace mode
-* Scheduling, Scheduling with SMP support
+#### Working features
+* boot code
+* framebuffer support, printing text
+* paging, segmentation, memory management
+* initramfs
+* user space
+* scheduler
+* elf loader (no dynamic linking yet)
+
+#### Stuff to do
 * Lots and lots of daemons
 * Porting user space programs
+* Dynamic linking, shared libraries
 
 ## Building Cthulhu OS
 
@@ -61,12 +68,19 @@ your path for compiler to find `x86_64-fhtagn-gcc` and `x86_64-fhtagn-as`. Your 
 
 After compilation is done, you should have `azathoth.img` in `build` directory.
 
+### Compiling libcthulhu
+
+`libcthulhu` is library used by all programs in Cthulhu-OS. Internally, it is used by some libc syscalls, therefore it is necessary to be always present.  
+`make cthulhu`. 
+
+After compilation is done, you should have `libcthulhu.a` and `cthulhu` directory in  `$SYSROOT$/usr/include` directory.
+
 ### Compiling libnyarlathotep
 
 `libnyarlathotep` is library used by daemons and other system components. You can create it by invoking 
 `make nyarlathotep`. 
 
-After compilation is done, you should have `libnyarlathotep.a` and `nyarlathotep.h` in `build/libnyarlathotep` directory.
+After compilation is done, you should have `libnyarlathotep.a` and `ny` directory in  `$SYSROOT$/usr/include` directory.
 
 ## Running Cthulhu OS
 
@@ -85,8 +99,12 @@ For more information check `disk/update_image.sh`.
 Sample grub configuration is in directory `boot`, which you can copy into your boot partition.
 
 ### `initrd` contents
-`initrd` input directory must contain `init` directory containing `init` init file and directory 
-`init/daemons` containing daemons to be loaded initially.  
+`initrd` 
+
+#### `init`
+
+`initrd` input directory must contain `sys` directory containing `init` init file and directory 
+`sys/daemons` containing daemons to be loaded initially.  
 
 ### Running Cthulhu OS on QEMU
 Simply invoke `qemu-system-x86_64 -hdc <yourdiskimagefile> -m 128 -s -smp cores=<numbercores>,threads=<numberthreads>,sockets=<numsockets> -cpu Haswell,+pdpe1gb`
