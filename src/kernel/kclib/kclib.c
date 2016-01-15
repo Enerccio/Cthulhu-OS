@@ -90,7 +90,7 @@ tid_t __kclib_get_tid() {
 }
 
 extern void wait_until_activated();
-void __kclib_halt(mtx_id_t __asked_mutex) {
+void __kclib_mutex_halt(mtx_id_t __asked_mutex) {
     if (multiprocessing_ready)
         wait_until_activated(WAIT_KERNEL_MUTEX);
 }
@@ -100,4 +100,8 @@ extern void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t messa
 void __kclib_mutex_unlocked(mtx_id_t __asked_mutex) {
     if (multiprocessing_ready)
         broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_KERNEL_MUTEX, 0, NULL);
+}
+
+void __kclib_mutex_locked(mtx_id_t __asked_mutex) {
+
 }

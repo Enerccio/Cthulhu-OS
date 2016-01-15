@@ -69,12 +69,15 @@ typedef struct proc {
     uint8_t	     priority;
 
     mmap_area_t* mem_maps;
+    list_t*      mutexes;
 } proc_t;
 
 struct thread {
     tid_t tId;
     proc_t*  parent_process;
+
     uint8_t	 priority;
+    bool     blocked;
 
     /* Userspace information */
     ruint_t last_rip, last_rsp, last_rax, last_rdi, last_rsi, last_rdx, last_rcx;

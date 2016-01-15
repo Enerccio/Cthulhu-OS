@@ -31,6 +31,9 @@
 
 #include <stdnoreturn.h>
 #include <ds/hmap.h>
+#include <ds/llist.h>
+#include <ds/array.h>
+#include <ds/btree.h>
 
 extern void wait_until_activated(ruint_t wait_code);
 extern void proc_spinlock_lock(volatile void* memaddr);
@@ -44,7 +47,13 @@ extern void set_active_page(void* page);
 
 ruint_t __process_modifier;
 ruint_t __thread_modifier;
+ruint_t __halted_modifier;
 bool    scheduler_enabled = false;
+
+rb_tree_t*    halted_threads;
+hash_table_t* mutex_waiters;
+hash_table_t* mutex_status;
+ruint_t       mutex_id;
 
 uint64_t do_get_priority_count(cpu_t* cpu) {
 	uint64_t count = 0;
@@ -158,7 +167,7 @@ thread_t* get_and_update_threads(cpu_t* cpu, queue_t** queues) {
 }
 
 void context_switch(registers_t* r, cpu_t* cpu, thread_t* old_head, thread_t* selection) {
-	if (old_head != NULL) {
+	if (old_head != NULL && !old_head->blocked) {
 		queue_t* queues[5] = { cpu->priority_0, cpu->priority_1, cpu->priority_2, cpu->priority_3, cpu->priority_4 };
 		queue_push(queues[old_head->priority], old_head);
 	}
@@ -270,7 +279,119 @@ void enschedule_best(thread_t* t) {
     enschedule(t, mincpu);
 }
 
+__attribute__((hot)) static int __cmp_tid(const void* a, const void* b) {
+	tid_t ta = (tid_t)(uintptr_t)a;
+	tid_t tb = (tid_t)(uintptr_t)b;
+	if (ta > tb)
+		return -1;
+	else if (ta < tb)
+		return 1;
+	else
+		return 0;
+}
+
+static void __nop(void* ignored) {
+
+}
+
 void initialize_scheduler() {
     __process_modifier = 0;
     __thread_modifier = 0;
+    __halted_modifier = 0;
+
+    halted_threads = rb_create_tree(__cmp_tid, __nop, __nop);
+    mutex_waiters = create_uint64_table();
+    mutex_status = create_uint64_table();
+    mutex_id = 0;
+}
+
+uint64_t new_mutex() {
+	cpu_t* cpu = get_current_cput();
+
+	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&cpu->__cpu_sched_lock);
+	proc_spinlock_lock(&__thread_modifier);
+	proc_spinlock_lock(&__halted_modifier);
+	uint64_t mtxid = mutex_id++;
+	table_set(mutex_waiters, (void*)mtxid, create_array());
+	table_set(mutex_status, (void*)mtxid, (void*)false);
+	list_push_right(cpu->ct->parent_process->mutexes, (void*)mtxid);
+	proc_spinlock_unlock(&__halted_modifier);
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+
+	return mtxid;
+}
+
+void unblock_mutex_waits(uint64_t mtxid) {
+	proc_spinlock_lock(&__halted_modifier);
+	if (!table_contains(mutex_waiters, (void*)mtxid)){
+		proc_spinlock_unlock(&__thread_modifier);
+		return;
+	}
+
+	array_t* wtarray = (array_t*)table_get(mutex_waiters, (void*)mtxid);
+	for (uint32_t i=0; i<array_get_size(wtarray); i++) {
+		tid_t bttid = (tid_t)(uintptr_t) array_get_at(wtarray, i);
+		rb_node_t* bnode = tree_find(halted_threads, (void*)bttid);
+		thread_t* blocked_thread = (thread_t*) bnode->info;
+		blocked_thread->blocked = false;
+		rb_delete(halted_threads, bnode);
+		enschedule_best(blocked_thread);
+	}
+	array_clean(wtarray);
+	table_set(mutex_status, (void*)mtxid, (void*)false);
+
+	proc_spinlock_unlock(&__halted_modifier);
+}
+
+void block_mutex_waits(uint64_t mtxid) {
+	proc_spinlock_lock(&__halted_modifier);
+	if (!table_contains(mutex_waiters, (void*)mtxid)){
+		proc_spinlock_unlock(&__thread_modifier);
+		return;
+	}
+
+	table_set(mutex_status, (void*)mtxid, (void*)true);
+
+	proc_spinlock_unlock(&__halted_modifier);
+}
+
+void block_wait_mutex(uint64_t mtxid, registers_t* registers) {
+	cpu_t* cpu = get_current_cput();
+
+	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&cpu->__cpu_sched_lock);
+	proc_spinlock_lock(&__thread_modifier);
+	proc_spinlock_lock(&__halted_modifier);
+
+	if (!table_contains(mutex_waiters, (void*)mtxid)){
+		proc_spinlock_unlock(&__thread_modifier);
+		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+		proc_spinlock_unlock(&cpu->__cpu_lock);
+		proc_spinlock_unlock(&__thread_modifier);
+		return;
+	}
+
+	if (!((bool)table_get(mutex_status, (void*)mtxid))) {
+		proc_spinlock_unlock(&__thread_modifier);
+		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+		proc_spinlock_unlock(&cpu->__cpu_lock);
+		proc_spinlock_unlock(&__halted_modifier);
+		return;
+	}
+
+	thread_t* thread = cpu->ct;
+	thread->blocked = true;
+	array_t* wtarray = (array_t*)table_get(mutex_waiters, (void*)mtxid);
+	array_push_data(wtarray, (void*)thread->tId);
+	rb_insert(halted_threads, (void*)thread->tId, thread);
+
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+	proc_spinlock_unlock(&__halted_modifier);
+
+	schedule(registers);
 }

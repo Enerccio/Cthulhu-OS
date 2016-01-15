@@ -8,6 +8,7 @@
 #include "../grx/image.h"
 #include "../processes/ipc.h"
 #include "../processes/daemons.h"
+#include "../processes/scheduler.h"
 
 static volatile bool initramfs_exists = true;
 
@@ -240,4 +241,25 @@ ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 	}
 
 	return E_IFS_ACTION_SUCCESS;
+}
+
+// mutex
+
+ruint_t register_mutex(registers_t* r) {
+	return new_mutex();
+}
+
+ruint_t unlock_mutex(registers_t* r, ruint_t mtxid) {
+	unblock_mutex_waits((uint64_t)mtxid);
+	return 0;
+}
+
+ruint_t lock_mutex(registers_t* r, ruint_t mtxid) {
+	block_mutex_waits((uint64_t)mtxid);
+	return 0;
+}
+
+ruint_t wait_for_mutex(registers_t* r, ruint_t mtxid) {
+	block_wait_mutex((uint64_t)mtxid, r);
+	return 0;
 }

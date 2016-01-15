@@ -85,6 +85,7 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     process->proc_random = rg_create_random_generator(get_unix_time());
     process->parent = NULL;
     process->priority = 0;
+    process->mutexes = create_list();
 
     thread_t* main_thread = malloc(sizeof(thread_t));
     if (main_thread == NULL) {
@@ -94,6 +95,7 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     main_thread->parent_process = process;
     main_thread->tId = __atomic_add_fetch(&thread_id_num, 1, __ATOMIC_SEQ_CST);
     main_thread->priority = 0;
+    main_thread->blocked = false;
     main_thread->last_rdi = (ruint_t)(uintptr_t)process->argc;
     main_thread->last_rsi = (ruint_t)(uintptr_t)process->argv;
     main_thread->last_rdx = (ruint_t)(uintptr_t)process->environ;
@@ -378,6 +380,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	process->parent = NULL;
 	process->priority = asked_priority;
 	process->pml4 = create_pml4();
+	process->mutexes = create_list();
 
 	uintptr_t opml4 = (uintptr_t)get_active_page();
 	set_active_page((void*)process->pml4);
@@ -395,6 +398,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	main_thread->parent_process = process;
 	main_thread->tId = __atomic_add_fetch(&thread_id_num, 1, __ATOMIC_SEQ_CST);
 	main_thread->priority = asked_priority;
+	main_thread->blocked = false;
 	array_push_data(process->threads, main_thread);
 
 	err = load_elf_exec((uintptr_t)image_data, process);

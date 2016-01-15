@@ -45,3 +45,8 @@ void copy_registers(registers_t* r, thread_t* t);
 void registers_copy(thread_t* t, registers_t* r);
 
 void initialize_scheduler();
+
+uint64_t new_mutex();
+void unblock_mutex_waits(uint64_t mtxid);
+void block_mutex_waits(uint64_t mtxid);
+void block_wait_mutex(uint64_t mtxid, registers_t* registers);
