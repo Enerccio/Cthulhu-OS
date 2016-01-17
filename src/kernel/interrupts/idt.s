@@ -63,14 +63,12 @@ ISR_NOERRCODE 44
 ISR_NOERRCODE 45
 ISR_NOERRCODE 46
 ISR_NOERRCODE 47
-ISR_NOERRCODE 128
-ISR_NOERRCODE 129 ; spec interrupt handler
 ISR_NOERRCODE 255
 
 [EXTERN isr_handler]
 
 isr_common_stub:
-    cli
+    swapgs
     push rax
     xor rax, rax
     mov ax, gs
@@ -134,6 +132,7 @@ isr_common_stub:
     mov gs, ax
     pop rax ;19
     add rsp, 16
+    swapgs
     iretq
 
 [GLOBAL idt_flush]

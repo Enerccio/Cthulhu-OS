@@ -50,13 +50,6 @@ void register_syscall(bool system, uint8_t syscall_id, syscall_t syscall) {
     syscalls[sysid] = syscall;
 }
 
-void check_address_range_handler(jmp_buf b, void* fa, ruint_t errco) {
-	uintptr_t faa = (uintptr_t)fa;
-	if (faa < 0xFFFF800000000000) {
-		longjmp(b, EINVAL);
-	}
-}
-
 void do_sys_handler(registers_t* registers, syscall_t* sc) {
 	if (sc->uses_error) {
 		switch (sc->args) {
@@ -103,30 +96,7 @@ void sys_handler(registers_t* registers, bool dev) {
     }
 
     syscall_t* sc = &syscalls[rnum];
-    cpu_t* cpu = get_current_cput();
-
-    jmp_buf buf;
-    int error;
-    if (sc->unsafe) {
-    	if ((error = setjmp(buf)) != 0) {
-			if (sc->uses_error) {
-				registers->rdi = error;
-			} else {
-				registers->rax = error;
-			}
-			cpu->pf_handler.handler = NULL;
-			return;
-    	} else {
-    		if (sc->unsafe) {
-    			cpu->pf_handler.handler = check_address_range_handler;
-    			cpu->pf_handler.jmp = buf;
-    		}
-    		do_sys_handler(registers, sc);
-    		cpu->pf_handler.handler = NULL;
-    	}
-    } else {
-    	do_sys_handler(registers, sc);
-    }
+    do_sys_handler(registers, sc);
 }
 
 void system_call_handler(uintptr_t error_code, registers_t* r) {
@@ -192,8 +162,6 @@ syscall_t make_syscall_5(syscall_5 sfnc, bool e, bool unsafe) {
 
 void initialize_system_calls() {
     memset(syscalls, 0, sizeof(syscalls));
-    register_interrupt_handler(0x80, system_call_handler);
-    register_interrupt_handler(0x81, dev_system_call_handler);
 
     register_syscall(false, SYS_ALLOCATE, make_syscall_1(allocate_memory, false, false));
     register_syscall(false, SYS_DEALLOCATE, make_syscall_2(deallocate_memory, false, false));

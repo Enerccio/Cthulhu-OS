@@ -26,25 +26,30 @@
  */
 #include "logger.h"
 
-#include <ds/array.h>
+#include <ds/llist.h>
 
 typedef enum {
     MESSAGE, WARNING, ERROR,
 } log_level_t;
 
-array_t* boot_log;
+list_t* boot_log;
 
 typedef struct log_entry {
     log_level_t ll;
     char message[255];
+    struct chained_element le;
 } log_entry_t;
 
 extern bool __ports_initialized;
 extern bool __print_initialized;
 extern void write_byte_com(uint8_t com, uint8_t data);
 
+static struct chained_element* __log_entry_getter(void* data) {
+	return &((log_entry_t*)data)->le;
+}
+
 void initialize_logger() {
-    boot_log = create_array();
+    boot_log = create_list_static(&__log_entry_getter);
 }
 
 static inline void print_to_com(char* ch) {
@@ -63,6 +68,8 @@ void log(log_level_t log_level, const char* message) {
 
     // write message that we are in the kernel
     log_entry_t* le = malloc(sizeof(log_entry_t));
+    if (le == NULL)
+    	return;
     le->ll = log_level;
 
     // display log level
@@ -105,7 +112,7 @@ void log(log_level_t log_level, const char* message) {
     strncpy(le->message, message, 254);
     le->message[254] = '\0';
 
-    array_push_data(boot_log, le);
+    list_push_right(boot_log, le);
 }
 
 /**

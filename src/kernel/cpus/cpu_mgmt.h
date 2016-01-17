@@ -44,6 +44,9 @@
 typedef void (*jmp_handler_t)(jmp_buf b, void* fa, ruint_t errno);
 
 typedef struct cpu {
+	struct cpu*   self;
+	void*  		  syscall_stack;
+
     void*    stack;
     void*    handler_stack;
     void*    pf_stack;

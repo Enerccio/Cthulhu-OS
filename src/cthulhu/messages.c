@@ -26,11 +26,3 @@
  */
 
 #include "messages.h"
-
-ruint_t send_message(message_header_t* mh) {
-	if (mh->await_reply) {
-		// TODO:
-	} else {
-		sys_1arg(SYS_SEND_MESSAGE, mh);
-	}
-}

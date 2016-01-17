@@ -105,8 +105,6 @@ extern void isr45();
 extern void isr46();
 extern void isr47();
 
-extern void isr128();
-extern void isr129();
 extern void isr255();
 
 #define IRQ0  32

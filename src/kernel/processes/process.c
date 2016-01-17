@@ -39,7 +39,7 @@
 ruint_t __proclist_lock;
 ruint_t process_id_num;
 ruint_t thread_id_num;
-array_t* processes;
+list_t* processes;
 
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
@@ -69,7 +69,7 @@ proc_t* create_init_process_structure(uintptr_t pml) {
 
     proc_spinlock_lock(&__proclist_lock);
     process->proc_id = ++process_id_num;
-    array_push_data(processes, process);
+    list_push_right(processes, process);
     proc_spinlock_unlock(&__proclist_lock);
 
     process->fds = create_array();
@@ -85,7 +85,7 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     process->proc_random = rg_create_random_generator(get_unix_time());
     process->parent = NULL;
     process->priority = 0;
-    process->mutexes = create_list();
+    process->mutexes = create_uint64_table();
 
     thread_t* main_thread = malloc(sizeof(thread_t));
     if (main_thread == NULL) {
@@ -104,11 +104,15 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     return process;
 }
 
+static struct chained_element* __process_get_function(void* data){
+	return &((proc_t*)data)->process_list;
+}
+
 void initialize_processes() {
     __proclist_lock = 0;
     process_id_num = 0;
     thread_id_num = 0;
-    processes = create_array_spec(256);
+    processes = create_list_static(&__process_get_function);
 }
 
 mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_size) {
@@ -380,7 +384,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	process->parent = NULL;
 	process->priority = asked_priority;
 	process->pml4 = create_pml4();
-	process->mutexes = create_list();
+	process->mutexes = create_uint64_table();
 
 	uintptr_t opml4 = (uintptr_t)get_active_page();
 	set_active_page((void*)process->pml4);
@@ -459,7 +463,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 
 	proc_spinlock_lock(&__proclist_lock);
 	process->proc_id = ++process_id_num;
-	array_push_data(processes, process);
+	list_push_right(processes, process);
 	proc_spinlock_unlock(&__proclist_lock);
 
 	main_thread->last_rdi = (ruint_t)(uintptr_t)process->argc;

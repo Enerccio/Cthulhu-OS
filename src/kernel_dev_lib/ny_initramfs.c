@@ -50,13 +50,8 @@ int get_file(const char* path, ifs_file_t* file) {
     return E_IFS_ACTION_SUCCESS;
 }
 
-static int __set_priority(system_message_t* sm, void* data) {
-	sm->message_contents.cpm.process_priority = (uint8_t)(uintptr_t)data;
-	sm->message_contents.cpm.mode = initramfs;
-	return 0;
-}
-
 int execve_ifs(const char* ifs_path, char** argv, char** envp, int priority) {
+	/*
 	if (priority < 0 || priority >= 5)
 		return EINVAL;
 
@@ -68,5 +63,6 @@ int execve_ifs(const char* ifs_path, char** argv, char** envp, int priority) {
     }
 
     return create_process_s_cb(ifs_path, argc, argv, envp, false, __set_priority, (void*)(uintptr_t)priority);
+    */
 }
 

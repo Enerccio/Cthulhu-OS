@@ -34,12 +34,6 @@
 extern "C" {
 #endif
 
-typedef int (*cp_cb_t)(system_message_t* cp_message, void* data);
-
-pid_t getpid();
-int create_process_s_cb(const char* path, int argc, char** argv,
-		char** envp, bool waitfr, cp_cb_t callback, void* data);
-
 #ifdef __cplusplus
 }
 #endif

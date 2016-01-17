@@ -44,6 +44,7 @@ extern void load_gdt(gdt_ptr_t* gdt, uint16_t tssid);
 extern gdt_ptr_t gdt;
 extern void kp_halt();
 extern uintptr_t get_active_page();
+extern void write_gs(ruint_t addr);
 
 #define AP_INIT_LOAD_ADDRESS (2)
 #define INIT_IPI_FLAGS (5<<8)
@@ -102,7 +103,13 @@ bool search_for_cpu_by_apic(void* e, void* d) {
  * Returns pointer to current cpu's cput structure
  */
 cpu_t* get_current_cput() {
-    cpu_t* cpu = (cpu_t*)array_find_by_pred(cpus, search_for_cpu_by_apic, (void*)(uintptr_t)get_local_apic_id());
+    cpu_t* cpu;
+
+    __asm__ __volatile__ (
+    	"mov %%gs:0, %0"
+    		: "=r" (cpu)
+    );
+
     return cpu;
 }
 
@@ -238,6 +245,7 @@ void initialize_mp(unsigned int localcpu) {
 #define KERNEL_PF_STACK_SIZE           (0x3000)
 #define KERNEL_DF_STACK_SIZE           (0x2000)
 #define KERNEL_IPI_STACK_SIZE          (0x3000)
+#define KERNEL_SYSCALL_STACK_SIZE      (0x10000)
 #define PAGE_ALIGN(x) ((x) & (~(0xFFF)))
 
 /**
@@ -259,6 +267,8 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
     }
 
     cpu->insert_id = insertid;
+    cpu->syscall_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_SYSCALL_STACK_SIZE));
+    cpu->self = cpu;
     cpu->__cpu_lock = 0;
     cpu->__ipi_lock = 0;
     cpu->__cpu_sched_lock = 0;
@@ -329,4 +339,14 @@ void initialize_cpus() {
             }
         }
     }
+
+    uint8_t localcpu = get_local_apic_id();
+    uint32_t proclen = array_get_size(cpus);
+	for (uint32_t i=0; i<proclen; i++) {
+		cpu_t* cpu = array_get_at(cpus, i);
+		if (cpu->apic_id == localcpu) {
+			write_gs((ruint_t)cpu);
+			return;
+		}
+	}
 }

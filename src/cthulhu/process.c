@@ -28,34 +28,3 @@
 #include "process.h"
 
 #include <errno.h>
-
-pid_t getpid() {
-	int error = 0;
-	pid_t pid = (pid_t) sys_0arg_e(SYS_GET_PID, (ruint_t*)&error);
-	if (error != 0) {
-		errno = error;
-	}
-	return pid;
-}
-
-int create_process_s_cb(const char* path, int argc, char** argv,
-		char** envp, bool waitfr, cp_cb_t callback, void* data) {
-	system_message_t sm;
-
-	sm.header.mtype = system_message;
-	sm.header.await_reply = waitfr;
-	sm.message_type = create_process;
-	sm.message_contents.cpm.argc = argc;
-	sm.message_contents.cpm.argv = argv;
-	sm.message_contents.cpm.envp = envp;
-	sm.message_contents.cpm.path = path;
-	sm.message_contents.cpm.process_priority = (uint8_t) sys_0arg(SYS_GET_CTHREAD_PRIORITY);
-
-	int error;
-	if (callback != NULL) {
-		if ((error=callback(&sm, data))!=0)
-			return error;
-	}
-
-	return (int) send_message(&sm.header);
-}

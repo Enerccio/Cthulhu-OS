@@ -31,17 +31,3 @@
 #include "daemons.h"
 
 #include <cthulhu/messages.h>
-
-typedef struct message {
-	message_main_type_t mtype;
-
-    uint64_t sender_process;
-    tid_t    sender_thread;
-    uint64_t receiver_process;
-
-    message_header_t* message_contents;
-
-    /** Used for message managing */
-    ruint_t __message_lock;
-    uint32_t __message_ref_count;
-} message_t;

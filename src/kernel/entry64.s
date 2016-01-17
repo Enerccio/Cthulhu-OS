@@ -44,6 +44,18 @@ bsp_entry_64:
     hlt
     jmp .hang_bsp
 
+[GLOBAL write_gs]
+write_gs:
+    push rcx
+    mov rcx, 0xC0000101
+    mov rax, rdi
+    and rax, 0xffffffff
+    mov rdx, rdi
+    shr rdx, 32
+    wrmsr
+    pop rcx
+    ret
+
 [GLOBAL ap_entry_64]
 ap_entry_64:
     mov rbx, (0xFEE00000 + 2 * 0x10) + (0xFFFF000000000000 + (509<<39))
@@ -62,9 +74,19 @@ ap_entry_64:
     mov rax, 8
     mul rcx
     add rax, [rbx] ; rax contains pointer to cpu
-    mov rsi, [rax] ; rsi contains pointer to stack
+    mov rsi, [rax+16] ; rsi contains pointer to init stack
     mov rsp, [rsi]
     xor rbp, rbp
+
+    push rax
+    push rdx
+    push rdi
+
+
+    pop rdi
+    pop rdx
+    pop rax
+
     extern ap_main
     call ap_main
     cli

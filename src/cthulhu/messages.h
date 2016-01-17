@@ -38,49 +38,12 @@ typedef void* ipc_pointer_t;
 #define NO_RECEIVER_PROCESS_SPECIFIED __UINT64_MAX__
 #define NO_RECEIVER_THREAD_SPECIFIED  __TID_MAX__
 
-/** system messages */
-typedef enum smess_type {
-	create_process
-} smess_type_t;
-
-typedef enum create_process_mode {
-	initramfs, vfs
-} create_process_mode_t;
-typedef struct create_process_message {
-	const char*  path;
-	char** argv;
-	char** envp;
-	int argc;
-	create_process_mode_t mode;
-	uint8_t		 process_priority;
-
-	// TODO: add more later
-} create_process_message_t;
-
-typedef enum message_type { system_message, simple_message, large_message } message_type_h;
-
-typedef struct message_header {
-	message_type_h mtype;
-	bool await_reply;
-} message_header_t;
-
-typedef struct system_message {
-	message_header_t header;
-	smess_type_t message_type;
-	union {
-		create_process_message_t cpm;
-	} message_contents;
-} system_message_t;
-
-/* for simple/large messages */
-typedef enum message_main_type {
-    targetted_message,
-    broadcast_message,
-    daemon_message,
-    continuation_message,
-} message_main_type_t;
-
-ruint_t send_message(message_header_t* mh);
+typedef struct message {
+	bool	    used;
+	pid_t		target_process;
+	tid_t		target_thread;
+	uint8_t 	data[0x100000];
+} message_t;
 
 #ifdef __cplusplus
 }

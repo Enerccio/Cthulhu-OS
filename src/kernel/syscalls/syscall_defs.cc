@@ -131,6 +131,7 @@ ruint_t dev_fb_get_width(registers_t* r) {
 }
 
 // ipc
+/*
 int __create_initramfs_process(system_message_t* sm, registers_t* r) {
 	if (!initramfs_exists) {
 		return ENOENT;
@@ -177,24 +178,17 @@ int __system_message(system_message_t* sm, registers_t* r) {
 	return rv;
 }
 
-ruint_t sys_send_message(registers_t* r, ruint_t message) {
-	if (message >= 0xFFFF800000000000) {
-		return (ruint_t)EINVAL;
-	}
+*/
 
-	message_header_t* mh = (message_header_t*)message;
-	if (mh->mtype == system_message) {
-		return __system_message((system_message_t*)mh, r);
-	}
-	return 0;
+bool validate_address(void* address, size_t size) {
+	return true;
 }
 
 // services
 ruint_t get_service_status(registers_t* r, ruint_t sname) {
 	const char* name = (const char*) sname;
-	if (sname >= 0xFFFF800000000000) {
-		return false;
-	}
+	if (!validate_address((void*)name, 2048))
+		return -1;
 	return daemon_registered(name);
 }
 
@@ -203,17 +197,21 @@ ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 	if (!initramfs_exists) {
 		return E_IFS_INITRAMFS_GONE;
 	}
+
 	const char* path = (const char*)(uintptr_t)p;
 	initramfs_entry_t* entry = (initramfs_entry_t*)(uintptr_t)strpnt;
 
-	if (p >= 0xFFFF800000000000) {
+	if (!validate_address((void*)p, 2048))
 		return E_EINVAL;
-	}
-	if (strpnt >= 0xFFFF800000000000) {
+
+	if (!validate_address((void*)strpnt, 2048))
 		return E_EINVAL;
-	}
 
 	path_element_t* pe = get_path(path);
+
+	if (pe == NULL) {
+		return E_EINVAL;
+	}
 
 	if (pe->type == PE_DIR) {
 		entry->type = et_dir;
@@ -243,7 +241,17 @@ ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 	return E_IFS_ACTION_SUCCESS;
 }
 
+bool validate_message(message_t* message) {
+	return validate_address((void*)message, sizeof(message_t));
+}
+
 // mutex
+
+ruint_t sys_send_message(registers_t* r, ruint_t message) {
+	if (!validate_message((message_t*)message))
+		return 0;
+	return 0;
+}
 
 ruint_t register_mutex(registers_t* r) {
 	return new_mutex();
