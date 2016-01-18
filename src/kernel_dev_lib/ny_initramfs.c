@@ -51,7 +51,6 @@ int get_file(const char* path, ifs_file_t* file) {
 }
 
 int execve_ifs(const char* ifs_path, char** argv, char** envp, int priority) {
-	/*
 	if (priority < 0 || priority >= 5)
 		return EINVAL;
 
@@ -62,7 +61,6 @@ int execve_ifs(const char* ifs_path, char** argv, char** envp, int priority) {
         ++argt;
     }
 
-    return create_process_s_cb(ifs_path, argc, argv, envp, false, __set_priority, (void*)(uintptr_t)priority);
-    */
+    return dev_sys_4arg(DEV_SYS_INITRAMFS_EXECVE, ifs_path, argc, argv, envp);
 }
 

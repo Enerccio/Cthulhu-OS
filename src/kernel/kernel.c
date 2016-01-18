@@ -65,8 +65,6 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     cpus = NULL;
     kernel_tmp_heap_start = heap_start;
 
-    debug_break;
-
     initialize_temporary_heap(heap_start);
     initialize_physical_memory_allocation(mboot_addr);
     initialize_standard_heap();
@@ -159,6 +157,8 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
 
     log_msg("Init loaded.");
     log_msg("Scheduling init.");
+
+    debug_break;
 
     DISABLE_INTERRUPTS();
     enschedule_to_self(array_get_at(initp->threads, 0));

@@ -70,9 +70,9 @@ ISR_NOERRCODE 255
 isr_common_stub:
     push rax
     xor rax, rax
-    mov rax, [rsp+(5*8)]
+    mov rax, [rsp+(4*8)]
     cmp rax, 0x8
-    jne .skip
+    je .skip
     swapgs
 .skip:
     xor rax, rax
@@ -129,9 +129,9 @@ isr_common_stub:
     mov es, ax
     pop rax
     mov fs, ax
-    mov ax, [rsp+(5*8)]
-    cmp rax, 0x10
-    jne .skip2
+    mov ax, [rsp+(4*8)]
+    cmp rax, 0x8
+    je .skip2
     swapgs
 .skip2:
     pop rax ;19

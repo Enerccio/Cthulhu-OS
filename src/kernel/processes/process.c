@@ -62,6 +62,20 @@ pid_t get_current_pid() {
     return pid;
 }
 
+proc_t* get_current_process() {
+	cpu_t* cpu = get_current_cput();
+	proc_spinlock_lock(&cpu->__cpu_lock);
+	proc_spinlock_lock(&cpu->__cpu_sched_lock);
+	proc_spinlock_lock(&__thread_modifier);
+
+	proc_t* proc = cpu->ct->parent_process;
+
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+	return proc;
+}
+
 proc_t* create_init_process_structure(uintptr_t pml) {
     proc_t* process = malloc(sizeof(proc_t));
     if (process == NULL) {
@@ -87,6 +101,7 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     process->parent = NULL;
     process->priority = 0;
     process->mutexes = create_uint64_table();
+    process->mtx_id = 0;
     if (process->mutexes == NULL) {
     	error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
@@ -191,9 +206,6 @@ mmap_area_t** request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_
     *lm = newmm;
     return lm;
 }
-
-#define ALIGN_DOWN(a, b) ((a) - (a % b))
-#define ALIGN_UP(a, b) ((a % b == 0) ? (a) : (ALIGN_DOWN(a, b) + b))
 
 mmap_area_t** find_va_hole(proc_t* proc, size_t req_size, size_t align_amount) {
     mmap_area_t** lm = &proc->mem_maps;
@@ -408,6 +420,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	process->proc_random = rg_create_random_generator(get_unix_time());
 	process->parent = NULL;
 	process->priority = asked_priority;
+	process->mtx_id = 0;
 	process->pml4 = create_pml4();
 	if (process->pml4 == 0) {
 		destroy_array(process->fds);
@@ -548,16 +561,7 @@ uintptr_t map_virtual_virtual(uintptr_t* _vastart, uintptr_t vaend, bool readonl
     vastart = ALIGN_DOWN(vastart, 0x1000);
     vaend = ALIGN_UP(vaend, 0x1000);
 
-    cpu_t* cpu = get_current_cput();
-    proc_spinlock_lock(&cpu->__cpu_lock);
-    proc_spinlock_lock(&cpu->__cpu_sched_lock);
-    proc_spinlock_lock(&__thread_modifier);
-
-    proc_t* proc = cpu->ct->parent_process;
-
-    proc_spinlock_unlock(&__thread_modifier);
-    proc_spinlock_unlock(&cpu->__cpu_lock);
-    proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+    proc_t* proc = get_current_process();
 
     mmap_area_t** _hole = find_va_hole(proc, vaend-vastart, 0x1000);
     mmap_area_t* hole = *_hole;
@@ -579,16 +583,7 @@ uintptr_t map_physical_virtual(puint_t* _vastart, puint_t vaend, bool readonly) 
     vastart = ALIGN_DOWN(vastart, 0x1000);
     vaend = ALIGN_UP(vaend, 0x1000);
 
-    cpu_t* cpu = get_current_cput();
-    proc_spinlock_lock(&cpu->__cpu_lock);
-    proc_spinlock_lock(&cpu->__cpu_sched_lock);
-    proc_spinlock_lock(&__thread_modifier);
-
-    proc_t* proc = cpu->ct->parent_process;
-
-    proc_spinlock_unlock(&__thread_modifier);
-    proc_spinlock_unlock(&cpu->__cpu_lock);
-    proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+    proc_t* proc = get_current_process();
 
     mmap_area_t** _hole = find_va_hole(proc, vaend-vastart, 0x1000);
     mmap_area_t* hole = *_hole;

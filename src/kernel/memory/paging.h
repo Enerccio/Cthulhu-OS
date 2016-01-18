@@ -34,6 +34,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+typedef enum memory_state {
+	ms_okay, ms_swapped, ms_allocondem, ms_cow, ms_notpresent, ms_einvalid
+} memstate_t;
+
 #define BITMASK(b) (1 << ((b) % CHAR_BIT))
 #define BITSLOT(b) ((b) / CHAR_BIT)
 #define BITSET(a, b) ((a)[BITSLOT(b)] |= BITMASK(b))
@@ -63,6 +67,15 @@ typedef union page {
         uint64_t copy2       : 1;
     }                       copyinfo;
     uint64_t                address;
+    struct {
+    	uint64_t present	: 1;	// same present bit as above
+    	uint64_t valid		: 1;
+    	uint64_t swapped	: 1;	// whether page was swapped out or not
+    	uint64_t allocondem : 1;	// whether allocation on demand is required
+    	uint64_t exec		: 1;		// alloc on demand is data only
+    	uint64_t reserved   : 11;	// reserved future bits
+    	uint64_t gps_id		: 48;	// general purpose id
+    }						internal;
 } page_t;
 
 typedef union page_table {
@@ -206,6 +219,7 @@ typedef struct alloc_info {
 	size_t	  amount;
 	bool      exec;
 	bool      finished;
+	bool	  aod;
 } alloc_info_t;
 
 /**
@@ -263,6 +277,7 @@ void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool 
 
 void mem_change_type(uintptr_t start, size_t len, int change_type, bool new_value, bool invalidate_others);
 
-
 bool map_range(uintptr_t* start, uintptr_t end, uintptr_t* tostart, uintptr_t toend, bool virtual_memory,
         bool readonly, bool kernel);
+
+memstate_t check_mem_state(uintptr_t address, size_t size, uint64_t* storeptr, size_t maxc, size_t* usedentries);

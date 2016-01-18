@@ -46,7 +46,7 @@ void*     __kclib_allocate(size_t aamount) {
     uintptr_t ha = heap_start_address;
     if (!allocate(heap_start_address, aamount, true, false))
     	return NULL;
-    heap_start_address += ALIGN_UP(aamount); // fix deallocation
+    heap_start_address += ALIGN_UP(aamount, 0x1000); // fix deallocation
     return (void*)ha;
 }
 

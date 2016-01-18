@@ -28,9 +28,11 @@
 #include "heap.h"
 #include "../cpus/ipi.h"
 #include "../cpus/cpu_mgmt.h"
+#include "../processes/process.h"
 
 /** aligns the address to 0x1000 and then casts it to type */
 #define PALIGN(type, addr) ((type)ALIGN(addr))
+#define _ALIGN_UP(v) ((v) % 0x1000 == 0 ? (v) : ALIGN((v) + 0x1000))
 
 
 /** Maximum physical bits in page structures */
@@ -451,7 +453,7 @@ size_t __strlen(char* c) {
 bool check_used_range(puint_t test, puint_t fa, size_t sa) {
     ruint_t from = ALIGN(fa);
     sa += fa - from;
-    ruint_t size = ALIGN_UP(sa);
+    ruint_t size = _ALIGN_UP(sa);
     if (from <= test && test < from + size) {
         return true;
     }
@@ -786,10 +788,17 @@ static puint_t allocate_frame(puint_t* paddress, bool kernel, bool readonly, boo
     page_t page;
     memset(&page, 0, sizeof(page_t));
     if (!PRESENT(*paddress)) {
-        new = true;
-        page.address = get_free_frame();
-        if (page.address == 0)
-        	return 0;
+    	page.address = *paddress;
+    	if (page.internal.valid) {
+    		// TODO: only this should happen here
+    		if (page.internal.allocondem) {
+    			exec = page.internal.exec;
+    		}
+    	}
+		new = true;
+		page.address = get_free_frame();
+		if (page.address == 0)
+			return 0;
     } else {
         new = false;
         page.address = ALIGN(*paddress);
@@ -833,7 +842,7 @@ static void deallocate_frame(puint_t* paddress, uintptr_t va) {
  * Repeatedly calls allocate_frame for every frame.
  */
 bool allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
-    amount = ALIGN_UP(amount+(from-ALIGN(from)));
+    amount = _ALIGN_UP(amount+(from-ALIGN(from)));
     from = ALIGN(from);
     uintptr_t addr;
     for (addr = from; addr < from + amount; addr += 0x1000) {
@@ -842,7 +851,7 @@ bool allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
         if (frame == NULL) {
         	goto dealloc;
         }
-        if (allocate_frame(frame, kernel, readonly, true) == 0) {
+        if (allocate_frame(frame, kernel, readonly, false) == 0) {
         	goto dealloc;
         }
         proc_spinlock_unlock(&__frame_lock);
@@ -850,22 +859,32 @@ bool allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
     return true;
 
 dealloc:
+	proc_spinlock_unlock(&__frame_lock);
 	deallocate(from, addr-from);
 	return false;
 }
 
 void allocate_mem(alloc_info_t* ainfo, bool kernel, bool readonly) {
-    ainfo->amount = ALIGN_UP(ainfo->amount+(ainfo->from-ALIGN(ainfo->from)));
+    ainfo->amount = _ALIGN_UP(ainfo->amount+(ainfo->from-ALIGN(ainfo->from)));
     ainfo->from = ALIGN(ainfo->from);
     for (uintptr_t addr = ainfo->from; addr < ainfo->from + ainfo->amount; addr += 0x1000) {
         proc_spinlock_lock(&__frame_lock);
         uint64_t* frame = kernel ? get_page(addr, true) : get_page_user(addr, true);
         if (frame == NULL) {
         	ainfo->finished = false;
+        	proc_spinlock_unlock(&__frame_lock);
         	return;
         }
-        if (allocate_frame(frame, kernel, readonly, ainfo->exec) == 0) {
+        if (ainfo->aod) {
+        	page_t page;
+        	page.internal.present = 0;
+        	page.internal.valid = 1;
+        	page.internal.allocondem = 1;
+        	page.internal.exec = ainfo->exec;
+        	*frame = page.address;
+        } else if (allocate_frame(frame, kernel, readonly, ainfo->exec) == 0) {
         	ainfo->finished = false;
+        	proc_spinlock_unlock(&__frame_lock);
 			return;
         }
         ainfo->from += 0x1000;
@@ -1100,6 +1119,33 @@ puint_t create_pml4() {
 
 // TODO: add swap?
 bool page_fault(uintptr_t address, ruint_t errcode) {
+
+	//proc_t* process = get_current_process();
+
+	if ((errcode & (1<<0)) == 0) {
+		uint64_t* paddr = get_page(address, false);
+		if (paddr != NULL) {
+			page_t page;
+			page.address = *paddr;
+			if (page.internal.valid) {
+				if (page.internal.allocondem) {
+					alloc_info_t ainfo;
+					ainfo.amount = 0x1000;
+					ainfo.finished = false;
+					ainfo.aod = false;
+					ainfo.exec = false;
+					ainfo.from = ALIGN(address);
+					allocate_mem(&ainfo, false, false);
+					if (!ainfo.finished) {
+						// TODO: send message to swapper
+					}
+				} else if (page.internal.swapped) {
+					// TODO: send message to swapper
+				}
+			}
+		}
+	}
+
     if ((errcode & (1<<1)) != 0) {
         // write error
         uint64_t* page = get_page(address, false);
@@ -1167,7 +1213,7 @@ void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool 
 
 void mem_change_type(uintptr_t from, size_t amount,
         int change_type, bool new_value, bool invalidate_others) {
-    amount = ALIGN_UP(amount);
+    amount = _ALIGN_UP(amount);
     for (uintptr_t addr = from; addr < from + amount; addr += 0x1000) {
         puint_t* paddress = get_page(addr, true);
         if (!PRESENT(*paddress)) {
@@ -1239,4 +1285,52 @@ bool map_range(uintptr_t* _start, uintptr_t end, uintptr_t* _tostart, uintptr_t 
 
     broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, toend, NULL);
     return true;
+}
+
+memstate_t check_mem_state(uintptr_t address, size_t size, uint64_t* storeptr,
+		size_t maxc, size_t* usedentries) {
+	memstate_t mstate = ms_einvalid;
+
+	for (uintptr_t addr=address; addr<address+size; addr+=0x1000) {
+		puint_t* entry = get_page(addr, false);
+		if (entry == NULL) {
+			return ms_notpresent;
+		}
+		page_t page;
+		page.address = *entry;
+		if (page.flaggable.present == 1) {
+			// page is present and thus valid
+			// TODO: check for CoW
+		} else {
+			if (page.internal.valid == 1) {
+				// not present but valid, find out why
+				if (page.internal.swapped == 1) {
+					if (mstate == ms_einvalid) {
+						mstate = ms_swapped;
+					}
+					if (mstate == ms_swapped || *usedentries >= maxc) {
+						storeptr[*usedentries] = page.internal.gps_id;
+						++*usedentries;
+					} else {
+						return mstate;
+					}
+				} else if (page.internal.allocondem) {
+					if (mstate == ms_einvalid) {
+						mstate = ms_allocondem;
+					}
+					if (mstate == ms_allocondem || *usedentries >= maxc) {
+						storeptr[*usedentries] = addr;
+						++*usedentries;
+					} else {
+						return mstate;
+					}
+				}
+			} else {
+				return ms_notpresent;
+			}
+		}
+	}
+
+	mstate = ms_okay;
+	return mstate;
 }

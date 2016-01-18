@@ -10,7 +10,87 @@
 #include "../processes/daemons.h"
 #include "../processes/scheduler.h"
 
+#define MAX_CHECKED_ELEMENTS 0x512
+
 static volatile bool initramfs_exists = true;
+
+bool repair_memory(memstate_t state, uint64_t* b, size_t elements, continuation_t* c) {
+	// TODO: dispatch crap here
+	switch (state) {
+	case ms_okay: return true; // sentinel
+	case ms_notpresent:
+	case ms_einvalid: {
+		// TODO: add abort
+	} break;
+	case ms_cow: {
+		// TODO: add cow
+	} break;
+	case ms_allocondem: {
+		for (size_t ix=0; ix<elements; ix++) {
+			alloc_info_t ainfo;
+
+			ainfo.from = b[ix];
+			ainfo.amount = 0x1000;
+			ainfo.finished = false;
+			ainfo.exec = false;
+			ainfo.aod = false;
+
+			allocate_mem(&ainfo, false, false);
+			if (!ainfo.finished) {
+				// TODO: add swapper dispatch call here
+				c->present = true;
+				return false;
+			}
+		}
+		return true;
+	} break;
+	case ms_swapped: {
+		// TODO: add allocondem
+	} break;
+	}
+	return false;
+}
+
+bool validate_address(void* address, size_t size, continuation_t* c) {
+	size_t found = 0;
+	uint64_t localbuf[MAX_CHECKED_ELEMENTS];
+	memstate_t state = check_mem_state((uintptr_t)address, size, localbuf, MAX_CHECKED_ELEMENTS, &found);
+
+	if (state != ms_okay) {
+		return repair_memory(state, localbuf, found, c);
+	}
+
+	return true;
+}
+
+bool validate_string(char* string, continuation_t* c) {
+	size_t found = 0;
+	uint64_t localbuf[MAX_CHECKED_ELEMENTS];
+
+	uintptr_t addr = (uintptr_t)string;
+	uintptr_t nextb = ALIGN_UP(addr, 0x1000);
+
+	while (true) {
+		memstate_t state = check_mem_state(addr, nextb-addr, localbuf, MAX_CHECKED_ELEMENTS, &found);
+		if (state != ms_okay) {
+			return repair_memory(state, localbuf, found, c);
+		}
+		// mstate is fine, check the characters
+		char* s = (char*)addr;
+		for (size_t i=0; i<nextb-addr; i++) {
+			if (s[i] == '\0')
+				return true;
+		}
+		addr += 0x1000;
+		nextb += 0x1000;
+	}
+
+	return true;
+}
+
+bool validate_message(message_t* message, continuation_t* c) {
+	return validate_address((void*)message, sizeof(message_t), c);
+}
 
 ruint_t allocate_memory_cont(registers_t* r, continuation_t* c, ruint_t from, ruint_t size,
 		ruint_t addr);
@@ -46,10 +126,12 @@ ruint_t allocate_memory_cont(registers_t* r, continuation_t* c, ruint_t from, ru
 	c->_2 = addr;
 
 	alloc_info_t ainfo;
+
 	ainfo.amount = size;
 	ainfo.from = from;
-	ainfo.exec = false;
+	ainfo.exec = true;
 	ainfo.finished = false;
+	ainfo.aod = true;
 
 	allocate_mem(&ainfo, false, false);
 
@@ -159,64 +241,10 @@ ruint_t dev_fb_get_width(registers_t* r, continuation_t* c) {
 	return grx_get_width();
 }
 
-// ipc
-/*
-int __create_initramfs_process(system_message_t* sm, registers_t* r) {
-	if (!initramfs_exists) {
-		return ENOENT;
-	}
-
-	char* path = (char*)sm->message_contents.cpm.path;
-	if (((uintptr_t)path) >= 0xFFFF800000000000 )
-		return EINVAL;
-	char** argv = sm->message_contents.cpm.argv;
-	if (((uintptr_t)argv) >= 0xFFFF800000000000 )
-		return EINVAL;
-	int argc = sm->message_contents.cpm.argc;
-	char** envp = sm->message_contents.cpm.envp;
-	if (((uintptr_t)envp) >= 0xFFFF800000000000 )
-		return EINVAL;
-
-	path_element_t* pe = get_path(path);
-	if (pe == NULL || pe->type == PE_DIR) {
-		return ENOENT;
-	}
-
-	proc_t* process;
-	int rv = create_process_base(get_data(pe->element.file), argc, argv, envp,
-			&process, sm->message_contents.cpm.process_priority, r);
-	if (rv == 0) {
-
-	}
-
-	return rv;
-}
-
-int __create_process(system_message_t* sm, registers_t* r) {
-	if (sm->message_contents.cpm.mode == initramfs) {
-		return __create_initramfs_process(sm, r);
-	}
-	return EINVAL;
-}
-
-int __system_message(system_message_t* sm, registers_t* r) {
-	int rv = EINVAL;
-	if (sm->message_type == create_process) {
-		rv = __create_process(sm, r);
-	}
-	return rv;
-}
-
-*/
-
-bool validate_address(void* address, size_t size) {
-	return true;
-}
-
 // services
 ruint_t get_service_status(registers_t* r, continuation_t* c, ruint_t sname) {
 	const char* name = (const char*) sname;
-	if (!validate_address((void*)name, 2048))
+	if (!validate_string((void*)name, c))
 		return -1;
 	return daemon_registered(name);
 }
@@ -230,10 +258,12 @@ ruint_t get_initramfs_entry(registers_t* r, continuation_t* c, ruint_t p, ruint_
 	const char* path = (const char*)(uintptr_t)p;
 	initramfs_entry_t* entry = (initramfs_entry_t*)(uintptr_t)strpnt;
 
-	if (!validate_address((void*)p, 2048))
+	STATIC_ASSERT(sizeof(ifs_directory_t) == sizeof(ifs_file_t));
+
+	if (!validate_string((void*)p, c))
 		return E_EINVAL;
 
-	if (!validate_address((void*)strpnt, 2048))
+	if (!validate_address((void*)strpnt, sizeof(ifs_directory_t), c))
 		return E_EINVAL;
 
 	path_element_t* pe = get_path(path);
@@ -283,14 +313,55 @@ ruint_t get_initramfs_entry(registers_t* r, continuation_t* c, ruint_t p, ruint_
 	return E_IFS_ACTION_SUCCESS;
 }
 
-bool validate_message(message_t* message) {
-	return validate_address((void*)message, sizeof(message_t));
+ruint_t create_process_ivfs(registers_t* r, continuation_t* c, ruint_t _path, ruint_t _argc,
+							ruint_t _argv, ruint_t _envp) {
+	size_t ix = 0;
+	char* path = (char*)_path;
+	if (!validate_string(path, c))
+		return EINVAL;
+
+	int argc = _argc;
+
+	char** argv = (char**)_argv;
+	if (!validate_address((void*)argv, (argc+1)*8, c)) {
+		return EINVAL;
+	}
+	for (ix=0; ix<(size_t)argc+1; ++ix) {
+		if (!validate_string(argv[ix], c))
+			return EINVAL;
+	}
+
+	char** envp = (char**)_envp;
+	ix = 0;
+	while (true) {
+		if (!validate_address((void*)(envp+ix), 8, c)) {
+			return EINVAL;
+		}
+		if (envp[ix] == NULL)
+			break;
+		if (!validate_string(envp[ix], c))
+			return EINVAL;
+	}
+
+	path_element_t* pe = get_path(path);
+	if (pe == NULL || pe->type == PE_DIR) {
+		return ENOENT;
+	}
+
+	proc_t* process;
+	int rv = create_process_base(get_data(pe->element.file), argc, argv, envp,
+			&process, 0, r);
+	if (rv == 0) {
+
+	}
+
+	return rv;
 }
 
 // mutex
 
 ruint_t sys_send_message(registers_t* r, continuation_t* c, ruint_t message) {
-	if (!validate_message((message_t*)message))
+	if (!validate_message((message_t*)message, c))
 		return 0;
 	return 0;
 }

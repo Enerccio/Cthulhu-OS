@@ -32,11 +32,6 @@
 
 #include <stdlib.h>
 
-/** aligns the address to 0x1000 down */
-#define ALIGN(addr) (((uintptr_t)addr) & (~0xFFF))
-/** aligns the address to 0x1000 up */
-#define ALIGN_UP(v) ((v) % 0x1000 == 0 ? (v) : ALIGN((v) + 0x1000))
-
 /**
  * Initializes temporary heap with provided address
  */

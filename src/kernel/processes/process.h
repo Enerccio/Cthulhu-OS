@@ -113,6 +113,7 @@ struct thread {
 extern list_t* processes;
 
 pid_t get_current_pid();
+proc_t* get_current_process();
 
 proc_t* create_init_process_structure(uintptr_t pml);
 mmap_area_t** mmap_area(proc_t* proc, uintptr_t address);

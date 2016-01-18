@@ -72,3 +72,13 @@ typedef void* aligned_ptr_t;
     }while(0)
 
 #define ENOMEM_INTERNAL INT_MIN
+
+#define _MAX(x, y) ((x) <= (y) ? (y) : (x))
+#define _MIN(x, y) ((x) <= (y) ? (x) : (y))
+#define STATIC_ASSERT(X) ({ extern int __attribute__((error("assertion failure: '" #X "' not true"))) compile_time_check(); ((X)?0:compile_time_check()),0; })
+
+/** aligns the address to 0x1000 down */
+#define ALIGN(addr) (((uintptr_t)addr) & (~0xFFF))
+/** aligns the address up */
+#define ALIGN_DOWN(a, b) ((a) - (a % b))
+#define ALIGN_UP(a, b) ((a % b == 0) ? (a) : (ALIGN_DOWN(a, b) + b))
