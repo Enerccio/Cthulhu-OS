@@ -33,6 +33,7 @@
 #include "../interrupts/idt.h"
 #include "../ports/ports.h"
 #include "../processes/scheduler.h"
+#include "../processes/process.h"
 
 extern volatile uintmax_t clock_ms;
 extern volatile uintmax_t clock_s;
@@ -248,6 +249,10 @@ void initialize_mp(unsigned int localcpu) {
 #define KERNEL_SYSCALL_STACK_SIZE      (0x10000)
 #define PAGE_ALIGN(x) ((x) & (~(0xFFF)))
 
+static struct chained_element* __thread_queue_get(void* data) {
+	return &((thread_t*)data)->schedule_list;
+}
+
 /**
  * Creates cpu_t structure from APIC MADT information.
  */
@@ -282,11 +287,11 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
     cpu->ipi_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_IPI_STACK_SIZE));
     cpu->pf_handler.handler = NULL;
     cpu->ct = NULL;
-    cpu->priority_0 = create_queue();
-    cpu->priority_1 = create_queue();
-    cpu->priority_2 = create_queue();
-    cpu->priority_3 = create_queue();
-    cpu->priority_4 = create_queue();
+    cpu->priority_0 = create_queue_static(__thread_queue_get);
+    cpu->priority_1 = create_queue_static(__thread_queue_get);
+    cpu->priority_2 = create_queue_static(__thread_queue_get);
+    cpu->priority_3 = create_queue_static(__thread_queue_get);
+    cpu->priority_4 = create_queue_static(__thread_queue_get);
     return cpu;
 }
 

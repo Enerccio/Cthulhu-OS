@@ -171,6 +171,12 @@ after_pages_set:
     or eax, 1 << 31 | 1 << 0     ; Set the PG-bit, which is the 31nd bit, and the PM-bit, which is the 0th bit.
     mov cr0, eax                 ; Set control register 0 to the A-register.
 
+    mov ecx, 0xC0000080          ; Set the C-register to 0xC0000080, which is the EFER MSR.
+    rdmsr                        ; Read from the model-specific register.
+    or eax, 1 << 0               ; Set the syscall sysexit
+    or eax, 1 << 11              ; Set the execution disable
+    wrmsr                        ; Write to the model-specific register.
+
     lgdt [GDT64.Pointer]         ; Load the 64-bit global descriptor table.
     mov ax, 0x10
     mov es, ax

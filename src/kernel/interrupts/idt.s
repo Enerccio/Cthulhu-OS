@@ -68,11 +68,13 @@ ISR_NOERRCODE 255
 [EXTERN isr_handler]
 
 isr_common_stub:
-    swapgs
     push rax
     xor rax, rax
-    mov ax, gs
-    push rax
+    mov rax, [rsp+(5*8)]
+    cmp rax, 0x8
+    jne skip
+    swapgs
+skip:
     xor rax, rax
     mov ax, fs
     push rax
@@ -83,7 +85,6 @@ isr_common_stub:
     mov ax, ds
     push rax ; 5
     mov rax, 0x10
-    mov gs, ax
     mov fs, ax
     mov ds, ax
     mov ss, ax
@@ -128,11 +129,13 @@ isr_common_stub:
     mov es, ax
     pop rax
     mov fs, ax
-    pop rax
-    mov gs, ax
+    mov ax, [rsp+(5*8)]
+    cmp rax, 0x10
+    jne skip2
+    swapgs
+skip2:
     pop rax ;19
     add rsp, 16
-    swapgs
     iretq
 
 [GLOBAL idt_flush]

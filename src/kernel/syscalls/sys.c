@@ -35,6 +35,7 @@
 extern ruint_t __thread_modifier;
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
+extern void register_syscall_handler();
 
 #include "syscall_defs.cc"
 
@@ -84,12 +85,12 @@ void do_sys_handler(registers_t* registers, syscall_t* sc) {
 	}
 }
 
-void sys_handler(registers_t* registers, bool dev) {
-    if (registers->rax >= 2048) {
+void sys_handler(registers_t* registers) {
+    if (registers->rax >= 4096) {
         registers->rdi = -1;
         return;
     }
-    uint16_t rnum = dev ? (2048 + registers->rax) : registers->rax;
+    uint16_t rnum = registers->rax;
     if (!syscalls[rnum].present) {
         registers->rdi = -1;
         return;
@@ -97,14 +98,6 @@ void sys_handler(registers_t* registers, bool dev) {
 
     syscall_t* sc = &syscalls[rnum];
     do_sys_handler(registers, sc);
-}
-
-void system_call_handler(uintptr_t error_code, registers_t* r) {
-    sys_handler(r, false);
-}
-
-void dev_system_call_handler(uintptr_t error_code, registers_t* r) {
-    sys_handler(r, true);
 }
 
 syscall_t make_syscall_0(syscall_0 sfnc, bool e, bool unsafe) {
@@ -161,6 +154,7 @@ syscall_t make_syscall_5(syscall_5 sfnc, bool e, bool unsafe) {
 }
 
 void initialize_system_calls() {
+	register_syscall_handler();
     memset(syscalls, 0, sizeof(syscalls));
 
     register_syscall(false, SYS_ALLOCATE, make_syscall_1(allocate_memory, false, false));

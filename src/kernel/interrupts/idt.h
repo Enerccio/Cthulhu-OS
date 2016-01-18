@@ -140,7 +140,7 @@ extern void isr255();
 typedef struct registers{
     ruint_t r15, r14, r13, r12, r11, r10, r9, r8, rbp, rcx, rbx;
     ruint_t rdx, rsi, rdi;
-    ruint_t es, ds, fs, gs, rax;
+    ruint_t es, ds, fs, rax;
     ruint_t type, ecode;
     ruint_t rip, cs, rflags, uesp, ss;
 } registers_t ;

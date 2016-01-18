@@ -44,16 +44,24 @@ bsp_entry_64:
     hlt
     jmp .hang_bsp
 
-[GLOBAL write_gs]
-write_gs:
+[GLOBAL write_wmrsc]
+write_wmrsc:
     push rcx
-    mov rcx, 0xC0000101
-    mov rax, rdi
-    and rax, 0xffffffff
-    mov rdx, rdi
+    mov rcx, rdi
+    mov eax, esi
+    mov rdx, rsi
     shr rdx, 32
     wrmsr
     pop rcx
+    ret
+
+[GLOBAL write_gs]
+write_gs:
+    mov rax, rdi
+    mov rdi, 0xC0000102
+    mov rsi, rax
+    call write_wmrsc
+    swapgs
     ret
 
 [GLOBAL ap_entry_64]

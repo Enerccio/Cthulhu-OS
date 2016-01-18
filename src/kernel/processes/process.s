@@ -18,9 +18,8 @@ switch_to_usermode:
     mov ds, ax
     mov es, ax
     mov ds, ax
-    ; todo add thread local
     mov fs, ax
-    mov gs, ax
+    ; todo add thread local
     push rax
     push rdx
     push rcx
@@ -32,4 +31,5 @@ switch_to_usermode:
     xor rcx, rcx
     xor r10, r10
     xor r11, r11
+    swapgs
     iretq
