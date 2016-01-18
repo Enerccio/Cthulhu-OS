@@ -52,19 +52,20 @@ void reinitialize_gdt() {
     kernel_data->s = 1;
     kernel_data->type = 2 & 0xF;
     kernel_data->p = 1;
+    kernel_data->dpl = 0;
 
-    descriptor_t* u_code = &gdt.descriptors[3];
+    descriptor_t* u_data = &gdt.descriptors[3];
+    u_data->s = 1;
+    u_data->type = 2 & 0xF;
+    u_data->p = 1;
+    u_data->dpl = 3;
+
+    descriptor_t* u_code = &gdt.descriptors[4];
     u_code->s = 1;
     u_code->type = 10 & 0xF;
     u_code->dpl = 3;
     u_code->p = 1;
     u_code->l = 1;
-
-    descriptor_t* u_data = &gdt.descriptors[4];
-    u_data->s = 1;
-    u_data->type = 2 & 0xF;
-    u_data->dpl = 3;
-    u_data->p = 1;
 
     tss_descriptor_t* tsd;
     size_t asize = array_get_size(cpus);
