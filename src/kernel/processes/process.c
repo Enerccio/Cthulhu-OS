@@ -68,12 +68,6 @@ proc_t* create_init_process_structure(uintptr_t pml) {
         error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
 
-    process->continuation = malloc(sizeof(continuation_t));
-    if (process->continuation == NULL) {
-    	error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
-    }
-    process->continuation->present = false;
-
     proc_spinlock_lock(&__proclist_lock);
     process->proc_id = ++process_id_num;
     list_push_right(processes, process);
@@ -109,6 +103,13 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     main_thread->last_rdi = (ruint_t)(uintptr_t)process->argc;
     main_thread->last_rsi = (ruint_t)(uintptr_t)process->argv;
     main_thread->last_rdx = (ruint_t)(uintptr_t)process->environ;
+
+    main_thread->continuation = malloc(sizeof(continuation_t));
+	if (main_thread->continuation == NULL) {
+		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+	}
+	main_thread->continuation->present = false;
+
     if (array_push_data(process->threads, main_thread) == 0) {
     	error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
@@ -442,6 +443,20 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	main_thread->parent_process = process;
 	main_thread->priority = asked_priority;
 	main_thread->blocked = false;
+
+	main_thread->continuation = malloc(sizeof(continuation_t));
+	if (main_thread->continuation == NULL) {
+		free(main_thread);
+		destroy_table(process->mutexes);
+		destroy_array(process->threads);
+		destroy_array(process->fds);
+		free(process);
+		// TODO: free process address page
+		set_active_page((void*)opml4);
+		return ENOMEM_INTERNAL;
+	}
+	main_thread->continuation->present = false;
+
 	array_push_data(process->threads, main_thread);
 
 	err = load_elf_exec((uintptr_t)image_data, process);
@@ -452,6 +467,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	}
 
 	if (err != 0) {
+		free(main_thread->continuation);
 		free(main_thread);
 		destroy_table(process->mutexes);
 		destroy_array(process->threads);
@@ -465,6 +481,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	char** argvu = argv;
 	char** envpu = envp;
 	if ((err = cpy_array_user(argc, &argvu, process)) != 0) {
+		free(main_thread->continuation);
 		free(main_thread);
 		destroy_table(process->mutexes);
 		destroy_array(process->threads);
@@ -475,6 +492,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 		return err;
 	}
 	if ((err = cpy_array_user(envc, &envpu, process)) != 0) {
+		free(main_thread->continuation);
 		free(main_thread);
 		destroy_table(process->mutexes);
 		destroy_array(process->threads);

@@ -12,9 +12,10 @@
 
 static volatile bool initramfs_exists = true;
 
-/*
+ruint_t allocate_memory_cont(registers_t* r, continuation_t* c, ruint_t from, ruint_t size,
+		ruint_t addr);
 
-ruint_t allocate_memory(registers_t* r, ruint_t size) {
+ruint_t allocate_memory(registers_t* r, continuation_t* c, ruint_t size) {
     cpu_t* cpu = get_current_cput();
 
     proc_spinlock_lock(&cpu->__cpu_lock);
@@ -27,17 +28,42 @@ ruint_t allocate_memory(registers_t* r, ruint_t size) {
     if (mmap_area == 0) {
         proc_spinlock_unlock(&__thread_modifier);
         proc_spinlock_unlock(&cpu->__cpu_lock);
+        c->present = true;
         return 0;
     }
     mmap_area->mtype = heap_data;
-    allocate(mmap_area->vastart, size, false, false);
-
     proc_spinlock_unlock(&__thread_modifier);
     proc_spinlock_unlock(&cpu->__cpu_lock);
-    return mmap_area->vastart;
+
+    return allocate_memory_cont(r, c, mmap_area->vastart, size, mmap_area->vastart);
 }
 
-ruint_t deallocate_memory(registers_t* r, ruint_t from, ruint_t aamount) {
+ruint_t allocate_memory_cont(registers_t* r, continuation_t* c, ruint_t from, ruint_t size,
+		ruint_t addr) {
+	c->continuation = syscalls[SYS_ALLOC_CONT];
+	c->_0 = from;
+	c->_1 = size;
+	c->_2 = addr;
+
+	alloc_info_t ainfo;
+	ainfo.amount = size;
+	ainfo.from = from;
+	ainfo.exec = false;
+	ainfo.finished = false;
+
+	allocate_mem(&ainfo, false, false);
+
+	if (!ainfo.finished) {
+		c->_0 = ainfo.from;
+		c->_1 = ainfo.amount;
+		c->_2 = addr;
+		c->present = true;
+		// TODO: add message to swapper
+	}
+	return addr;
+}
+
+ruint_t deallocate_memory(registers_t* r, continuation_t* c, ruint_t from, ruint_t aamount) {
 	cpu_t* cpu = get_current_cput();
 
 	proc_spinlock_lock(&cpu->__cpu_lock);
@@ -72,9 +98,7 @@ ruint_t deallocate_memory(registers_t* r, ruint_t from, ruint_t aamount) {
 	return 0;
 }
 
-*/
-
-ruint_t get_tid(registers_t* r) {
+ruint_t get_tid(registers_t* r, continuation_t* c) {
 	cpu_t* cpu = get_current_cput();
 
 	proc_spinlock_lock(&cpu->__cpu_lock);
@@ -89,7 +113,7 @@ ruint_t get_tid(registers_t* r) {
 	return tid;
 }
 
-ruint_t get_pid(registers_t* r) {
+ruint_t get_pid(registers_t* r, continuation_t* c) {
 	cpu_t* cpu = get_current_cput();
 
 	proc_spinlock_lock(&cpu->__cpu_lock);
@@ -104,7 +128,7 @@ ruint_t get_pid(registers_t* r) {
 	return pid;
 }
 
-ruint_t get_ct_priority(registers_t* r) {
+ruint_t get_ct_priority(registers_t* r, continuation_t* c) {
 	cpu_t* cpu = get_current_cput();
 
 	proc_spinlock_lock(&cpu->__cpu_lock);
@@ -119,7 +143,7 @@ ruint_t get_ct_priority(registers_t* r) {
 	return cp;
 }
 
-ruint_t dev_fb_get_height(registers_t* r) {
+ruint_t dev_fb_get_height(registers_t* r, continuation_t* c) {
 	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
 		return DS_ERROR_NOT_ALLOWED;
 	// TODO: add authorization
@@ -127,7 +151,7 @@ ruint_t dev_fb_get_height(registers_t* r) {
 	return grx_get_height();
 }
 
-ruint_t dev_fb_get_width(registers_t* r) {
+ruint_t dev_fb_get_width(registers_t* r, continuation_t* c) {
 	if (daemon_registered(SERVICE_FRAMEBUFFER) && !is_daemon_process(get_current_pid(), SERVICE_FRAMEBUFFER))
 		return DS_ERROR_NOT_ALLOWED;
 	// TODO: add authorization
@@ -190,7 +214,7 @@ bool validate_address(void* address, size_t size) {
 }
 
 // services
-ruint_t get_service_status(registers_t* r, ruint_t sname) {
+ruint_t get_service_status(registers_t* r, continuation_t* c, ruint_t sname) {
 	const char* name = (const char*) sname;
 	if (!validate_address((void*)name, 2048))
 		return -1;
@@ -198,7 +222,7 @@ ruint_t get_service_status(registers_t* r, ruint_t sname) {
 }
 
 // initramfs
-ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
+ruint_t get_initramfs_entry(registers_t* r, continuation_t* c, ruint_t p, ruint_t strpnt) {
 	if (!initramfs_exists) {
 		return E_IFS_INITRAMFS_GONE;
 	}
@@ -226,6 +250,7 @@ ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 		ifs_directory_t* de = ((ifs_directory_t*)entry);
 		de->entries = proc_alloc(entry->num_ent_or_size * 8);
 		if (de->entries == NULL)
+			c->present = true;
 			return ENOMEM_INTERNAL;
 		size_t len;
 		for (uint32_t i=0; i<entry->num_ent_or_size; i++) {
@@ -234,6 +259,7 @@ ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 			de->entries[i] = proc_alloc((len = strlen(child_pe->name))+1);
 			if (de->entries[i] == NULL) {
 				proc_dealloc((uintptr_t)de->entries);
+				c->present = true;
 				return ENOMEM_INTERNAL;
 			}
 			memcpy(de->entries[i], child_pe->name, len+1);
@@ -249,6 +275,7 @@ ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 					(puint_t)((uintptr_t)get_data(pe->element.file))+entry->num_ent_or_size
 					-ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS), true);
 		if (((ifs_file_t*)entry)->file_contents == NULL) {
+			c->present = true;
 			return ENOMEM_INTERNAL;
 		}
 	}
@@ -262,24 +289,30 @@ bool validate_message(message_t* message) {
 
 // mutex
 
-ruint_t sys_send_message(registers_t* r, ruint_t message) {
+ruint_t sys_send_message(registers_t* r, continuation_t* c, ruint_t message) {
 	if (!validate_message((message_t*)message))
 		return 0;
 	return 0;
 }
 
-ruint_t register_mutex(registers_t* r) {
-	return new_mutex();
+ruint_t register_mutex(registers_t* r, continuation_t* c) {
+	int error = 0;
+	uint64_t mtxid = new_mutex(&error);
+	if (error == ENOMEM_INTERNAL) {
+		c->present = true;
+	}
+
+	return mtxid;
 }
 
-ruint_t unlock_mutex(registers_t* r, ruint_t mtxid) {
+ruint_t unlock_mutex(registers_t* r, continuation_t* c, ruint_t mtxid) {
 	return (ruint_t)unblock_mutex_waits((uint64_t)mtxid);
 }
 
-ruint_t lock_mutex(registers_t* r, ruint_t mtxid) {
+ruint_t lock_mutex(registers_t* r, continuation_t* c, ruint_t mtxid) {
 	return (ruint_t)block_mutex_waits((uint64_t)mtxid);
 }
 
-ruint_t wait_for_mutex(registers_t* r, ruint_t mtxid) {
+ruint_t wait_for_mutex(registers_t* r, continuation_t* c, ruint_t mtxid) {
 	return (ruint_t)block_wait_mutex((uint64_t)mtxid, r);
 }

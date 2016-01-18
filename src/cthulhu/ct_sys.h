@@ -38,3 +38,4 @@
 #define SYS_MUTEX_UNLOCKED			9
 #define SYS_MUTEX_WAITING			10
 #define SYS_MUTEX_LOCKED			11
+#define SYS_ALLOC_CONT				12

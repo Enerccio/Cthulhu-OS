@@ -31,12 +31,12 @@
 #include "../interrupts/idt.h"
 #include "../processes/process.h"
 
-typedef ruint_t (*syscall_0)(registers_t*);
-typedef ruint_t (*syscall_1)(registers_t*, ruint_t);
-typedef ruint_t (*syscall_2)(registers_t*, ruint_t, ruint_t);
-typedef ruint_t (*syscall_3)(registers_t*, ruint_t, ruint_t, ruint_t);
-typedef ruint_t (*syscall_4)(registers_t*, ruint_t, ruint_t, ruint_t, ruint_t);
-typedef ruint_t (*syscall_5)(registers_t*, ruint_t, ruint_t, ruint_t, ruint_t, ruint_t);
+typedef ruint_t (*syscall_0)(registers_t*, continuation_t*);
+typedef ruint_t (*syscall_1)(registers_t*, continuation_t*, ruint_t);
+typedef ruint_t (*syscall_2)(registers_t*, continuation_t*, ruint_t, ruint_t);
+typedef ruint_t (*syscall_3)(registers_t*, continuation_t*, ruint_t, ruint_t, ruint_t);
+typedef ruint_t (*syscall_4)(registers_t*, continuation_t*, ruint_t, ruint_t, ruint_t, ruint_t);
+typedef ruint_t (*syscall_5)(registers_t*, continuation_t*, ruint_t, ruint_t, ruint_t, ruint_t, ruint_t);
 typedef struct syscall {
     bool present;
     bool uses_error;
@@ -67,5 +67,6 @@ typedef struct continuation {
 } continuation_t;
 
 void register_syscall(bool system, uint16_t syscall_id, syscall_t syscall);
+void do_sys_handler(registers_t* registers, syscall_t* sc, continuation_t* cnt);
 
 void initialize_system_calls();

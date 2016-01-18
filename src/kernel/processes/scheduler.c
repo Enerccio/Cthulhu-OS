@@ -28,6 +28,7 @@
 #include "scheduler.h"
 #include "../cpus/cpu_mgmt.h"
 #include "../cpus/ipi.h"
+#include "../syscalls/sys.h"
 
 #include <stdnoreturn.h>
 #include <ds/hmap.h>
@@ -210,6 +211,12 @@ void context_switch(registers_t* r, cpu_t* cpu, thread_t* old_head, thread_t* se
 				cpu->ct->last_rsi,
 				cpu->ct->last_rcx);
 	}
+
+	if (selection->continuation->present) {
+		selection->continuation->present = false;
+		do_sys_handler(r, &selection->continuation->continuation,
+				selection->continuation);
+	}
 }
 
 // TODO add switching threads
@@ -303,7 +310,7 @@ static struct chained_element* __blocked_getter(void* data) {
 	return &(((thread_t*)data)->blocked_list);
 }
 
-uint64_t new_mutex() {
+uint64_t new_mutex(int* err) {
 	cpu_t* cpu = get_current_cput();
 
 	proc_spinlock_lock(&cpu->__cpu_lock);
@@ -318,7 +325,8 @@ uint64_t new_mutex() {
 		proc_spinlock_unlock(&__thread_modifier);
 		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 		proc_spinlock_unlock(&cpu->__cpu_lock);
-		return ENOMEM_INTERNAL;
+		*err = ENOMEM_INTERNAL;
+		return 0;
 	}
 
 	mtx->blocked_threads = create_list(__blocked_getter);
@@ -328,7 +336,8 @@ uint64_t new_mutex() {
 		proc_spinlock_unlock(&__thread_modifier);
 		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 		proc_spinlock_unlock(&cpu->__cpu_lock);
-		return ENOMEM_INTERNAL;
+		*err = ENOMEM_INTERNAL;
+		return 0;
 	}
 
 	mtx->blocked = false;
@@ -341,6 +350,8 @@ uint64_t new_mutex() {
 		proc_spinlock_unlock(&__thread_modifier);
 		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 		proc_spinlock_unlock(&cpu->__cpu_lock);
+		*err = ENOMEM_INTERNAL;
+		return 0;
 	}
 
 	++process->mtx_id;
@@ -350,6 +361,7 @@ uint64_t new_mutex() {
 	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 	proc_spinlock_unlock(&cpu->__cpu_lock);
 
+	*err = 0;
 	return mtx->mtx_id;
 }
 

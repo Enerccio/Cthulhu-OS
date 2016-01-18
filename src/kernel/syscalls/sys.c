@@ -37,9 +37,9 @@ extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
 extern void register_syscall_handler();
 
-#include "syscall_defs.cc"
-
 syscall_t syscalls [4096];
+
+#include "syscall_defs.cc"
 
 void register_syscall(bool system, uint16_t syscall_id, syscall_t syscall) {
     if (syscall.uses_error && syscall.args == 0) {
@@ -51,34 +51,38 @@ void register_syscall(bool system, uint16_t syscall_id, syscall_t syscall) {
     syscalls[sysid] = syscall;
 }
 
-void do_sys_handler(registers_t* registers, syscall_t* sc) {
+void do_sys_handler(registers_t* registers, syscall_t* sc, continuation_t* cnt) {
 	if (sc->uses_error) {
 		switch (sc->args) {
-		case 1: registers->rax = sc->syscall._1(registers, (ruint_t)&error);
+		case 1: registers->rax = sc->syscall._1(registers, cnt, (ruint_t)&error);
 			break;
-		case 2: registers->rax = sc->syscall._2(registers, (ruint_t)&error, registers->rdi);
+		case 2: registers->rax = sc->syscall._2(registers, cnt, (ruint_t)&error, registers->rdi);
 			break;
-		case 3: registers->rax = sc->syscall._3(registers, (ruint_t)&error, registers->rdi, registers->rsi);
+		case 3: registers->rax = sc->syscall._3(registers, cnt, (ruint_t)&error, registers->rdi,
+												registers->rsi);
 				break;
-		case 4: registers->rax = sc->syscall._4(registers, (ruint_t)&error, registers->rdi, registers->rsi, registers->rdx);
+		case 4: registers->rax = sc->syscall._4(registers, cnt, (ruint_t)&error, registers->rdi,
+												registers->rsi, registers->rdx);
 				break;
-		case 5: registers->rax = sc->syscall._5(registers, (ruint_t)&error, registers->rdi,
+		case 5: registers->rax = sc->syscall._5(registers, cnt, (ruint_t)&error, registers->rdi,
 												registers->rsi, registers->rdx, registers->rcx);
 				break;
 		}
 	} else {
 		switch (sc->args) {
-		case 0: registers->rax = sc->syscall._0(registers);
+		case 0: registers->rax = sc->syscall._0(registers, cnt);
 			break;
-		case 1: registers->rax = sc->syscall._1(registers, registers->rdi);
+		case 1: registers->rax = sc->syscall._1(registers, cnt, registers->rdi);
 			break;
-		case 2: registers->rax = sc->syscall._2(registers, registers->rdi, registers->rsi);
+		case 2: registers->rax = sc->syscall._2(registers, cnt, registers->rdi, registers->rsi);
 			break;
-		case 3: registers->rax = sc->syscall._3(registers, registers->rdi, registers->rsi, registers->rdx);
+		case 3: registers->rax = sc->syscall._3(registers, cnt, registers->rdi, registers->rsi,
+												registers->rdx);
 				break;
-		case 4: registers->rax = sc->syscall._4(registers, registers->rdi, registers->rsi, registers->rdx, registers->rcx);
+		case 4: registers->rax = sc->syscall._4(registers, cnt, registers->rdi, registers->rsi,
+												registers->rdx, registers->rcx);
 				break;
-		case 5: registers->rax = sc->syscall._5(registers, registers->rdi,
+		case 5: registers->rax = sc->syscall._5(registers, cnt, registers->rdi,
 												registers->rsi, registers->rdx, registers->rcx, registers->r9);
 				break;
 		}
@@ -97,7 +101,26 @@ void sys_handler(registers_t* registers) {
     }
 
     syscall_t* sc = &syscalls[rnum];
-    do_sys_handler(registers, sc);
+    cpu_t* cpu = get_current_cput();
+
+    proc_spinlock_lock(&cpu->__cpu_lock);
+    proc_spinlock_lock(&cpu->__cpu_sched_lock);
+	proc_spinlock_lock(&__thread_modifier);
+
+	thread_t* ct = cpu->ct;
+	continuation_t* cnt = ct->continuation;
+	cnt->continuation = *sc;
+	cnt->_0 = registers->rdi;
+	cnt->_1 = registers->rsi;
+	cnt->_2 = registers->rdx;
+	cnt->_3 = registers->rcx;
+	cnt->_4 = registers->r9;
+
+	proc_spinlock_unlock(&__thread_modifier);
+	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+	proc_spinlock_unlock(&cpu->__cpu_lock);
+
+    do_sys_handler(registers, sc, cnt);
 }
 
 syscall_t make_syscall_0(syscall_0 sfnc, bool e, bool unsafe) {
@@ -157,8 +180,9 @@ void initialize_system_calls() {
 	register_syscall_handler();
     memset(syscalls, 0, sizeof(syscalls));
 
-    //register_syscall(false, SYS_ALLOCATE, make_syscall_1(allocate_memory, false, false));
-    //register_syscall(false, SYS_DEALLOCATE, make_syscall_2(deallocate_memory, false, false));
+    register_syscall(false, SYS_ALLOCATE, make_syscall_1(allocate_memory, false, false));
+    register_syscall(false, SYS_ALLOC_CONT, make_syscall_3(allocate_memory_cont, false, false));
+    register_syscall(false, SYS_DEALLOCATE, make_syscall_2(deallocate_memory, false, false));
     register_syscall(false, SYS_GET_TID, make_syscall_0(get_tid, false, false));
     register_syscall(false, SYS_GET_PID, make_syscall_0(get_pid, false, false));
     register_syscall(false, SYS_SEND_MESSAGE, make_syscall_1(sys_send_message, false, true));

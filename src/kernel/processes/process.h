@@ -86,7 +86,6 @@ typedef struct proc {
 
     uint64_t	  			mtx_id;
     hash_table_t* 			mutexes;
-    continuation_t*			continuation;
 } proc_t;
 
 struct thread {
@@ -95,6 +94,7 @@ struct thread {
 
     uint8_t	 				priority;
     bool					blocked;
+    continuation_t*			continuation;
 
     /* Userspace information */
     ruint_t 				last_rip, last_rsp, last_rax, last_rdi, last_rsi, last_rdx, last_rcx;
