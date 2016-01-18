@@ -149,12 +149,15 @@ int32_t load_elf_stage_one(Elf64_Ehdr* header, uintptr_t base_address, proc_t* p
                     continue;
 
                 // must appear at this address
-                mmap_area_t* mmap_area = request_va_hole(process, section->sh_addr, section->sh_size);
+                mmap_area_t** _mmap_area = request_va_hole(process, section->sh_addr, section->sh_size);
+                mmap_area_t* mmap_area = *_mmap_area;
                 if (mmap_area == NULL) {
                     return ELF_ERROR_SECTION_OVERLAPS;
                 }
                 mmap_area->mtype = program_data;
-                allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false);
+                if (!allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false)) {
+                	return ELF_ERROR_ENOMEM;
+                }
                 if (section->sh_type == SHT_NOBITS) {
                     // nobits, just memset
                     memset((void*)mmap_area->vastart, 0, mmap_area->vaend-mmap_area->vastart);
@@ -182,12 +185,15 @@ int32_t load_elf_stage_one(Elf64_Ehdr* header, uintptr_t base_address, proc_t* p
                     continue;
 
                 // must appear at this address
-                mmap_area_t* mmap_area = find_va_hole(process, section->sh_size, section->sh_addralign);
+                mmap_area_t** _mmap_area = find_va_hole(process, section->sh_size, section->sh_addralign);
+                mmap_area_t* mmap_area = *_mmap_area;
                 if (mmap_area == NULL) {
                     return ELF_ERROR_SECTION_OVERLAPS;
                 }
                 mmap_area->mtype = program_data;
-                allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false);
+                if (!allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false)) {
+                	return ELF_ERROR_ENOMEM;
+                }
                 if (section->sh_type == SHT_NOBITS) {
                     // nobits, just memset
                     memset((void*)mmap_area->vastart, 0, mmap_area->vaend-mmap_area->vastart);
@@ -265,12 +271,15 @@ int32_t load_elf_exec(uintptr_t elf_file_data, proc_t* process) {
 
     // TODO: support alloc size
     size_t ssize = BASE_STACK_SIZE;
-    mmap_area_t* mmap_area = find_va_hole(process, ssize, 0x1000);
+    mmap_area_t** _mmap_area = find_va_hole(process, ssize, 0x1000);
+    mmap_area_t* mmap_area = *_mmap_area;
     if (mmap_area == NULL) {
         return ELF_ERROR_ENOMEM;
     }
     mmap_area->mtype = stack_data;
-    allocate(mmap_area->vastart, ssize, false, false);
+    if (!allocate(mmap_area->vastart, ssize, false, false)) {
+    	return ELF_ERROR_ENOMEM;
+    }
     memset((void*)mmap_area->vastart, 0, ssize);
     thread->stack_bottom_address = mmap_area->vastart;
     thread->stack_top_address = mmap_area->vaend;

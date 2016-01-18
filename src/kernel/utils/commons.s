@@ -34,7 +34,7 @@
 ; extern void kp_halt()
 kp_halt:
     cli
-    halt
+    hlt
     jmp kp_halt
 
 [GLOBAL check_cpuid_apic]

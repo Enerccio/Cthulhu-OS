@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include "../commons.h"
 #include "../interrupts/idt.h"
+#include "../memory/paging.h"
 
 #include <ds/array.h>
 #include <ds/random.h>
@@ -58,10 +59,12 @@ typedef struct mmap_area {
 typedef struct thread thread_t;
 
 typedef struct mtx_int {
-	uint32_t 				mtx_id;
+	uint64_t 				mtx_id;
 	bool     				blocked;
 	list_t*  				blocked_threads;
 } mtx_int_t;
+
+typedef struct continuation continuation_t;
 
 typedef struct proc {
     intmax_t     			proc_id;
@@ -83,6 +86,7 @@ typedef struct proc {
 
     uint64_t	  			mtx_id;
     hash_table_t* 			mutexes;
+    continuation_t*			continuation;
 } proc_t;
 
 struct thread {
@@ -111,16 +115,19 @@ extern list_t* processes;
 pid_t get_current_pid();
 
 proc_t* create_init_process_structure(uintptr_t pml);
-mmap_area_t* request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_size);
-mmap_area_t* find_va_hole(proc_t* proc, size_t req_size, size_t align_amount);
+mmap_area_t** mmap_area(proc_t* proc, uintptr_t address);
+mmap_area_t** request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_size);
+mmap_area_t** find_va_hole(proc_t* proc, size_t req_size, size_t align_amount);
 
 int create_process_base(uint8_t* image_data, int argc, char** argv, char** envp, proc_t** cpt,
 		uint8_t priority, registers_t* r);
 
-uintptr_t map_virtual_virtual(uintptr_t vastart, uintptr_t vaend, bool readonly);
-uintptr_t map_physical_virtual(puint_t vastart, puint_t vaend, bool readonly);
-
 void* proc_alloc(size_t size);
 void* proc_alloc_direct(proc_t* proc, size_t size);
+void  proc_dealloc(uintptr_t mem);
+void  proc_dealloc_direct(proc_t* proc, uintptr_t mem);
+
+uintptr_t map_virtual_virtual(uintptr_t* vastart, uintptr_t vaend, bool readonly);
+uintptr_t map_physical_virtual(puint_t* vastart, puint_t vaend, bool readonly);
 
 void initialize_processes();

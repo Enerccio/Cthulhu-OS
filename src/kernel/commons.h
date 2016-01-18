@@ -34,6 +34,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <limits.h>
 
 #include "multiboot.h"
 
@@ -70,3 +71,4 @@ typedef void* aligned_ptr_t;
         debug_break; \
     }while(0)
 
+#define ENOMEM_INTERNAL INT_MIN

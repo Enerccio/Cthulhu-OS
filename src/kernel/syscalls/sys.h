@@ -29,6 +29,7 @@
 
 #include "../commons.h"
 #include "../interrupts/idt.h"
+#include "../processes/process.h"
 
 typedef ruint_t (*syscall_0)(registers_t*);
 typedef ruint_t (*syscall_1)(registers_t*, ruint_t);
@@ -58,6 +59,13 @@ syscall_t make_syscall_3(syscall_3 sfnc, bool e, bool unsafe);
 syscall_t make_syscall_4(syscall_4 sfnc, bool e, bool unsafe);
 syscall_t make_syscall_5(syscall_5 sfnc, bool e, bool unsafe);
 
-void register_syscall(bool system, uint8_t syscall_id, syscall_t syscall);
+
+typedef struct continuation {
+	syscall_t continuation;
+	ruint_t _0, _1, _2, _3, _4;
+	bool present;
+} continuation_t;
+
+void register_syscall(bool system, uint16_t syscall_id, syscall_t syscall);
 
 void initialize_system_calls();

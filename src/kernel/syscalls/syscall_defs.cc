@@ -12,6 +12,8 @@
 
 static volatile bool initramfs_exists = true;
 
+/*
+
 ruint_t allocate_memory(registers_t* r, ruint_t size) {
     cpu_t* cpu = get_current_cput();
 
@@ -20,7 +22,8 @@ ruint_t allocate_memory(registers_t* r, ruint_t size) {
 
     thread_t* ct = cpu->ct;
 
-    mmap_area_t* mmap_area = find_va_hole(ct->parent_process, size, 0x1000);
+    mmap_area_t** _mmap_area = find_va_hole(ct->parent_process, size, 0x1000);
+    mmap_area_t* mmap_area = *_mmap_area;
     if (mmap_area == 0) {
         proc_spinlock_unlock(&__thread_modifier);
         proc_spinlock_unlock(&cpu->__cpu_lock);
@@ -68,6 +71,8 @@ ruint_t deallocate_memory(registers_t* r, ruint_t from, ruint_t aamount) {
 	proc_spinlock_unlock(&cpu->__cpu_lock);
 	return 0;
 }
+
+*/
 
 ruint_t get_tid(registers_t* r) {
 	cpu_t* cpu = get_current_cput();
@@ -220,22 +225,32 @@ ruint_t get_initramfs_entry(registers_t* r, ruint_t p, ruint_t strpnt) {
 
 		ifs_directory_t* de = ((ifs_directory_t*)entry);
 		de->entries = proc_alloc(entry->num_ent_or_size * 8);
+		if (de->entries == NULL)
+			return ENOMEM_INTERNAL;
 		size_t len;
 		for (uint32_t i=0; i<entry->num_ent_or_size; i++) {
 			path_element_t* child_pe = (path_element_t*)array_get_at(pe->element.dir->path_el_array, i);
 
 			de->entries[i] = proc_alloc((len = strlen(child_pe->name))+1);
+			if (de->entries[i] == NULL) {
+				proc_dealloc((uintptr_t)de->entries);
+				return ENOMEM_INTERNAL;
+			}
 			memcpy(de->entries[i], child_pe->name, len+1);
 		}
 	} else {
 		entry->type = et_file;
 		strncpy(entry->name, pe->name, 255);
 		entry->num_ent_or_size = pe->element.file->size;
+		puint_t fe = (puint_t)get_data(pe->element.file)
+							-ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
 		((ifs_file_t*)entry)->file_contents = (char*)
-				map_physical_virtual((puint_t)get_data(pe->element.file)
-					-ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS),
+				map_physical_virtual(&fe,
 					(puint_t)((uintptr_t)get_data(pe->element.file))+entry->num_ent_or_size
 					-ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS), true);
+		if (((ifs_file_t*)entry)->file_contents == NULL) {
+			return ENOMEM_INTERNAL;
+		}
 	}
 
 	return E_IFS_ACTION_SUCCESS;
@@ -258,16 +273,13 @@ ruint_t register_mutex(registers_t* r) {
 }
 
 ruint_t unlock_mutex(registers_t* r, ruint_t mtxid) {
-	unblock_mutex_waits((uint64_t)mtxid);
-	return 0;
+	return (ruint_t)unblock_mutex_waits((uint64_t)mtxid);
 }
 
 ruint_t lock_mutex(registers_t* r, ruint_t mtxid) {
-	block_mutex_waits((uint64_t)mtxid);
-	return 0;
+	return (ruint_t)block_mutex_waits((uint64_t)mtxid);
 }
 
 ruint_t wait_for_mutex(registers_t* r, ruint_t mtxid) {
-	block_wait_mutex((uint64_t)mtxid, r);
-	return 0;
+	return (ruint_t)block_wait_mutex((uint64_t)mtxid, r);
 }

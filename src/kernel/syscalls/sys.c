@@ -41,7 +41,7 @@ extern void register_syscall_handler();
 
 syscall_t syscalls [4096];
 
-void register_syscall(bool system, uint8_t syscall_id, syscall_t syscall) {
+void register_syscall(bool system, uint16_t syscall_id, syscall_t syscall) {
     if (syscall.uses_error && syscall.args == 0) {
         // this has no sense
         return;
@@ -157,8 +157,8 @@ void initialize_system_calls() {
 	register_syscall_handler();
     memset(syscalls, 0, sizeof(syscalls));
 
-    register_syscall(false, SYS_ALLOCATE, make_syscall_1(allocate_memory, false, false));
-    register_syscall(false, SYS_DEALLOCATE, make_syscall_2(deallocate_memory, false, false));
+    //register_syscall(false, SYS_ALLOCATE, make_syscall_1(allocate_memory, false, false));
+    //register_syscall(false, SYS_DEALLOCATE, make_syscall_2(deallocate_memory, false, false));
     register_syscall(false, SYS_GET_TID, make_syscall_0(get_tid, false, false));
     register_syscall(false, SYS_GET_PID, make_syscall_0(get_pid, false, false));
     register_syscall(false, SYS_SEND_MESSAGE, make_syscall_1(sys_send_message, false, true));

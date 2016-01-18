@@ -171,8 +171,6 @@ static puint_t get_free_frame() {
         }
 
         proc_spinlock_unlock(&__frame_lock);
-        // TODO handle crap here
-        kp_halt();
         return 0;
     }
 }
@@ -246,6 +244,8 @@ static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
         pdpt_t pdpt;
         memset(&pdpt, 0, sizeof(pdpt_t));
         pdpt.number = get_free_frame();
+        if (pdpt.number == 0)
+        	return 0;
         pdpt.flaggable.present = 1;
         pdpt.flaggable.us = user;
         pdpt.flaggable.rw = 1;
@@ -261,6 +261,9 @@ static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
         page_directory_t dir;
         memset(&dir, 0, sizeof(page_directory_t));
         dir.number = get_free_frame();
+        if (dir.number == 0) {
+        	return 0;
+        }
         dir.flaggable.present = 1;
         dir.flaggable.us = user;
         dir.flaggable.rw = 1;
@@ -276,6 +279,9 @@ static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
         page_table_t pt;
         memset(&pt, 0, sizeof(page_table_t));
         pt.number = get_free_frame();
+        if (pt.number == 0) {
+        	return 0;
+        }
         pt.flaggable.present = 1;
         pt.flaggable.us = user;
         pt.flaggable.rw = 1;
@@ -775,13 +781,15 @@ void initialize_physical_memory_allocation(struct multiboot_info* mboot_addr) {
  *
  * If page is present, it does nothing.
  */
-static puint_t allocate_frame(puint_t* paddress, bool kernel, bool readonly) {
+static puint_t allocate_frame(puint_t* paddress, bool kernel, bool readonly, bool exec) {
     bool new;
     page_t page;
     memset(&page, 0, sizeof(page_t));
     if (!PRESENT(*paddress)) {
         new = true;
         page.address = get_free_frame();
+        if (page.address == 0)
+        	return 0;
     } else {
         new = false;
         page.address = ALIGN(*paddress);
@@ -789,6 +797,7 @@ static puint_t allocate_frame(puint_t* paddress, bool kernel, bool readonly) {
     page.flaggable.present = 1;
     page.flaggable.rw = readonly ? 0 : 1;
     page.flaggable.us = kernel ? 0 : 1;
+    page.flaggable.xd = exec ? 1 : 0;
     *paddress = page.address;
 
     if (new) {
@@ -823,47 +832,48 @@ static void deallocate_frame(puint_t* paddress, uintptr_t va) {
  *
  * Repeatedly calls allocate_frame for every frame.
  */
-void allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
+bool allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
     amount = ALIGN_UP(amount+(from-ALIGN(from)));
     from = ALIGN(from);
-    for (uintptr_t addr = from; addr < from + amount; addr += 0x1000) {
+    uintptr_t addr;
+    for (addr = from; addr < from + amount; addr += 0x1000) {
         proc_spinlock_lock(&__frame_lock);
-        allocate_frame(kernel ? get_page(addr, true) : get_page_user(addr, true), kernel, readonly);
+        uint64_t* frame = kernel ? get_page(addr, true) : get_page_user(addr, true);
+        if (frame == NULL) {
+        	goto dealloc;
+        }
+        if (allocate_frame(frame, kernel, readonly, true) == 0) {
+        	goto dealloc;
+        }
         proc_spinlock_unlock(&__frame_lock);
     }
+    return true;
+
+dealloc:
+	deallocate(from, addr-from);
+	return false;
 }
 
-// only works within same cr3!
-void map_range(uintptr_t start, uintptr_t end, uintptr_t tostart, uintptr_t toend, bool virtual_memory,
-        bool readonly, bool kernel) {
-    uintptr_t offs=0;
-    for (; offs<(end-start); offs+=0x1000) {
-        uintptr_t smem = start+offs;
-        uintptr_t tmem = tostart+offs;
-
-        puint_t frame;
-        if (virtual_memory) {
-            frame = ALIGN(*get_page(smem, true));
-            proc_spinlock_lock(&__frame_lock);
-            frame_info_t* fi = get_frame_info(frame);
-            if (fi != NULL) {
-                ++fi->usage_count;
-            }
-            proc_spinlock_unlock(&__frame_lock);
-        } else {
-            frame = smem;
+void allocate_mem(alloc_info_t* ainfo, bool kernel, bool readonly) {
+    ainfo->amount = ALIGN_UP(ainfo->amount+(ainfo->from-ALIGN(ainfo->from)));
+    ainfo->from = ALIGN(ainfo->from);
+    for (uintptr_t addr = ainfo->from; addr < ainfo->from + ainfo->amount; addr += 0x1000) {
+        proc_spinlock_lock(&__frame_lock);
+        uint64_t* frame = kernel ? get_page(addr, true) : get_page_user(addr, true);
+        if (frame == NULL) {
+        	ainfo->finished = false;
+        	return;
         }
+        if (allocate_frame(frame, kernel, readonly, ainfo->exec) == 0) {
+        	ainfo->finished = false;
+			return;
+        }
+        ainfo->from += 0x1000;
+        ainfo->amount -= 0x10000;
 
-        page_t page;
-        memset(&page, 0, sizeof(page_t));
-        page.address = ALIGN(frame);
-        page.flaggable.present = 1;
-        page.flaggable.rw = readonly ? 0 : 1;
-        page.flaggable.us = kernel ? 0 : 1;
-        *get_page(tmem, true) = page.address;
+        proc_spinlock_unlock(&__frame_lock);
     }
-
-    broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, toend, NULL);
+    ainfo->finished = true;
 }
 
 /**
@@ -914,6 +924,7 @@ bool allocated(uintptr_t addr) {
     return true;
 }
 
+/*
 puint_t clone_ptable(puint_t source_ptable, puint_t target_ptable) {
     page_table_t sptable;
     page_table_t tptable;
@@ -1056,12 +1067,16 @@ puint_t clone_paging_structures() {
     broadcast_ipi_message(true, IPI_INVLD_PML, active_page, 0, NULL);
     return tentry.number;
 }
+*/
 
 puint_t create_pml4() {
 	puint_t active_page = get_active_page();
 	proc_spinlock_lock(&__frame_lock);
 	puint_t target_page = get_free_frame();
 	proc_spinlock_unlock(&__frame_lock);
+
+	if (target_page == 0)
+		return 0;
 
 	cr3_page_entry_t apentry;
 	cr3_page_entry_t tentry;
@@ -1146,8 +1161,8 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
     return false;
 }
 
-void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool rw) {
-    *physmem = allocate_frame(get_page(block_addr, true), kernel, rw);
+void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool rw, bool exec) {
+    *physmem = allocate_frame(get_page(block_addr, true), kernel, rw, exec);
 }
 
 void mem_change_type(uintptr_t from, size_t amount,
@@ -1173,4 +1188,55 @@ void mem_change_type(uintptr_t from, size_t amount,
     } else {
         broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, from, amount, NULL);
     }
+}
+
+// only works within same cr3!
+bool map_range(uintptr_t* _start, uintptr_t end, uintptr_t* _tostart, uintptr_t toend, bool virtual_memory,
+        bool readonly, bool kernel) {
+	uintptr_t tostart = *_tostart;
+	uintptr_t start = *_start;
+    uintptr_t offs=0;
+    for (; offs<(end-start); offs+=0x1000) {
+        uintptr_t smem = start+offs;
+        uintptr_t tmem = tostart+offs;
+
+        uint64_t* tp = get_page(tmem, true);
+		if (tp == NULL) {
+			goto on_error;
+		}
+
+        puint_t frame;
+        if (virtual_memory) {
+            frame = ALIGN(*get_page(smem, true));
+            if (frame == 0) {
+            	goto on_error;
+            }
+            proc_spinlock_lock(&__frame_lock);
+            frame_info_t* fi = get_frame_info(frame);
+            if (fi != NULL) {
+                ++fi->usage_count;
+            }
+            proc_spinlock_unlock(&__frame_lock);
+        } else {
+            frame = smem;
+        }
+
+        page_t page;
+        memset(&page, 0, sizeof(page_t));
+        page.address = ALIGN(frame);
+        page.flaggable.present = 1;
+        page.flaggable.rw = readonly ? 0 : 1;
+        page.flaggable.us = kernel ? 0 : 1;
+        *tp = page.address;
+
+        continue;
+    on_error:
+		*_tostart += offs;
+		*_start += offs;
+		broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, offs, NULL);
+		return false;
+    }
+
+    broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, toend, NULL);
+    return true;
 }
