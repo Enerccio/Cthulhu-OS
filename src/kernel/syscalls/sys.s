@@ -1,5 +1,7 @@
 [BITS 64]
 
+%idefine sysretq o64 sysret
+
 [EXTERN write_wmrsc]
 
 [GLOBAL register_syscall_handler]
@@ -109,4 +111,4 @@ syscall_enter:
 
     swapgs
     mov rsp, rbx
-    sysret
+    sysretq

@@ -72,9 +72,9 @@ isr_common_stub:
     xor rax, rax
     mov rax, [rsp+(5*8)]
     cmp rax, 0x8
-    jne skip
+    jne .skip
     swapgs
-skip:
+.skip:
     xor rax, rax
     mov ax, fs
     push rax
@@ -131,9 +131,9 @@ skip:
     mov fs, ax
     mov ax, [rsp+(5*8)]
     cmp rax, 0x10
-    jne skip2
+    jne .skip2
     swapgs
-skip2:
+.skip2:
     pop rax ;19
     add rsp, 16
     iretq
