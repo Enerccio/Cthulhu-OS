@@ -37,15 +37,15 @@ dev_sys_1arg_e:
 ;
 ; extern uint64_t dev_sys_2arg(uint64_t syscallnum, void* arg1, void* arg2)
 dev_sys_2arg:
-    xor rcx, rcx
+    xor r8, r8
 dev_sys_2arg_e:
     mov rax, rdi
     mov rdi, rsi
     mov rsi, rdx
     syscall
-    test rcx, rcx
+    test r8, r8
     je .ret
-    mov qword [rcx], rdi
+    mov qword [r8], rdi
 .ret:
     ret
 
@@ -81,7 +81,7 @@ dev_sys_4arg_e:
     mov rdi, rsi
     mov rsi, rdx
     mov rdx, rcx
-    mov rcx, r8
+    mov r8, r8
     syscall
     test r9, r9
     je .ret
@@ -98,7 +98,7 @@ dev_sys_5arg:
     mov rdi, rsi
     mov rsi, rdx
     mov rdx, rcx
-    mov rcx, r8
-    mov r8, r9
+    mov r8, r8
+    mov r9, r9
     syscall
     ret

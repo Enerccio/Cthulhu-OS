@@ -69,6 +69,7 @@ ISR_NOERRCODE 255
 
 isr_common_stub:
     push rax
+
     xor rax, rax
     mov rax, [rsp+(4*8)]
     cmp rax, 0x8
@@ -78,32 +79,35 @@ isr_common_stub:
     xor rax, rax
     mov ax, fs
     push rax
+
     xor rax, rax
     mov ax, es
     push rax
+
     xor rax, rax
     mov ax, ds
-    push rax ; 5
+    push rax
+
     mov rax, 0x10
     mov fs, ax
     mov ds, ax
     mov ss, ax
     mov es, ax
 
-    push rdi
+    push rdi ; 5
     push rsi
     push rdx
     push rbx
-    push rcx ;10
-    push rbp
+    push rcx
+    push rbp ;10
     push r8
     push r9
     push r10
-    push r11 ;15
-    push r12
+    push r11
+    push r12 ;15
     push r13
     push r14
-    push r15 ; 19
+    push r15 ; 18
     mov rdi, rsp                ; move "pointer" from rsp to rdi (first parameter)
     mov rbx, rsp
     and rsp, 0xFFFFFFFFFFFFFFF0 ; align stack
@@ -123,12 +127,16 @@ isr_common_stub:
     pop rdx
     pop rsi
     pop rdi
+
     pop rax ;15
     mov ds, ax
+
     pop rax
     mov es, ax
+
     pop rax
     mov fs, ax
+
     mov ax, [rsp+(4*8)]
     cmp rax, 0x8
     je .skip2

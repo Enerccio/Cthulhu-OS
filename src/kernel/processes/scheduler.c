@@ -174,7 +174,7 @@ void context_switch(registers_t* r, cpu_t* cpu, thread_t* old_head, thread_t* se
 			copy_registers(r, old_head);
 		}
 
-	} else if (r != NULL && r->cs == (24|0x0003)) {
+	} else if (r != NULL && r->cs == (40|0x0003)) {
 		proc_spinlock_unlock(&__thread_modifier);
 		proc_spinlock_unlock(&cpu->__cpu_lock);
 		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
@@ -190,11 +190,11 @@ void context_switch(registers_t* r, cpu_t* cpu, thread_t* old_head, thread_t* se
 	__atomic_store_n(&cpu->current_address_space, pml4, __ATOMIC_SEQ_CST);
 
 	if (r != NULL) {
-		r->cs = 32 | 0x0003; // user space code
-		r->ss = 24 | 0x0003; // user space data
+		r->cs = 40 | 0x0003; // user space code
+		r->ss = 32 | 0x0003; // user space data
 		// TODO: add thread locals
-		r->ds = 24 | 0x0003; // user space data
-		r->es = 24 | 0x0003; // user space data
+		r->ds = 32 | 0x0003; // user space data
+		r->es = 32 | 0x0003; // user space data
 
 		registers_copy(cpu->ct, r);
 	}

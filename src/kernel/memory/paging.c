@@ -810,8 +810,15 @@ static puint_t allocate_frame(puint_t* paddress, bool kernel, bool readonly, boo
     *paddress = page.address;
 
     if (new) {
-        if (__mem_mirror_present)
-            memset((void*)physical_to_virtual(ALIGN(page.address)), 0xCC, 0x1000);
+        if (__mem_mirror_present) {
+        	if (page.flaggable.xd) {
+        		memset((void*)physical_to_virtual((ALIGN(page.address) &
+								(0x7FFFFFFFFFFFFFFF))), 0xCC, 0x1000);
+        	} else {
+        		memset((void*)physical_to_virtual(ALIGN(page.address)), 0xCC, 0x1000);
+        	}
+        }
+
     }
 
     return ALIGN(*paddress);
@@ -842,8 +849,9 @@ static void deallocate_frame(puint_t* paddress, uintptr_t va) {
  * Repeatedly calls allocate_frame for every frame.
  */
 bool allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
-    amount = _ALIGN_UP(amount+(from-ALIGN(from)));
-    from = ALIGN(from);
+	size_t dif = from-ALIGN(from);
+	amount = _ALIGN_UP(amount+dif);
+	from = ALIGN(from);
     uintptr_t addr;
     for (addr = from; addr < from + amount; addr += 0x1000) {
         proc_spinlock_lock(&__frame_lock);
@@ -865,7 +873,8 @@ dealloc:
 }
 
 void allocate_mem(alloc_info_t* ainfo, bool kernel, bool readonly) {
-    ainfo->amount = _ALIGN_UP(ainfo->amount+(ainfo->from-ALIGN(ainfo->from)));
+	size_t dif = ainfo->from-ALIGN(ainfo->from);
+    ainfo->amount = _ALIGN_UP(ainfo->amount+dif);
     ainfo->from = ALIGN(ainfo->from);
     for (uintptr_t addr = ainfo->from; addr < ainfo->from + ainfo->amount; addr += 0x1000) {
         proc_spinlock_lock(&__frame_lock);
@@ -888,7 +897,7 @@ void allocate_mem(alloc_info_t* ainfo, bool kernel, bool readonly) {
 			return;
         }
         ainfo->from += 0x1000;
-        ainfo->amount -= 0x10000;
+        ainfo->amount -= 0x1000;
 
         proc_spinlock_unlock(&__frame_lock);
     }
@@ -1139,14 +1148,13 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
 					if (!ainfo.finished) {
 						// TODO: send message to swapper
 					}
+					return true;
 				} else if (page.internal.swapped) {
 					// TODO: send message to swapper
 				}
 			}
 		}
-	}
-
-    if ((errcode & (1<<1)) != 0) {
+	} else if ((errcode & (1<<1)) != 0) {
         // write error
         uint64_t* page = get_page(address, false);
         if (page != NULL) {

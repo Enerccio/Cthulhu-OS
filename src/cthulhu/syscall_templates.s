@@ -1,6 +1,6 @@
 [GLOBAL sys_0arg]
 [GLOBAL sys_0arg_e]
-; 0 argument dev syscall
+; 0 argument  syscall
 ;
 ; extern uint64_t sys_0arg(uint64_t syscallnum)
 sys_0arg:
@@ -16,7 +16,7 @@ sys_0arg_e:
 
 [GLOBAL sys_1arg]
 [GLOBAL sys_1arg_e]
-; 1 argument dev syscall
+; 1 argument  syscall
 ;
 ; extern uint64_t sys_1arg(uint64_t syscallnum, void* arg1)
 sys_1arg:
@@ -33,25 +33,25 @@ sys_1arg_e:
 
 [GLOBAL sys_2arg]
 [GLOBAL sys_2arg_e]
-; 2 argument dev syscall
+; 2 argument  syscall
 ;
 ; extern uint64_t sys_2arg(uint64_t syscallnum, void* arg1, void* arg2)
 sys_2arg:
-    xor rcx, rcx
+    xor r8, r8
 sys_2arg_e:
     mov rax, rdi
     mov rdi, rsi
     mov rsi, rdx
     syscall
-    test rcx, rcx
+    test r8, r8
     je .ret
-    mov qword [rcx], rdi
+    mov qword [r8], rdi
 .ret:
     ret
 
 [GLOBAL sys_3arg]
 [GLOBAL sys_3arg_e]
-; 3 argument dev syscall
+; 3 argument  syscall
 ;
 ; extern uint64_t sys_3arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3)
 sys_3arg:
@@ -71,7 +71,7 @@ sys_3arg_e:
 
 [GLOBAL sys_4arg]
 [GLOBAL sys_4arg_e]
-; 4 argument dev syscall
+; 4 argument  syscall
 ;
 ; extern uint64_t sys_4arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4)
 sys_4arg:
@@ -81,7 +81,7 @@ sys_4arg_e:
     mov rdi, rsi
     mov rsi, rdx
     mov rdx, rcx
-    mov rcx, r8
+    mov r8, r8
     syscall
     test r9, r9
     je .ret
@@ -90,7 +90,7 @@ sys_4arg_e:
     ret
 
 [GLOBAL sys_5arg]
-; 5 argument dev syscall
+; 5 argument  syscall
 ;
 ; extern uint64_t sys_5arg(uint64_t syscallnum, void* arg1, void* arg2, void* arg3, void* arg4, void* arg5)
 sys_5arg:
@@ -98,7 +98,7 @@ sys_5arg:
     mov rdi, rsi
     mov rsi, rdx
     mov rdx, rcx
-    mov rcx, r8
-    mov r8, r9
+    mov r8, r8
+    mov r9, r9
     syscall
     ret

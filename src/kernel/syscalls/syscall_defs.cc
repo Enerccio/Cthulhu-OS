@@ -326,7 +326,7 @@ ruint_t create_process_ivfs(registers_t* r, continuation_t* c, ruint_t _path, ru
 	if (!validate_address((void*)argv, (argc+1)*8, c)) {
 		return EINVAL;
 	}
-	for (ix=0; ix<(size_t)argc+1; ++ix) {
+	for (ix=0; ix<(size_t)argc; ++ix) {
 		if (!validate_string(argv[ix], c))
 			return EINVAL;
 	}

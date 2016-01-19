@@ -46,26 +46,32 @@ void register_syscall(bool system, uint16_t syscall_id, syscall_t syscall) {
         // this has no sense
         return;
     }
-    uint16_t sysid = system ? (2048 + syscall_id) : syscall_id;
+    uint16_t sysid = system ? syscall_id : syscall_id;
     syscall.present = true;
     syscalls[sysid] = syscall;
 }
 
 void do_sys_handler(registers_t* registers, syscall_t* sc, continuation_t* cnt) {
 	if (sc->uses_error) {
+		int error;
 		switch (sc->args) {
 		case 1: registers->rax = sc->syscall._1(registers, cnt, (ruint_t)&error);
+			registers->rsi = (ruint_t)error;
 			break;
 		case 2: registers->rax = sc->syscall._2(registers, cnt, (ruint_t)&error, registers->rdi);
+			registers->rdx = (ruint_t)error;
 			break;
 		case 3: registers->rax = sc->syscall._3(registers, cnt, (ruint_t)&error, registers->rdi,
 												registers->rsi);
+				registers->r8 = (ruint_t)error;
 				break;
 		case 4: registers->rax = sc->syscall._4(registers, cnt, (ruint_t)&error, registers->rdi,
 												registers->rsi, registers->rdx);
+				registers->r8 = (ruint_t)error;
 				break;
 		case 5: registers->rax = sc->syscall._5(registers, cnt, (ruint_t)&error, registers->rdi,
-												registers->rsi, registers->rdx, registers->rcx);
+												registers->rsi, registers->rdx, registers->r8);
+				registers->r9 = (ruint_t)error;
 				break;
 		}
 	} else {
@@ -80,10 +86,10 @@ void do_sys_handler(registers_t* registers, syscall_t* sc, continuation_t* cnt) 
 												registers->rdx);
 				break;
 		case 4: registers->rax = sc->syscall._4(registers, cnt, registers->rdi, registers->rsi,
-												registers->rdx, registers->rcx);
+												registers->rdx, registers->r8);
 				break;
 		case 5: registers->rax = sc->syscall._5(registers, cnt, registers->rdi,
-												registers->rsi, registers->rdx, registers->rcx, registers->r9);
+												registers->rsi, registers->rdx, registers->r8, registers->r9);
 				break;
 		}
 	}
@@ -117,9 +123,9 @@ void sys_handler(registers_t* registers) {
 	cnt->continuation = *sc;
 	cnt->_0 = registers->rdi;
 	cnt->_1 = registers->rsi;
-	cnt->_2 = registers->rdx;
-	cnt->_3 = registers->rcx;
-	cnt->_4 = registers->r9;
+	cnt->_2 = registers->r8;
+	cnt->_3 = registers->r9;
+	cnt->_4 = registers->r10;
 
 	proc_spinlock_unlock(&__thread_modifier);
 	proc_spinlock_unlock(&cpu->__cpu_sched_lock);

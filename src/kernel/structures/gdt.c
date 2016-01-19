@@ -35,7 +35,7 @@ gdt_ptr_t gdt;
 extern void load_gdt(gdt_ptr_t* gdt, uint16_t tssid);
 
 void reinitialize_gdt() {
-    uint16_t numdesc = 5+(2*array_get_size(cpus));
+    uint16_t numdesc = 6+(2*array_get_size(cpus));
     descriptor_t* dscp = malloc(sizeof(descriptor_t)*numdesc);
     gdt.descriptors = dscp;
     gdt.limit = (sizeof(descriptor_t)*numdesc)-1;
@@ -54,13 +54,15 @@ void reinitialize_gdt() {
     kernel_data->p = 1;
     kernel_data->dpl = 0;
 
-    descriptor_t* u_data = &gdt.descriptors[3];
+    // 3rd isn't used
+
+    descriptor_t* u_data = &gdt.descriptors[4];
     u_data->s = 1;
     u_data->type = 2 & 0xF;
     u_data->p = 1;
     u_data->dpl = 3;
 
-    descriptor_t* u_code = &gdt.descriptors[4];
+    descriptor_t* u_code = &gdt.descriptors[5];
     u_code->s = 1;
     u_code->type = 10 & 0xF;
     u_code->dpl = 3;
@@ -69,7 +71,7 @@ void reinitialize_gdt() {
 
     tss_descriptor_t* tsd;
     size_t asize = array_get_size(cpus);
-    int itc = 5;
+    int itc = 6;
     for (size_t i=0; i<asize; i++) {
         cpu_t* cpu = array_get_at(cpus, i);
         tsd = (tss_descriptor_t*)&gdt.descriptors[itc];
@@ -96,5 +98,5 @@ void reinitialize_gdt() {
         tsd->descriptor.p = 1;
     }
 
-    load_gdt(&gdt, 40);
+    load_gdt(&gdt, 48);
 }

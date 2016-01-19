@@ -65,6 +65,8 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     cpus = NULL;
     kernel_tmp_heap_start = heap_start;
 
+
+
     initialize_temporary_heap(heap_start);
     initialize_physical_memory_allocation(mboot_addr);
     initialize_standard_heap();

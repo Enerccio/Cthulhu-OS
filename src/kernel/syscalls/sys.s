@@ -28,6 +28,7 @@ register_syscall_handler:
 
 [GLOBAL syscall_enter]
 syscall_enter:
+    push rbx
     mov rbx, rsp
     swapgs
     mov rsp, [gs:8]
@@ -111,4 +112,5 @@ syscall_enter:
 
     swapgs
     mov rsp, rbx
+    pop rbx
     sysretq

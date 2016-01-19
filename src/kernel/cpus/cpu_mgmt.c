@@ -142,7 +142,7 @@ void ap_main(ruint_t proc_id) {
     cpu_t* cpu = (cpu_t*)array_get_at(cpus, cpuid_to_cputord[proc_id]);
     cpu->started = true;
 
-    load_gdt(&gdt, (uint16_t)(cpuid_to_cputord[proc_id]*16)+(40));
+    load_gdt(&gdt, (uint16_t)(cpuid_to_cputord[proc_id]*16)+(48));
     idt_flush(&idt_ptr);
 
     ENABLE_INTERRUPTS();

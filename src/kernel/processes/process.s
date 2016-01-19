@@ -13,18 +13,19 @@ switch_to_usermode:
     xor r13, r13
     xor r14, r14
     xor r15, r15
-    mov rax, 24
-    or rax, 0x0003
+    mov rax, 32|3
     mov ds, ax
     mov es, ax
     mov ds, ax
     mov fs, ax
+
     ; todo add thread local
-    push rax
+    push 32 | 0x3
     push rdx
     push rcx
-    push 32 | 0x3
+    push 40 | 0x3
     push rsi
+
     mov rsi, r8 ; for main thread, this is char* argv
     mov rdx, r9 ; for main thread, this is char** envp;
     xor rax, rax
