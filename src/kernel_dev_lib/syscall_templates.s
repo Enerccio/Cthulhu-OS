@@ -7,7 +7,9 @@ dev_sys_0arg:
     xor rsi, rsi
 dev_sys_0arg_e:
     mov rax, rdi
+    push rbx
     syscall
+    pop rbx
     test rsi, rsi
     je .ret
     mov qword [rsi], rdi
@@ -24,7 +26,9 @@ dev_sys_1arg:
 dev_sys_1arg_e:
     mov rax, rdi
     mov rdi, rsi
+    push rbx
     syscall
+    pop rbx
     test rdx, rdx
     je .ret
     mov qword [rdx], rdi
@@ -42,7 +46,9 @@ dev_sys_2arg_e:
     mov rax, rdi
     mov rdi, rsi
     mov rsi, rdx
+    push rbx
     syscall
+    pop rbx
     test r8, r8
     je .ret
     mov qword [r8], rdi
@@ -61,7 +67,9 @@ dev_sys_3arg_e:
     mov rdi, rsi
     mov rsi, rdx
     mov rdx, rcx
+    push rbx
     syscall
+    pop rbx
     test r8, r8
     je .ret
     mov qword [r8], rdi
@@ -82,7 +90,9 @@ dev_sys_4arg_e:
     mov rsi, rdx
     mov rdx, rcx
     mov r8, r8
+    push rbx
     syscall
+    pop rbx
     test r9, r9
     je .ret
     mov qword [r9], rdi
@@ -100,5 +110,7 @@ dev_sys_5arg:
     mov rdx, rcx
     mov r8, r8
     mov r9, r9
+    push rbx
     syscall
+    pop rbx
     ret
