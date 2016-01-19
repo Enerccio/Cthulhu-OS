@@ -35,7 +35,7 @@ gdt_ptr_t gdt;
 extern void load_gdt(gdt_ptr_t* gdt, uint16_t tssid);
 
 void reinitialize_gdt() {
-    uint16_t numdesc = 6+(2*array_get_size(cpus));
+    uint16_t numdesc = 6+(3*array_get_size(cpus));
     descriptor_t* dscp = malloc(sizeof(descriptor_t)*numdesc);
     gdt.descriptors = dscp;
     gdt.limit = (sizeof(descriptor_t)*numdesc)-1;
@@ -96,7 +96,23 @@ void reinitialize_gdt() {
         tsd->descriptor.g = 0;
         tsd->descriptor.type = 9;
         tsd->descriptor.p = 1;
+
+        descriptor_t* gs = &gdt.descriptors[itc];
+        gs->s = 1;
+        gs->type = 2 & 0xF;
+        gs->p = 1;
+        gs->dpl = 3;
     }
 
     load_gdt(&gdt, 48);
+
+    uint8_t localcpu = get_local_apic_id();
+	uint32_t proclen = array_get_size(cpus);
+	for (uint32_t i=0; i<proclen; i++) {
+		cpu_t* cpu = array_get_at(cpus, i);
+		if (cpu->apic_id == localcpu) {
+			write_gs((ruint_t)cpu);
+			return;
+		}
+	}
 }

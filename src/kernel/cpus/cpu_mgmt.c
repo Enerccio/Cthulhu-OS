@@ -141,7 +141,7 @@ void ap_main(ruint_t proc_id) {
     cpu_t* cpu = (cpu_t*)array_get_at(cpus, cpuid_to_cputord[proc_id]);
     cpu->started = true;
 
-    load_gdt(&gdt, (uint16_t)(cpuid_to_cputord[proc_id]*16)+(48));
+    load_gdt(&gdt, (uint16_t)(cpuid_to_cputord[proc_id]*24)+(48));
     idt_flush(&idt_ptr);
 
     ENABLE_INTERRUPTS();
@@ -343,14 +343,4 @@ void initialize_cpus() {
             }
         }
     }
-
-    uint8_t localcpu = get_local_apic_id();
-    uint32_t proclen = array_get_size(cpus);
-	for (uint32_t i=0; i<proclen; i++) {
-		cpu_t* cpu = array_get_at(cpus, i);
-		if (cpu->apic_id == localcpu) {
-			write_gs((ruint_t)cpu);
-			return;
-		}
-	}
 }

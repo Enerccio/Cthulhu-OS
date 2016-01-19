@@ -558,7 +558,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 		set_active_page((void*)opml4);
 	}
 	main_thread->local_info->self = main_thread->local_info;
-	main_thread->local_info->t = main_thread->tId;
 
 	process->argc = argc;
 	process->argv = argvu;
@@ -584,6 +583,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	list_push_right(processes, process);
 	proc_spinlock_unlock(&__proclist_lock);
 
+	main_thread->local_info->t = main_thread->tId;
 	main_thread->last_rdi = (ruint_t)(uintptr_t)process->argc;
 	main_thread->last_rsi = (ruint_t)(uintptr_t)process->argv;
 	main_thread->last_rdx = (ruint_t)(uintptr_t)process->environ;

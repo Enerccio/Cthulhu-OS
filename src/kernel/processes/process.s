@@ -32,5 +32,6 @@ switch_to_usermode:
     xor rcx, rcx
     xor r10, r10
     xor r11, r11
+
     swapgs
     iretq

@@ -13,7 +13,12 @@ load_gdt:
     mov ds, ax
     mov ss, ax
     mov rax, rsi
+
     ltr ax
+
+    add rsi, 16
+    mov rax, rsi
+    mov gs, ax
 
     push 8
     push .jmpt

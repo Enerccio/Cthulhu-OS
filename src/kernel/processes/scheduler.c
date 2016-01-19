@@ -199,7 +199,7 @@ void context_switch(registers_t* r, cpu_t* cpu, thread_t* old_head, thread_t* se
 		registers_copy(cpu->ct, r);
 	}
 
-	write_gs((void*)cpu->ct->local_info);
+	write_gs((uintptr_t)cpu->ct->local_info);
 	__asm__ __volatile__ ("\tswapgs\n");
 
 	proc_spinlock_unlock(&__thread_modifier);
@@ -337,6 +337,7 @@ int futex_wait(registers_t* registers, uint32_t* ftx, uint32_t value) {
 	proc_spinlock_unlock(&cpu->__cpu_lock);
 
 	schedule(registers);
+	return 0;
 }
 
 int futex_wake(registers_t* registers, uint32_t* ftx, int num) {
