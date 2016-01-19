@@ -76,6 +76,10 @@ proc_t* get_current_process() {
 	return proc;
 }
 
+static struct chained_element* __blocked_getter(void* data) {
+	return &(((thread_t*)data)->blocked_list);
+}
+
 proc_t* create_init_process_structure(uintptr_t pml) {
     proc_t* process = malloc(sizeof(proc_t));
     if (process == NULL) {
@@ -100,9 +104,8 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     process->proc_random = rg_create_random_generator(get_unix_time());
     process->parent = NULL;
     process->priority = 0;
-    process->mutexes = create_uint64_table();
-    process->mtx_id = 0;
-    if (process->mutexes == NULL) {
+    process->futexes = create_uint64_table();
+    if (process->futexes == NULL) {
     	error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
 
@@ -114,6 +117,10 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     main_thread->parent_process = process;
     main_thread->tId = __atomic_add_fetch(&thread_id_num, 1, __ATOMIC_SEQ_CST);
     main_thread->priority = 0;
+    main_thread->futex_block = create_list_static(__blocked_getter);
+    if (main_thread->futex_block == NULL) {
+    	error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+    }
     main_thread->blocked = false;
     main_thread->last_rdi = (ruint_t)(uintptr_t)process->argc;
     main_thread->last_rsi = (ruint_t)(uintptr_t)process->argv;
@@ -124,6 +131,13 @@ proc_t* create_init_process_structure(uintptr_t pml) {
 		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
 	}
 	main_thread->continuation->present = false;
+
+	main_thread->local_info = proc_alloc_direct(process, sizeof(tli_t));
+	if (main_thread->local_info == NULL) {
+		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+	}
+	main_thread->local_info->self = main_thread->local_info;
+	main_thread->local_info->t = main_thread->tId;
 
     if (array_push_data(process->threads, main_thread) == 0) {
     	error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
@@ -420,7 +434,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	process->proc_random = rg_create_random_generator(get_unix_time());
 	process->parent = NULL;
 	process->priority = asked_priority;
-	process->mtx_id = 0;
 	process->pml4 = create_pml4();
 	if (process->pml4 == 0) {
 		destroy_array(process->fds);
@@ -429,9 +442,9 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	}
 
 	uintptr_t opml4 = (uintptr_t)get_active_page();
-	process->mutexes = create_uint64_table();
+	process->futexes = create_uint64_table();
 
-	if (process->mutexes == NULL) {
+	if (process->futexes == NULL) {
 		destroy_array(process->threads);
 		destroy_array(process->fds);
 		free(process);
@@ -444,7 +457,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 
 	thread_t* main_thread = malloc(sizeof(thread_t));
 	if (main_thread == NULL) {
-		destroy_table(process->mutexes);
+		destroy_table(process->futexes);
 		destroy_array(process->threads);
 		destroy_array(process->fds);
 		free(process);
@@ -460,7 +473,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	main_thread->continuation = malloc(sizeof(continuation_t));
 	if (main_thread->continuation == NULL) {
 		free(main_thread);
-		destroy_table(process->mutexes);
+		destroy_table(process->futexes);
 		destroy_array(process->threads);
 		destroy_array(process->fds);
 		free(process);
@@ -469,6 +482,19 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 		return ENOMEM_INTERNAL;
 	}
 	main_thread->continuation->present = false;
+
+	main_thread->futex_block = create_list_static(__blocked_getter);
+	if (main_thread->futex_block == NULL) {
+		free(main_thread->continuation);
+		free(main_thread);
+		destroy_table(process->futexes);
+		destroy_array(process->threads);
+		destroy_array(process->fds);
+		free(process);
+		// TODO: free process address page
+		set_active_page((void*)opml4);
+		return ENOMEM_INTERNAL;
+	}
 
 	array_push_data(process->threads, main_thread);
 
@@ -480,9 +506,10 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	}
 
 	if (err != 0) {
+		free_list(main_thread->futex_block);
 		free(main_thread->continuation);
 		free(main_thread);
-		destroy_table(process->mutexes);
+		destroy_table(process->futexes);
 		destroy_array(process->threads);
 		destroy_array(process->fds);
 		free(process);
@@ -494,9 +521,10 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 	char** argvu = argv;
 	char** envpu = envp;
 	if ((err = cpy_array_user(argc, &argvu, process)) != 0) {
+		free_list(main_thread->futex_block);
 		free(main_thread->continuation);
 		free(main_thread);
-		destroy_table(process->mutexes);
+		destroy_table(process->futexes);
 		destroy_array(process->threads);
 		destroy_array(process->fds);
 		free(process);
@@ -505,9 +533,10 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 		return err;
 	}
 	if ((err = cpy_array_user(envc, &envpu, process)) != 0) {
+		free_list(main_thread->futex_block);
 		free(main_thread->continuation);
 		free(main_thread);
-		destroy_table(process->mutexes);
+		destroy_table(process->futexes);
 		destroy_array(process->threads);
 		destroy_array(process->fds);
 		free(process);
@@ -515,6 +544,21 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 		set_active_page((void*)opml4);
 		return err;
 	}
+
+	main_thread->local_info = proc_alloc_direct(process, sizeof(tli_t));
+	if (main_thread->local_info == NULL) {
+		free_list(main_thread->futex_block);
+		free(main_thread->continuation);
+		free(main_thread);
+		destroy_table(process->futexes);
+		destroy_array(process->threads);
+		destroy_array(process->fds);
+		free(process);
+		// TODO: free process address page
+		set_active_page((void*)opml4);
+	}
+	main_thread->local_info->self = main_thread->local_info;
+	main_thread->local_info->t = main_thread->tId;
 
 	process->argc = argc;
 	process->argv = argvu;

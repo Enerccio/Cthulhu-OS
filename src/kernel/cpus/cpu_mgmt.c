@@ -45,7 +45,6 @@ extern void load_gdt(gdt_ptr_t* gdt, uint16_t tssid);
 extern gdt_ptr_t gdt;
 extern void kp_halt();
 extern uintptr_t get_active_page();
-extern void write_gs(ruint_t addr);
 
 #define AP_INIT_LOAD_ADDRESS (2)
 #define INIT_IPI_FLAGS (5<<8)

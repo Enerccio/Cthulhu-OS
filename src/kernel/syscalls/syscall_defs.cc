@@ -180,21 +180,6 @@ ruint_t deallocate_memory(registers_t* r, continuation_t* c, ruint_t from, ruint
 	return 0;
 }
 
-ruint_t get_tid(registers_t* r, continuation_t* c) {
-	cpu_t* cpu = get_current_cput();
-
-	proc_spinlock_lock(&cpu->__cpu_lock);
-	proc_spinlock_lock(&__thread_modifier);
-
-	thread_t* ct = cpu->ct;
-	tid_t tid = ct->tId;
-
-	proc_spinlock_unlock(&__thread_modifier);
-	proc_spinlock_unlock(&cpu->__cpu_lock);
-
-	return tid;
-}
-
 ruint_t get_pid(registers_t* r, continuation_t* c) {
 	cpu_t* cpu = get_current_cput();
 
@@ -358,7 +343,7 @@ ruint_t create_process_ivfs(registers_t* r, continuation_t* c, ruint_t _path, ru
 	return rv;
 }
 
-// mutex
+// IPC
 
 ruint_t sys_send_message(registers_t* r, continuation_t* c, ruint_t message) {
 	if (!validate_message((message_t*)message, c))
@@ -366,24 +351,22 @@ ruint_t sys_send_message(registers_t* r, continuation_t* c, ruint_t message) {
 	return 0;
 }
 
-ruint_t register_mutex(registers_t* r, continuation_t* c) {
-	int error = 0;
-	uint64_t mtxid = new_mutex(&error);
-	if (error == ENOMEM_INTERNAL) {
-		c->present = true;
+// mutex
+
+ruint_t __futex_wait(registers_t* r, continuation_t* c, ruint_t _ftx_addr, ruint_t _state) {
+	uint32_t* ftx_addr = (uint32_t*)_ftx_addr;
+	uint32_t state = (uint32_t)_state;
+	if (!validate_address((void*)(ftx_addr), 8, c)) {
+		return EINVAL;
 	}
-
-	return mtxid;
+	return (ruint_t)futex_wait(r, ftx_addr, state);
 }
 
-ruint_t unlock_mutex(registers_t* r, continuation_t* c, ruint_t mtxid) {
-	return (ruint_t)unblock_mutex_waits((uint64_t)mtxid);
-}
-
-ruint_t lock_mutex(registers_t* r, continuation_t* c, ruint_t mtxid) {
-	return (ruint_t)block_mutex_waits((uint64_t)mtxid);
-}
-
-ruint_t wait_for_mutex(registers_t* r, continuation_t* c, ruint_t mtxid) {
-	return (ruint_t)block_wait_mutex((uint64_t)mtxid, r);
+ruint_t __futex_wake(registers_t* r, continuation_t* c, ruint_t _ftx_addr, ruint_t _num) {
+	uint32_t* ftx_addr = (uint32_t*)_ftx_addr;
+	int num = (int)_num;
+	if (!validate_address((void*)(ftx_addr), 8, c)) {
+		return EINVAL;
+	}
+	return (ruint_t)futex_wake(r, ftx_addr, num);
 }

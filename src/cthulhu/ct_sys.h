@@ -29,13 +29,10 @@
 
 #define SYS_ALLOCATE       			1
 #define SYS_DEALLOCATE      		2
-#define SYS_GET_TID        		 	3
 #define SYS_GET_PID         		4
 #define SYS_SEND_MESSAGE    		5
 #define SYS_RECEIVE_MESSAGE		  	6
 #define SYS_GET_CTHREAD_PRIORITY 	7
-#define SYS_REGISTER_MUTEX			8
-#define SYS_MUTEX_UNLOCKED			9
-#define SYS_MUTEX_WAITING			10
-#define SYS_MUTEX_LOCKED			11
-#define SYS_ALLOC_CONT				12
+#define SYS_FUTEX_WAIT				8
+#define SYS_FUTEX_WAKE				9
+#define SYS_ALLOC_CONT				10

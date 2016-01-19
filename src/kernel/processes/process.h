@@ -38,6 +38,7 @@
 #include <ds/hmap.h>
 
 #include <cthulhu/messages.h>
+#include <cthulhu/threading.h>
 
 typedef struct file_descriptor {
     uint32_t 				fd_pid;
@@ -57,12 +58,6 @@ typedef struct mmap_area {
 } mmap_area_t;
 
 typedef struct thread thread_t;
-
-typedef struct mtx_int {
-	uint64_t 				mtx_id;
-	bool     				blocked;
-	list_t*  				blocked_threads;
-} mtx_int_t;
 
 typedef struct continuation continuation_t;
 
@@ -84,8 +79,7 @@ typedef struct proc {
 
     struct chained_element 	process_list;
 
-    uint64_t	  			mtx_id;
-    hash_table_t* 			mutexes;
+    hash_table_t* 			futexes;
 } proc_t;
 
 struct thread {
@@ -106,6 +100,9 @@ struct thread {
 
     struct chained_element 	schedule_list;
     struct chained_element 	blocked_list;
+
+    tli_t*					local_info;
+    list_t*					futex_block;
 };
 
 #define BASE_STACK_SIZE 0x1000000

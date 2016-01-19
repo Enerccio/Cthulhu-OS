@@ -19,32 +19,15 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * scheduler.h
- *  Created on: Jan 1, 2016
+ * threading.h
+ *  Created on: Jan 19, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
 #pragma once
 
-#include "../commons.h"
-#include "../interrupts/clock.h"
-#include "../cpus/cpu_mgmt.h"
-#include "process.h"
-
-#include <ds/random.h>
-#include <ds/array.h>
-
-void attemp_to_run_scheduler(registers_t* r);
-void schedule(registers_t* r);
-void enschedule(thread_t* t, cpu_t* cpu);
-void enschedule_best(thread_t* t);
-void enschedule_to_self(thread_t* t);
-
-void copy_registers(registers_t* r, thread_t* t);
-void registers_copy(thread_t* t, registers_t* r);
-
-void initialize_scheduler();
-
-int futex_wait(registers_t* registers, uint32_t* ftx, uint32_t value);
-int futex_wake(registers_t* registers, uint32_t* ftx, int num);
+typedef struct thread_local_info {
+	struct thread_local_info* self;
+	tid_t t;
+} tli_t;

@@ -41,6 +41,8 @@
 
 #include "../processes/process.h"
 
+extern void write_gs(ruint_t addr);
+
 typedef void (*jmp_handler_t)(jmp_buf b, void* fa, ruint_t errno);
 
 typedef struct cpu {

@@ -199,6 +199,9 @@ void context_switch(registers_t* r, cpu_t* cpu, thread_t* old_head, thread_t* se
 		registers_copy(cpu->ct, r);
 	}
 
+	write_gs((void*)cpu->ct->local_info);
+	__asm__ __volatile__ ("\tswapgs\n");
+
 	proc_spinlock_unlock(&__thread_modifier);
 	proc_spinlock_unlock(&cpu->__cpu_lock);
 	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
@@ -306,66 +309,37 @@ void initialize_scheduler() {
     __halted_modifier = 0;
 }
 
-static struct chained_element* __blocked_getter(void* data) {
-	return &(((thread_t*)data)->blocked_list);
-}
+int futex_wait(registers_t* registers, uint32_t* ftx, uint32_t value) {
+	if (*ftx != value) {
+		return EWOULDBLOCK;
+	}
 
-uint64_t new_mutex(int* err) {
 	cpu_t* cpu = get_current_cput();
 
 	proc_spinlock_lock(&cpu->__cpu_lock);
 	proc_spinlock_lock(&cpu->__cpu_sched_lock);
 	proc_spinlock_lock(&__thread_modifier);
 	proc_spinlock_lock(&__halted_modifier);
+	// TODO: add timeout
 
-	proc_t* process = cpu->ct->parent_process;
-	mtx_int_t* mtx = malloc(sizeof(mtx_int_t));
-	if (mtx == NULL) {
-		proc_spinlock_unlock(&__halted_modifier);
-		proc_spinlock_unlock(&__thread_modifier);
-		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-		proc_spinlock_unlock(&cpu->__cpu_lock);
-		*err = ENOMEM_INTERNAL;
-		return 0;
+	list_t* btl = (list_t*)table_get(cpu->ct->parent_process->futexes, (void*) ftx);
+	if (btl == NULL) {
+		btl = cpu->ct->futex_block;
+		table_set(cpu->ct->parent_process->futexes, (void*) ftx, (void*)btl);
 	}
 
-	mtx->blocked_threads = create_list(__blocked_getter);
-	if (mtx->blocked_threads == NULL) {
-		free(mtx);
-		proc_spinlock_unlock(&__halted_modifier);
-		proc_spinlock_unlock(&__thread_modifier);
-		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-		proc_spinlock_unlock(&cpu->__cpu_lock);
-		*err = ENOMEM_INTERNAL;
-		return 0;
-	}
-
-	mtx->blocked = false;
-	mtx->mtx_id = process->mtx_id;
-	if (table_set(process->mutexes, (void*)mtx->mtx_id, mtx)) {
-		table_remove(process->mutexes, (void*)mtx->mtx_id);
-		free(mtx->blocked_threads);
-		free(mtx);
-		proc_spinlock_unlock(&__halted_modifier);
-		proc_spinlock_unlock(&__thread_modifier);
-		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-		proc_spinlock_unlock(&cpu->__cpu_lock);
-		*err = ENOMEM_INTERNAL;
-		return 0;
-	}
-
-	++process->mtx_id;
+	list_push_right(btl, cpu->ct);
+	cpu->ct->blocked = true;
 
 	proc_spinlock_unlock(&__halted_modifier);
 	proc_spinlock_unlock(&__thread_modifier);
 	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 	proc_spinlock_unlock(&cpu->__cpu_lock);
 
-	*err = 0;
-	return mtx->mtx_id;
+	schedule(registers);
 }
 
-int unblock_mutex_waits(uint64_t mtxid) {
+int futex_wake(registers_t* registers, uint32_t* ftx, int num) {
 	cpu_t* cpu = get_current_cput();
 
 	proc_spinlock_lock(&cpu->__cpu_lock);
@@ -373,8 +347,8 @@ int unblock_mutex_waits(uint64_t mtxid) {
 	proc_spinlock_lock(&__thread_modifier);
 	proc_spinlock_lock(&__halted_modifier);
 
-	mtx_int_t* mutex = (mtx_int_t*) table_get(cpu->ct->parent_process->mutexes, (void*) mtxid);
-	if (mutex == NULL) {
+	list_t* btl = (list_t*)table_get(cpu->ct->parent_process->futexes, (void*) ftx);
+	if (btl == NULL) {
 		proc_spinlock_unlock(&__halted_modifier);
 		proc_spinlock_unlock(&__thread_modifier);
 		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
@@ -383,9 +357,9 @@ int unblock_mutex_waits(uint64_t mtxid) {
 	}
 
 	list_iterator_t li;
-	list_create_iterator(mutex->blocked_threads, &li);
+	list_create_iterator(btl, &li);
 	thread_t* t = NULL;
-	while (list_has_next(&li)) {
+	while (num-- > 0 && list_has_next(&li)) {
 		t = list_next(&li);
 		list_remove_it(&li);
 
@@ -397,65 +371,5 @@ int unblock_mutex_waits(uint64_t mtxid) {
 	proc_spinlock_unlock(&__thread_modifier);
 	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 	proc_spinlock_unlock(&cpu->__cpu_lock);
-	return 0;
-}
-
-int block_mutex_waits(uint64_t mtxid) {
-	cpu_t* cpu = get_current_cput();
-
-	proc_spinlock_lock(&cpu->__cpu_lock);
-	proc_spinlock_lock(&cpu->__cpu_sched_lock);
-	proc_spinlock_lock(&__thread_modifier);
-	proc_spinlock_lock(&__halted_modifier);
-
-	mtx_int_t* mutex = (mtx_int_t*) table_get(cpu->ct->parent_process->mutexes, (void*) mtxid);
-	if (mutex == NULL) {
-		proc_spinlock_unlock(&__halted_modifier);
-		proc_spinlock_unlock(&__thread_modifier);
-		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-		proc_spinlock_unlock(&cpu->__cpu_lock);
-		return EINVAL;
-	}
-	mutex->blocked = true;
-
-	proc_spinlock_unlock(&__halted_modifier);
-	proc_spinlock_unlock(&__thread_modifier);
-	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-	proc_spinlock_unlock(&cpu->__cpu_lock);
-	return 0;
-}
-
-int block_wait_mutex(uint64_t mtxid, registers_t* registers) {
-	cpu_t* cpu = get_current_cput();
-
-	proc_spinlock_lock(&cpu->__cpu_lock);
-	proc_spinlock_lock(&cpu->__cpu_sched_lock);
-	proc_spinlock_lock(&__thread_modifier);
-	proc_spinlock_lock(&__halted_modifier);
-
-	mtx_int_t* mutex = (mtx_int_t*) table_get(cpu->ct->parent_process->mutexes, (void*) mtxid);
-	if (mutex == NULL) {
-		proc_spinlock_unlock(&__halted_modifier);
-		proc_spinlock_unlock(&__thread_modifier);
-		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-		proc_spinlock_unlock(&cpu->__cpu_lock);
-		return EINVAL;
-	}
-	if (!mutex->blocked) {
-		proc_spinlock_unlock(&__halted_modifier);
-		proc_spinlock_unlock(&__thread_modifier);
-		proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-		proc_spinlock_unlock(&cpu->__cpu_lock);
-		return 0;
-	}
-
-	list_push_right(mutex->blocked_threads, cpu->ct);
-
-	proc_spinlock_unlock(&__halted_modifier);
-	proc_spinlock_unlock(&__thread_modifier);
-	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-	proc_spinlock_unlock(&cpu->__cpu_lock);
-
-	schedule(registers);
 	return 0;
 }

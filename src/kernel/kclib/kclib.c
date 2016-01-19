@@ -77,10 +77,6 @@ clock_t __kclib_clock() {
     return get_unix_time() * CLOCKS_PER_SEC;
 }
 
-mtx_id_t __kclib_get_mutex_global_identifier() {
-    return 0; // all mutexes in kernel have same identifier
-}
-
 extern bool multiprocessing_ready;
 
 extern uint8_t get_local_apic_id();
@@ -90,19 +86,10 @@ tid_t __kclib_get_tid() {
     return 0;
 }
 
-extern void wait_until_activated();
-void __kclib_mutex_halt(mtx_id_t __asked_mutex) {
-    if (multiprocessing_ready)
-        wait_until_activated(WAIT_KERNEL_MUTEX);
+extern void __kclib_futex_wait(void* futex, int v) {
+	__asm__ __volatile__ ("\npause\t");
 }
 
-extern void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t message, ruint_t message2,
-        registers_t* r);
-void __kclib_mutex_unlocked(mtx_id_t __asked_mutex) {
-    if (multiprocessing_ready)
-        broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_KERNEL_MUTEX, 0, NULL);
-}
-
-void __kclib_mutex_locked(mtx_id_t __asked_mutex) {
+extern void __kclib_futex_wake(void* futex, int v) {
 
 }
