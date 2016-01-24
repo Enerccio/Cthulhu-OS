@@ -271,7 +271,8 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
     }
 
     cpu->insert_id = insertid;
-    cpu->syscall_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_SYSCALL_STACK_SIZE));
+    cpu->syscall_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_SYSCALL_STACK_SIZE)
+    		+KERNEL_SYSCALL_STACK_SIZE);
     cpu->self = cpu;
     cpu->__cpu_lock = 0;
     cpu->__ipi_lock = 0;
@@ -279,11 +280,11 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
     cpu->__message_clear_lock = 0;
     cpu->apic_message_handled = 0;
     cpu->current_address_space = get_active_page();
-    cpu->stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_INIT_STACK_SIZE));
-    cpu->handler_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_HANDLER_STACK_SIZE));
-    cpu->pf_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_PF_STACK_SIZE));
-    cpu->df_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_DF_STACK_SIZE));
-    cpu->ipi_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_IPI_STACK_SIZE));
+    cpu->stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_INIT_STACK_SIZE)+KERNEL_INIT_STACK_SIZE);
+    cpu->handler_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_HANDLER_STACK_SIZE)+KERNEL_HANDLER_STACK_SIZE);
+    cpu->pf_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_PF_STACK_SIZE)+KERNEL_PF_STACK_SIZE);
+    cpu->df_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_DF_STACK_SIZE)+KERNEL_DF_STACK_SIZE);
+    cpu->ipi_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_IPI_STACK_SIZE)+KERNEL_IPI_STACK_SIZE);
     cpu->pf_handler.handler = NULL;
     cpu->ct = NULL;
     cpu->priority_0 = create_queue_static(__thread_queue_get);

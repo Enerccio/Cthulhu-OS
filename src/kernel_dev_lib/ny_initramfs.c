@@ -61,6 +61,7 @@ int execve_ifs(const char* ifs_path, char** argv, char** envp, int priority) {
         ++argt;
     }
 
-    return dev_sys_4arg(DEV_SYS_INITRAMFS_EXECVE, ifs_path, argc, argv, envp);
+    return dev_sys_4arg(DEV_SYS_INITRAMFS_EXECVE,
+    		(ruint_t)ifs_path, (ruint_t)argc, (ruint_t)argv, (ruint_t)envp);
 }
 

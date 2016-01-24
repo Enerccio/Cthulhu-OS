@@ -31,14 +31,18 @@
 #include "../commons.h"
 #include "../interrupts/idt.h"
 #include "../memory/paging.h"
+#include "ipc.h"
 
 #include <ds/array.h>
 #include <ds/random.h>
 #include <ds/llist.h>
 #include <ds/hmap.h>
+#include <ds/queue.h>
 
 #include <cthulhu/messages.h>
 #include <cthulhu/threading.h>
+
+#define MESSAGE_BUFFER_CNT (10)
 
 typedef struct file_descriptor {
     uint32_t 				fd_pid;
@@ -76,10 +80,15 @@ typedef struct proc {
     uint8_t	     			priority;
 
     mmap_area_t* 			mem_maps;
-
     struct chained_element 	process_list;
 
+    _message_t  		       output_buffer[MESSAGE_BUFFER_CNT];
+    queue_t*				   input_buffer;
+    queue_t*				   pq_input_buffer;
+    message_target_container_t groups[256];
+
     hash_table_t* 			futexes;
+    list_t*					blocked_wait_messages;
 } proc_t;
 
 struct thread {
@@ -113,6 +122,8 @@ pid_t get_current_pid();
 proc_t* get_current_process();
 
 proc_t* create_init_process_structure(uintptr_t pml);
+void process_init(proc_t* process);
+
 mmap_area_t** mmap_area(proc_t* proc, uintptr_t address);
 mmap_area_t** request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_size);
 mmap_area_t** find_va_hole(proc_t* proc, size_t req_size, size_t align_amount);

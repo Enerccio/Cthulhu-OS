@@ -92,7 +92,9 @@ void pf_exception(ruint_t ecode, registers_t* registers) {
     if (registers->cs == 0x8) {
         // kernel page fault
         // TODO: add swap
-        error(ERROR_KERNEL_PAGE_FAULT_IN_NONPAGED_AREA, (ruint_t)fa, ecode, (void*)registers->rip);
+    	debug_break;
+    	return;
+        // error(ERROR_KERNEL_PAGE_FAULT_IN_NONPAGED_AREA, (ruint_t)fa, ecode, (void*)registers->rip);
     } else {
         if (!page_fault((uintptr_t)fa, registers->ecode)) {
             // TODO: add abort

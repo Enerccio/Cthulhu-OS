@@ -60,7 +60,9 @@ extern void* get_active_page();
 ruint_t kernel_tmp_heap_start;
 
 void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
-    __ports_initialized = false;
+	debug_break;
+
+	__ports_initialized = false;
     __print_initialized = false;
     cpus = NULL;
     kernel_tmp_heap_start = heap_start;
@@ -155,10 +157,12 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
         error(ERROR_INIT_INVALID, err, (uintptr_t)initp->proc_id, &kernel_main);
     }
 
+    process_init(initp);
+
+	debug_break;
+
     log_msg("Init loaded.");
     log_msg("Scheduling init.");
-
-    debug_break;
 
     DISABLE_INTERRUPTS();
     enschedule_to_self(array_get_at(initp->threads, 0));

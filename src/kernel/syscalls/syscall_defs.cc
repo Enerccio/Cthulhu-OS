@@ -333,11 +333,13 @@ ruint_t create_process_ivfs(registers_t* r, continuation_t* c, ruint_t _path, ru
 		return ENOENT;
 	}
 
+	proc_t* cp = get_current_process();
+
 	proc_t* process;
 	int rv = create_process_base(get_data(pe->element.file), argc, argv, envp,
 			&process, 0, r);
 	if (rv == 0) {
-
+		process->parent = cp;
 	}
 
 	return rv;

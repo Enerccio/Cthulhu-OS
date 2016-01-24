@@ -39,7 +39,7 @@ cd ..
 
 pushd sources/kclib/kclib
 make clean
-make all PREFIX=${SYSROOT}/usr CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar MODE=user
+make kclib PREFIX=${SYSROOT}/usr CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar MODE=user
 make crt0 PREFIX=usr SYSROOT=${SYSROOT} MODE=user
 popd
 

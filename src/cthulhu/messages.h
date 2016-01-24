@@ -33,16 +33,39 @@
 extern "C" {
 #endif
 
-typedef void* ipc_pointer_t;
-
 #define NO_RECEIVER_PROCESS_SPECIFIED __UINT64_MAX__
 #define NO_RECEIVER_THREAD_SPECIFIED  __TID_MAX__
 
+#define MESSAGE_BODY_SIZE ((0x200000)-sizeof(message_header_t))
+
+#define MESSAGE_MAGIC (0x86454D4D)
+
+typedef struct message_target_container {
+	pid_t target[64];
+} message_target_container_t;
+
+typedef struct message_header {
+	pid_t target_process;
+	struct {
+		uint64_t no_target  : 1;
+		uint64_t broadcast  : 1;
+		uint64_t group_cast : 1;
+		uint64_t group		: 8;
+		uint64_t self_state : 2; // 00 - block until reply, 01 - block all threads until reply,
+								 // 10 block other threads until reply, 11 - reserved
+		uint64_t deli_state : 2; // 00 - normal message, 01 - interrupt any,
+								 // 10 - interrupt one by tid specified in target_thread
+		uint64_t ignore_im  : 1;
+		uint64_t reserved   : 48;
+	} flags;
+	uint64_t target_thread;
+	uint64_t magic;
+	uint64_t checksum;
+} message_header_t;
+
 typedef struct message {
-	bool	    used;
-	pid_t		target_process;
-	tid_t		target_thread;
-	uint8_t 	data[0x100000];
+	message_header_t header;
+	char data[MESSAGE_BODY_SIZE];
 } message_t;
 
 #ifdef __cplusplus

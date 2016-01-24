@@ -30,4 +30,15 @@
 #include "../commons.h"
 #include "daemons.h"
 
+#include <ds/llist.h>
 #include <cthulhu/messages.h>
+
+typedef struct proc proc_t;
+
+typedef struct _message {
+	bool used;
+	proc_t* owner;
+	struct chained_element 	target_list;
+
+	message_t* message;
+} _message_t;
