@@ -321,6 +321,19 @@ typedef struct MADT_GENERIC_TRANSLATOR {
     uint32_t reserved2;
 } MADT_GENERIC_TRANSLATOR;
 
+typedef struct ACPI_MCFG {
+	struct ACPISDTHeader header;
+	uint8_t reserved[8];
+} ACPI_MCFG;
+
+typedef struct MCFG_ALLOCATION {
+	uint64_t address;
+	uint16_t pci_segment;
+	uint8_t start_bus_number;
+	uint8_t end_bus_number;
+	uint32_t reserved;
+} MCFG_ALLOCATION;
+
 extern struct RSDPDescriptor* rsdp_descriptor;
 extern uint8_t acpi_version;
 extern RSDT* rsdt;
@@ -337,3 +350,5 @@ void init_table_acpi();
  * MADT table.
  */
 void* find_madt();
+
+int64_t get_pci_numcount();

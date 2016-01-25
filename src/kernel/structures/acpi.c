@@ -78,42 +78,31 @@ bool valid_xsdt(XSDT* xsdt) {
     return acpisdt_checksum((ACPISDTHeader*)xsdt);
 }
 
-/**
- * Finds FACP table or returns NULL.
- *
- * Argument must be RSDT table.
- */
-void* findFACP(void* RootSDT) {
-    RSDT* rsdt = (RSDT*) RootSDT;
-    int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
-
-    for (int i=0; i<entries; i++) {
-        ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&rsdt->PointerToOtherSDT)[i]);
-        if (!strncmp(h->Signature, "FACP", 4))
-            return (void*)h;
-    }
-
-    // No FACP found
-    return NULL;
-}
-
-/**
- * Finds FACP table or returns NULL.
- *
- * Argument must be XSDT table.
- */
-void* findFACP_XSDT(void* RootSDT) {
-    XSDT* xsdt = (XSDT*) RootSDT;
-    int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
-
-    for (int i=0; i<entries; i++) {
-        ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&rsdt->PointerToOtherSDT)[i]);
-        if (!strncmp(h->Signature, "FACP", 4))
-            return (void*)h;
-    }
-
-    // No FACP found
-    return NULL;
+void* find_table_general(const char* name) {
+	if (acpi_version == 1) {
+		if (rsdt == NULL)
+			return NULL;
+		int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
+		for (int i=0; i<entries; i++) {
+			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&rsdt->PointerToOtherSDT)[i]);
+			if (!strncmp(h->Signature, name, 4)) {
+				if (acpisdt_checksum(h))
+					return h;
+			}
+		}
+	} else {
+		if (xsdt == NULL)
+			return NULL;
+		int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
+		for (int i=0; i<entries; i++) {
+			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&xsdt->PointerToOtherSDT)[i]);
+			if (!strncmp(h->Signature, name, 4)) {
+				if (acpisdt_checksum(h))
+					return h;
+			}
+		}
+	}
+	return NULL;
 }
 
 /**
@@ -122,28 +111,7 @@ void* findFACP_XSDT(void* RootSDT) {
  * Searches either RSDT or XSDT for MADT table and returns it.
  */
 void* find_madt() {
-    if (acpi_version == 1) {
-        if (rsdt == NULL)
-            return NULL;
-        int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
-        for (int i=0; i<entries; i++) {
-            ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&rsdt->PointerToOtherSDT)[i]);
-            if (!strncmp(h->Signature, "APIC", 4)) {
-                return h;
-            }
-        }
-    } else {
-        if (xsdt == NULL)
-            return NULL;
-        int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
-        for (int i=0; i<entries; i++) {
-            ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&xsdt->PointerToOtherSDT)[i]);
-            if (!strncmp(h->Signature, "APIC", 4)) {
-                return h;
-            }
-        }
-    }
-    return NULL;
+    return find_table_general("APIC");
 }
 
 /**
@@ -246,13 +214,7 @@ void init_table_acpi() {
         }
     }
 
-    void* fadt_address;
-
-    if (acpi_version == 1)
-        fadt_address = findFACP(rsdt);
-    else
-        fadt_address = findFACP_XSDT(xsdt);
-
+    void* fadt_address = find_table_general("FACP");
     if (valid_fadt((FADT*)fadt_address)) {
         fadt = (FADT*)fadt_address;
         century_register = fadt->Century;
@@ -260,4 +222,23 @@ void init_table_acpi() {
     } else {
         log_warn("No FADT Table detected");
     }
+}
+
+int64_t get_pci_numcount() {
+	ACPI_MCFG* mcfg = find_table_general("MCFG");
+	if (mcfg == NULL)
+		return -1; // no MCFG table found
+
+	size_t bytes = mcfg->header.Length;
+	bytes -= sizeof(ACPI_MCFG);
+	uintptr_t addr = ((uintptr_t)mcfg)+sizeof(ACPI_MCFG);
+	int64_t num = 0;
+
+	while (bytes > 0) {
+		MCFG_ALLOCATION* h = (MCFG_ALLOCATION*)addr;
+		bytes -= sizeof(MCFG_ALLOCATION);
+		addr += sizeof(MCFG_ALLOCATION);
+		++num;
+	}
+	return num;
 }

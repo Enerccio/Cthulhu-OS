@@ -60,8 +60,6 @@ extern void* get_active_page();
 ruint_t kernel_tmp_heap_start;
 
 void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
-	debug_break;
-
 	__ports_initialized = false;
     __print_initialized = false;
     cpus = NULL;

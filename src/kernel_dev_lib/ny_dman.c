@@ -19,16 +19,14 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * main.c
- *  Created on: Jan 2, 2016
+ * ny_dman.c
+ *  Created on: Jan 25, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#include <ny/nyarlathotep.h>
+#include "ny_dman.h"
 
-int main() {
-	int64_t pci_busc = get_pci_bus_count();
-
-    while (1) ;
+int64_t get_pci_bus_count() {
+	return dev_sys_0arg(DEV_SYS_PCI_BUS_COUNT);
 }

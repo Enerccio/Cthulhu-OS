@@ -207,4 +207,5 @@ void initialize_system_calls() {
     register_syscall(true, DEV_SYS_IVFS_GET_PATH_ELEMENT, make_syscall_2(get_initramfs_entry, false, true));
     register_syscall(true, DEV_SYS_SERVICE_EXISTS, make_syscall_1(get_service_status, false, true));
     register_syscall(true, DEV_SYS_INITRAMFS_EXECVE, make_syscall_4(create_process_ivfs, false, true));
+    register_syscall(true, DEV_SYS_PCI_BUS_COUNT, make_syscall_0(dev_dm_get_pci_c, false, false));
 }

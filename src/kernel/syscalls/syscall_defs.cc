@@ -372,3 +372,9 @@ ruint_t __futex_wake(registers_t* r, continuation_t* c, ruint_t _ftx_addr, ruint
 	}
 	return (ruint_t)futex_wake(r, ftx_addr, num);
 }
+
+// PCI
+#include "../structures/acpi.h"
+ruint_t dev_dm_get_pci_c(registers_t* r, continuation_t* c) {
+	return get_pci_numcount();
+}

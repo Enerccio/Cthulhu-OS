@@ -19,16 +19,23 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * main.c
- *  Created on: Jan 2, 2016
+ * ny_dman.h
+ *  Created on: Jan 25, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#include <ny/nyarlathotep.h>
+#pragma once
 
-int main() {
-	int64_t pci_busc = get_pci_bus_count();
+#include "ny_stddef.h"
+#include "devsys.h"
 
-    while (1) ;
-}
+typedef struct pci_bus {
+	uint64_t base_address;
+	uint16_t segment_group_num;
+	uint8_t  start_pci_busnum;
+	uint8_t  end_pci_busnum;
+	uint32_t _reserved;
+} pci_bus_t;
+
+int64_t get_pci_bus_count();
