@@ -224,7 +224,7 @@ void init_table_acpi() {
     }
 }
 
-int64_t get_pci_numcount() {
+int64_t get_pcie_numcount() {
 	ACPI_MCFG* mcfg = find_table_general("MCFG");
 	if (mcfg == NULL)
 		return -1; // no MCFG table found
@@ -236,6 +236,32 @@ int64_t get_pci_numcount() {
 
 	while (bytes > 0) {
 		MCFG_ALLOCATION* h = (MCFG_ALLOCATION*)addr;
+		bytes -= sizeof(MCFG_ALLOCATION);
+		addr += sizeof(MCFG_ALLOCATION);
+		++num;
+	}
+	return num;
+}
+
+void get_pcie_info(pci_bus_t* entry) {
+	ACPI_MCFG* mcfg = find_table_general("MCFG");
+	if (mcfg == NULL)
+		return -1; // no MCFG table found
+
+	size_t bytes = mcfg->header.Length;
+	bytes -= sizeof(ACPI_MCFG);
+	uintptr_t addr = ((uintptr_t)mcfg)+sizeof(ACPI_MCFG);
+	int64_t num = 0;
+
+	while (bytes > 0) {
+		pci_bus_t* e = &entry[num];
+
+		MCFG_ALLOCATION* h = (MCFG_ALLOCATION*)addr;
+		e->base_address = h->address;
+		e->end_pci_busnum = h->end_bus_number;
+		e->segment_group_num = h->pci_segment;
+		e->start_pci_busnum = h->start_bus_number;
+
 		bytes -= sizeof(MCFG_ALLOCATION);
 		addr += sizeof(MCFG_ALLOCATION);
 		++num;

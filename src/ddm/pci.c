@@ -19,17 +19,29 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * main.c
- *  Created on: Jan 2, 2016
+ * pci.c
+ *  Created on: Jan 26, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
 #include "pci.h"
 
-int main() {
-	register_as_service("::device-driver-manager");
-	load_pci_info();
+pci_bus_t* pci_express_info;
 
-    while (1) ;
+void load_pcie_info() {
+	int64_t pci_busc = get_pci_bus_count();
+	if (pci_busc <= 0) {
+		return; // no pcie
+	}
+
+	pci_express_info = malloc(sizeof(pci_bus_t) * pci_busc);
+	if (pci_express_info == NULL) {
+		// TODO: add kernel shutdown
+	}
+	get_pci_info(pci_express_info);
+}
+
+void load_pci_info() {
+	load_pcie_info();
 }

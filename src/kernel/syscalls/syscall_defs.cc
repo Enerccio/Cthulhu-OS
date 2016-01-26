@@ -181,18 +181,7 @@ ruint_t deallocate_memory(registers_t* r, continuation_t* c, ruint_t from, ruint
 }
 
 ruint_t get_pid(registers_t* r, continuation_t* c) {
-	cpu_t* cpu = get_current_cput();
-
-	proc_spinlock_lock(&cpu->__cpu_lock);
-	proc_spinlock_lock(&__thread_modifier);
-
-	thread_t* ct = cpu->ct;
-	pid_t pid = ct->parent_process->proc_id;
-
-	proc_spinlock_unlock(&__thread_modifier);
-	proc_spinlock_unlock(&cpu->__cpu_lock);
-
-	return pid;
+	return get_current_pid();
 }
 
 ruint_t get_ct_priority(registers_t* r, continuation_t* c) {
@@ -232,6 +221,13 @@ ruint_t get_service_status(registers_t* r, continuation_t* c, ruint_t sname) {
 	if (!validate_string((void*)name, c))
 		return -1;
 	return daemon_registered(name);
+}
+
+ruint_t register_service(registers_t* r, continuation_t* c, ruint_t sname) {
+	const char* name = (const char*) sname;
+	if (!validate_string((void*)name, c))
+		return -1;
+	return register_daemon_service(get_current_pid(), sname, false, c);
 }
 
 // initramfs
@@ -375,6 +371,28 @@ ruint_t __futex_wake(registers_t* r, continuation_t* c, ruint_t _ftx_addr, ruint
 
 // PCI
 #include "../structures/acpi.h"
-ruint_t dev_dm_get_pci_c(registers_t* r, continuation_t* c) {
-	return get_pci_numcount();
+#include <ny/ny_dman.h>
+ruint_t dev_dm_get_pcie_c(registers_t* r, continuation_t* c) {
+	if (daemon_registered(SERVICE_DDM) && !is_daemon_process(get_current_pid(), SERVICE_DDM))
+		return EINVAL;
+
+	return get_pcie_numcount();
+}
+
+ruint_t dev_dm_get_pcie_info(registers_t* r, continuation_t* c, ruint_t _pcistruct) {
+	if (daemon_registered(SERVICE_DDM) && !is_daemon_process(get_current_pid(), SERVICE_DDM))
+		return EINVAL;
+
+	pci_bus_t* pcistruct = (pci_bus_t*)_pcistruct;
+	int64_t pcicount = get_pcie_numcount();
+	if (pcicount <= 0) {
+		return EINVAL;
+	}
+
+	if (!validate_address(pcistruct, sizeof(pci_bus_t)*pcicount, c)) {
+		return EINVAL;
+	}
+
+	get_pcie_info(pcistruct);
+	return 0;
 }

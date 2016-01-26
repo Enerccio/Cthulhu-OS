@@ -39,3 +39,4 @@ typedef struct pci_bus {
 } pci_bus_t;
 
 int64_t get_pci_bus_count();
+int		get_pci_info(pci_bus_t* addr);

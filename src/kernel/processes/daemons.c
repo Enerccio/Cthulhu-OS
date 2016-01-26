@@ -26,6 +26,7 @@
  */
 
 #include "daemons.h"
+#include "../syscalls/sys.h"
 
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
@@ -33,13 +34,19 @@ extern void proc_spinlock_unlock(volatile void* memaddr);
 ruint_t __daemon_registration_lock;
 hash_table_t* dr_table;
 
-pid_t register_daemon_service(pid_t process, const char* service, bool overwrite_old_service_provider) {
+pid_t register_daemon_service(pid_t process, const char* service,
+		bool overwrite_old_service_provider, continuation_t* c) {
     proc_spinlock_lock(&__daemon_registration_lock);
 
     if (table_contains(dr_table, (void*)service) && !overwrite_old_service_provider) {
         return DAEMON_NOT_REGISTERED;
     }
-    table_set(dr_table, (void*)service, (void*)(uintptr_t)process);
+    if (table_set(dr_table, (void*)service, (void*)(uintptr_t)process)) {
+    	// TODO: add swapper call
+    	c->present = true;
+    	proc_spinlock_unlock(&__daemon_registration_lock);
+    	return ENOMEM_INTERNAL;
+    }
     uint64_t cdp = (pid_t)(uintptr_t)table_get(dr_table, (void*)service);
 
     proc_spinlock_unlock(&__daemon_registration_lock);

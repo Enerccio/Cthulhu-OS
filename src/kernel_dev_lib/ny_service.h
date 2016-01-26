@@ -32,3 +32,4 @@
 #include "devsys.h"
 
 bool service_exists(const char* service);
+int register_as_service(const char* service);

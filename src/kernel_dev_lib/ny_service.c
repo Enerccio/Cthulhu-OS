@@ -30,3 +30,7 @@
 bool service_exists(const char* service) {
 	return dev_sys_1arg(DEV_SYS_SERVICE_EXISTS, (ruint_t)service);
 }
+
+int register_as_service(const char* service) {
+	return dev_sys_1arg(DEV_SYS_SERVICE_REGISTER, (ruint_t)service);
+}

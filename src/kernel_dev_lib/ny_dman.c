@@ -28,5 +28,9 @@
 #include "ny_dman.h"
 
 int64_t get_pci_bus_count() {
-	return dev_sys_0arg(DEV_SYS_PCI_BUS_COUNT);
+	return dev_sys_0arg(DEV_SYS_PCIe_BUS_COUNT);
+}
+
+int	get_pci_info(pci_bus_t* addr) {
+	return dev_sys_1arg(DEV_SYS_PCIe_INFO, addr);
 }

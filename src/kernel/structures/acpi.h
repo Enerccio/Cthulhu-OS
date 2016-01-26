@@ -31,6 +31,7 @@
 #include "../memory/paging.h"
 
 #include <string.h>
+#include <ny/ny_dman.h>
 
 struct RSDPDescriptor {
     char Signature[8];
@@ -351,4 +352,5 @@ void init_table_acpi();
  */
 void* find_madt();
 
-int64_t get_pci_numcount();
+int64_t get_pcie_numcount();
+void get_pcie_info(pci_bus_t* entry);

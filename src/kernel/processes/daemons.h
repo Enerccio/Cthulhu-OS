@@ -30,6 +30,8 @@
 #include "../commons.h"
 #include <ds/hmap.h>
 
+typedef struct continuation continuation_t;
+
 #define DAEMON_NOT_REGISTERED -1
 
 // List of internal services
@@ -44,7 +46,8 @@
 #define SERVICE_FRAMEBUFFER "::service::internal::framebuffer"
 #define SERVICE_USERS "::service::internal::users"
 
-pid_t register_daemon_service(pid_t process, const char* service, bool overwrite_old_service_provider);
+pid_t register_daemon_service(pid_t process, const char* service,
+		bool overwrite_old_service_provider, continuation_t* c);
 
 bool daemon_registered(const char* service);
 bool is_daemon_process(pid_t process, const char* service);
