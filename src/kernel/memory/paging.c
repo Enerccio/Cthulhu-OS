@@ -1254,7 +1254,7 @@ bool map_range(uintptr_t* _start, uintptr_t end, uintptr_t* _tostart, uintptr_t 
         uintptr_t smem = start+offs;
         uintptr_t tmem = tostart+offs;
 
-        uint64_t* tp = get_page(tmem, true);
+        uint64_t* tp = kernel ? get_page(tmem, true) : get_page_user(tmem, true);
 		if (tp == NULL) {
 			goto on_error;
 		}

@@ -27,13 +27,38 @@
 
 #include "pci.h"
 
-pci_bus_t* pci_express_info;
+ARRAY_FUNCDEFS(pcie_info_ptr_t)
 
-void load_pcie_entry_info(pci_bus_t* info) {
-	size_t numentries = info->end_pci_busnum - info->start_pci_busnum;
-	void* pci_express_infoaddr = self_map_physical(info->base_address, numentries*4096);
+pci_bus_t* pci_express_info;
+pcie_info_array* pcie_entries;
+
+void load_pcie_entry_info(pci_bus_t* bi) {
+	size_t numentries = bi->end_pci_busnum - bi->start_pci_busnum;
+	void* pci_express_infoaddr = self_map_physical(bi->base_address, numentries*4096*8);
 	if (pci_express_infoaddr == NULL)
 		return;
+	for (size_t i=0; i<numentries; i++) {
+		pcie_info_t* info = malloc(sizeof(pcie_info_t));
+		if (info == NULL) {
+			// TODO: add kernel shutdown
+			return;
+		}
+		memset(info, 0, sizeof(pcie_info_t));
+		info->probeaddr = (void*)(((char*)pci_express_infoaddr) + (8 * 4096 * i));
+		info->vendor_id = *((uint16_t*)info->probeaddr);
+		info->device_id = *(((uint16_t*)info->probeaddr)+1);
+
+		if (info->device_id == 0xffff && info->vendor_id == 0xffff) {
+			free(info);
+			continue;
+		}
+
+		size_t cac = array_get_size(pcie_info_ptr_t, pcie_entries);
+		if (array_push_data(pcie_info_ptr_t, pcie_entries, info) == cac) {
+			// TODO: add kernel shutdown
+			return;
+		}
+	}
 }
 
 void load_pcie_info() {
@@ -45,6 +70,7 @@ void load_pcie_info() {
 	pci_express_info = malloc(sizeof(pci_bus_t) * pci_busc);
 	if (pci_express_info == NULL) {
 		// TODO: add kernel shutdown
+		return;
 	}
 	get_pci_info(pci_express_info);
 	for (int64_t i=0; i<pci_busc; i++) {
@@ -53,5 +79,11 @@ void load_pcie_info() {
 }
 
 void load_pci_info() {
+	pcie_entries = create_array(pcie_info_ptr_t);
+	if (pcie_entries == NULL) {
+		// TODO: add kernel shutdown
+		return;
+	}
+
 	load_pcie_info();
 }

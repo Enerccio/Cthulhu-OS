@@ -752,6 +752,7 @@ uintptr_t map_physical_virtual(puint_t* _vastart, puint_t vaend, bool readonly) 
     hole->mtype = kernel_allocated_heap_data;
     uintptr_t temporary = hole->vastart;
     if (!map_range(_vastart, vaend, &temporary, hole->vaend, false, readonly, false)) {
+    	*_vastart = vastart;
     	free_mmap_area(hole, _hole);
     	return 0;
     }

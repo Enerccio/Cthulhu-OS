@@ -28,5 +28,15 @@
 #pragma once
 
 #include <ny/nyarlathotep.h>
+#include <datastruct/array.h>
+
+typedef struct {
+	uint16_t device_id, vendor_id;
+	void* probeaddr;
+} pcie_info_t;
+
+typedef pcie_info_t* pcie_info_ptr_t;
+ARRAY_HEADER(pcie_info_ptr_t)
+typedef ARRAY_TYPE(pcie_info_ptr_t) pcie_info_array;
 
 void load_pci_info();
