@@ -28,6 +28,7 @@
 #pragma once
 
 #include "ny_stddef.h"
+#include "ny_commons.h"
 #include "devsys.h"
 
 typedef struct pci_bus {
@@ -40,3 +41,4 @@ typedef struct pci_bus {
 
 int64_t get_pci_bus_count();
 int		get_pci_info(pci_bus_t* addr);
+void* 	self_map_physical(puint_t physaddr, size_t size);

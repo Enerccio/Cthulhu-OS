@@ -210,4 +210,5 @@ void initialize_system_calls() {
     register_syscall(true, DEV_SYS_INITRAMFS_EXECVE, make_syscall_4(create_process_ivfs, false, true));
     register_syscall(true, DEV_SYS_PCIe_BUS_COUNT, make_syscall_0(dev_dm_get_pcie_c, false, false));
     register_syscall(true, DEV_SYS_PCIe_INFO, make_syscall_1(dev_dm_get_pcie_info, false, false));
+    register_syscall(true, DEV_SYS_MAP_PHYSICAL_SELF, make_syscall_2(dev_selfmap_physical, false, false));
 }

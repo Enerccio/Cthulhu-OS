@@ -180,6 +180,23 @@ ruint_t deallocate_memory(registers_t* r, continuation_t* c, ruint_t from, ruint
 	return 0;
 }
 
+ruint_t dev_selfmap_physical(registers_t* r, continuation_t* c, ruint_t _physaddr, ruint_t _size) {
+	if (daemon_registered(SERVICE_DDM) && !is_daemon_process(get_current_pid(), SERVICE_DDM))
+		return EINVAL;
+	size_t size = (size_t)_size;
+	puint_t physaddr = (puint_t)_physaddr;
+
+	uintptr_t ptr = map_physical_virtual(&physaddr, physaddr+size, false);
+	if (ptr == 0) {
+		// TODO: add swapper
+		c->_0 = physaddr;
+		c->_1 = size-(physaddr-_physaddr);
+		c->present = true;
+		return 0;
+	}
+	return (ruint_t)ptr;
+}
+
 ruint_t get_pid(registers_t* r, continuation_t* c) {
 	return get_current_pid();
 }
@@ -227,7 +244,7 @@ ruint_t register_service(registers_t* r, continuation_t* c, ruint_t sname) {
 	const char* name = (const char*) sname;
 	if (!validate_string((void*)name, c))
 		return -1;
-	return register_daemon_service(get_current_pid(), sname, false, c);
+	return register_daemon_service(get_current_pid(), name, false, c);
 }
 
 // initramfs

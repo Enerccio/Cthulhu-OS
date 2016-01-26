@@ -235,7 +235,6 @@ int64_t get_pcie_numcount() {
 	int64_t num = 0;
 
 	while (bytes > 0) {
-		MCFG_ALLOCATION* h = (MCFG_ALLOCATION*)addr;
 		bytes -= sizeof(MCFG_ALLOCATION);
 		addr += sizeof(MCFG_ALLOCATION);
 		++num;
@@ -246,7 +245,7 @@ int64_t get_pcie_numcount() {
 void get_pcie_info(pci_bus_t* entry) {
 	ACPI_MCFG* mcfg = find_table_general("MCFG");
 	if (mcfg == NULL)
-		return -1; // no MCFG table found
+		return; // no MCFG table found
 
 	size_t bytes = mcfg->header.Length;
 	bytes -= sizeof(ACPI_MCFG);
@@ -266,5 +265,4 @@ void get_pcie_info(pci_bus_t* entry) {
 		addr += sizeof(MCFG_ALLOCATION);
 		++num;
 	}
-	return num;
 }

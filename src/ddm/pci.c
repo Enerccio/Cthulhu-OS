@@ -29,6 +29,13 @@
 
 pci_bus_t* pci_express_info;
 
+void load_pcie_entry_info(pci_bus_t* info) {
+	size_t numentries = info->end_pci_busnum - info->start_pci_busnum;
+	void* pci_express_infoaddr = self_map_physical(info->base_address, numentries*4096);
+	if (pci_express_infoaddr == NULL)
+		return;
+}
+
 void load_pcie_info() {
 	int64_t pci_busc = get_pci_bus_count();
 	if (pci_busc <= 0) {
@@ -40,6 +47,9 @@ void load_pcie_info() {
 		// TODO: add kernel shutdown
 	}
 	get_pci_info(pci_express_info);
+	for (int64_t i=0; i<pci_busc; i++) {
+		load_pcie_entry_info(&pci_express_info[i]);
+	}
 }
 
 void load_pci_info() {

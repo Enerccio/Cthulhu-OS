@@ -19,26 +19,14 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * devsys.h
- *  Created on: Jan 6, 2016
+ * pci.h
+ *  Created on: Jan 26, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
 #pragma once
 
-#define DS_ERROR_SUCCESS        0
-#define DS_ERROR_NOT_IMPLEMENTED -1
-#define DS_ERROR_NOT_ALLOWED    -2
-#define DS_ERROR_NOT_AUTHORIZED -3
-#define DS_ERROR_MODE_UNSUPPORTED -4
+#include <ny/nyarlathotep.h>
 
-#define DEV_SYS_FRAMEBUFFER_GET_WIDTH   		(1 + 2048)
-#define DEV_SYS_FRAMEBUFFER_GET_HEIGHT  		(2 + 2048)
-#define DEV_SYS_IVFS_GET_PATH_ELEMENT   		(3 + 2048)
-#define DEV_SYS_SERVICE_EXISTS					(4 + 2048)
-#define DEV_SYS_SERVICE_REGISTER				(5 + 2048)
-#define DEV_SYS_INITRAMFS_EXECVE				(6 + 2048)
-#define DEV_SYS_PCIe_BUS_COUNT					(7 + 2048)
-#define DEV_SYS_PCIe_INFO						(8 + 2048)
-#define DEV_SYS_MAP_PHYSICAL_SELF				(9 + 2048)
+void load_pci_info();
