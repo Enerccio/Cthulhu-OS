@@ -111,6 +111,7 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     process->priority = 0;
     process->process_list.data = process;
     process->futexes = create_uint64_table();
+    process->__ob_lock = 0;
     if (process->futexes == NULL) {
         error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
@@ -455,6 +456,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
     }
     memset(process, 0, sizeof(proc_t));
 
+    process->__ob_lock = 0;
     process->process_list.data = process;
 
     process->fds = create_array();

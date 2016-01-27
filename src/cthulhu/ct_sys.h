@@ -36,3 +36,4 @@
 #define SYS_FUTEX_WAIT              8
 #define SYS_FUTEX_WAKE              9
 #define SYS_ALLOC_CONT              10
+#define SYS_GET_FMESSAGE_BLOCK		11

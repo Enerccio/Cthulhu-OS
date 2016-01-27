@@ -34,6 +34,11 @@
 extern "C" {
 #endif
 
+typedef struct create_process_stage1 {
+	bool parent;
+	int8_t priority; // -1 parent process priority
+} cp_stage1;
+
 #ifdef __cplusplus
 }
 #endif

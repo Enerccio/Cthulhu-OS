@@ -26,3 +26,38 @@
  */
 
 #include "messages.h"
+
+message_t* get_free_message() {
+	message_t* mp;
+	int error = 0;
+	do {
+		error = sys_1arg(SYS_GET_FMESSAGE_BLOCK, (ruint_t)&mp);
+	} while (error != 0 && error == ETRYAGAIN);
+	if (error != 0) {
+		return NULL;
+	} else {
+		return mp;
+	}
+}
+
+uint64_t compute_message_checksum(message_t* message) {
+	uint64_t cm = 0;
+	uint8_t* mbytes = (uint8_t*)message;
+	for (unsigned int i=0; i<sizeof(message_t); i++) {
+		cm += mbytes[i];
+	}
+	return 16 - (cm % 16);
+}
+
+int	send_message(message_t* message) {
+	message->header.checksum = compute_message_checksum(message);
+	int error = 0;
+	do {
+		error = sys_1arg(SYS_SEND_MESSAGE, (ruint_t)message);
+	} while (error != 0 && error == ETRYAGAIN);
+	return error;
+}
+
+int receive_message(void* bodyptr) {
+	return sys_1arg(SYS_RECEIVE_MESSAGE, (ruint_t)bodyptr);
+}

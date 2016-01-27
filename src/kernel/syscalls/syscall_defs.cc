@@ -13,6 +13,8 @@
 #define MAX_CHECKED_ELEMENTS 0x512
 
 static volatile bool initramfs_exists = true;
+extern void proc_spinlock_lock(volatile void* memaddr);
+extern void proc_spinlock_unlock(volatile void* memaddr);
 
 bool repair_memory(memstate_t state, uint64_t* b, size_t elements, continuation_t* c) {
 	// TODO: dispatch crap here
@@ -364,6 +366,30 @@ ruint_t sys_send_message(registers_t* r, continuation_t* c, ruint_t message) {
 	if (!validate_message((message_t*)message, c))
 		return 0;
 	return 0;
+}
+
+ruint_t get_empty_message(registers_t* r, continuation_t* c, ruint_t _mp) {
+	message_t** mp = (message_t**)_mp;
+	if (!validate_address((void*)mp, 8, c)) {
+		return EINVAL;
+	}
+	proc_t* cp = get_current_process();
+
+	proc_spinlock_lock(&cp->__ob_lock);
+
+	for (int i=0; i<MESSAGE_BUFFER_CNT; i++) {
+		_message_t* message = &cp->output_buffer[i];
+		if (!message->used) {
+			message->used = true;
+			memset(message->message, 0, sizeof(message_t));
+			*mp = message->message;
+			proc_spinlock_unlock(&cp->__ob_lock);
+			return 0;
+		}
+	}
+
+	proc_spinlock_unlock(&cp->__ob_lock);
+	return ETRYAGAIN;
 }
 
 // mutex

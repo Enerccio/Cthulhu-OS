@@ -82,6 +82,7 @@ typedef struct proc {
     mmap_area_t*            mem_maps;
     struct chained_element  process_list;
 
+    uint64_t				   __ob_lock;
     _message_t                 output_buffer[MESSAGE_BUFFER_CNT];
     queue_t*                   input_buffer;
     queue_t*                   pq_input_buffer;

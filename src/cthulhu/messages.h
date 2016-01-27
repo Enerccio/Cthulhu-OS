@@ -68,6 +68,10 @@ typedef struct message {
     char data[MESSAGE_BODY_SIZE];
 } message_t;
 
+message_t* get_free_message();
+int		   send_message(message_t* message);
+int		   receive_message(void* bodyptr);
+
 #ifdef __cplusplus
 }
 #endif

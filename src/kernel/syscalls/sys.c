@@ -200,6 +200,7 @@ void initialize_system_calls() {
     register_syscall(false, SYS_GET_CTHREAD_PRIORITY, make_syscall_0(get_ct_priority, false, false));
     register_syscall(false, SYS_FUTEX_WAIT, make_syscall_2(__futex_wait, false, false));
     register_syscall(false, SYS_FUTEX_WAKE, make_syscall_2(__futex_wake, false, false));
+    register_syscall(false, SYS_GET_FMESSAGE_BLOCK, make_syscall_1(get_empty_message, false, false));
 
     // dev syscalls
     register_syscall(true, DEV_SYS_FRAMEBUFFER_GET_HEIGHT, make_syscall_0(dev_fb_get_height, false, false));
