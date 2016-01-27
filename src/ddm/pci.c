@@ -92,23 +92,9 @@ union busaddr {
 	uint64_t number;
 };
 
-uint64_t* config_qword(uintptr_t address,
-		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
-		uint8_t ereg, uint8_t reg, uint8_t offset) {
-	union busaddr ba;
-	ba.number = 0;
-	ba.addr.bus = busnum;
-	ba.addr.device = devicenum;
-	ba.addr.ereg = ereg;
-	ba.addr.func = funcnum;
-	ba.addr.reg = reg;
-	ba.addr.offset = offset;
-	return ((uint64_t*)(ba.number + address));
-}
-
 uint32_t* config_dword(uintptr_t address,
 		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
-		uint8_t ereg, uint8_t reg, uint8_t offset) {
+		uint8_t ereg, uint8_t reg) {
 	union busaddr ba;
 	ba.number = 0;
 	ba.addr.bus = busnum;
@@ -116,50 +102,44 @@ uint32_t* config_dword(uintptr_t address,
 	ba.addr.ereg = ereg;
 	ba.addr.func = funcnum;
 	ba.addr.reg = reg;
-	ba.addr.offset = offset;
-	return ((uint32_t*)(ba.number + address));
+	ba.addr.offset = 0;
+	uint32_t* ca = ((uint32_t*)(ba.number + address));
+	return ca;
 }
 
-uint16_t* config_word(uintptr_t address,
+uint8_t config_read_byte(uintptr_t address,
 		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
 		uint8_t ereg, uint8_t reg, uint8_t offset) {
-	union busaddr ba;
-	ba.number = 0;
-	ba.addr.bus = busnum;
-	ba.addr.device = devicenum;
-	ba.addr.ereg = ereg;
-	ba.addr.func = funcnum;
-	ba.addr.reg = reg;
-	ba.addr.offset = offset;
-	return ((uint16_t*)(ba.number + address));
+
+	if (offset == 0) offset = 3;
+	else if (offset == 1) offset = 2;
+	else if (offset == 2) offset = 1;
+	else offset = 0;
+
+	return RREG32(config_dword(address, busnum, devicenum, funcnum, ereg, reg), offset*8, 8) >> (offset*8);
 }
 
-uint8_t* config_byte(uintptr_t address,
+uint16_t config_read_word(uintptr_t address,
 		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
 		uint8_t ereg, uint8_t reg, uint8_t offset) {
-	union busaddr ba;
-	ba.number = 0;
-	ba.addr.bus = busnum;
-	ba.addr.device = devicenum;
-	ba.addr.ereg = ereg;
-	ba.addr.func = funcnum;
-	ba.addr.reg = reg;
-	ba.addr.offset = offset;
-	return ((uint8_t*)(ba.number + address));
+
+	if (offset == 0) offset = 2;
+	else if (offset == 2) offset = 0;
+
+	return RREG32(config_dword(address, busnum, devicenum, funcnum, ereg, reg), offset*8, 16) >> (offset*8);
 }
 
-void config_write_byte(uintptr_t address,
+uint32_t config_read_dword(uintptr_t address,
 		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
-		uint8_t ereg, uint8_t reg, uint8_t offset, uint8_t data) {
-	union busaddr ba;
-	ba.number = 0;
-	ba.addr.bus = busnum;
-	ba.addr.device = devicenum;
-	ba.addr.ereg = ereg;
-	ba.addr.func = funcnum;
-	ba.addr.reg = reg;
-	ba.addr.offset = offset;
-	*((uint8_t*)(ba.number + address)) = data;
+		uint8_t ereg, uint8_t reg) {
+	return *config_dword(address, busnum, devicenum, funcnum, ereg, reg);
+}
+
+uint64_t config_read_qword(uintptr_t address,
+		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
+		uint8_t ereg, uint8_t reg) {
+	return (((uint64_t)*config_dword(address, busnum, devicenum, funcnum, ereg, reg) << 32)) +
+			*config_dword(address, busnum, devicenum, funcnum, ereg, reg+1);
 }
 
 void load_pcie_entry_info(pci_bus_t* bi) {
@@ -170,7 +150,7 @@ void load_pcie_entry_info(pci_bus_t* bi) {
 	for (size_t i=0; i<numentries; i++) {
 		for (int j=0; j<32; j++) {
 			for (int k=0; k<7; k++) {
-				uint16_t vendor_id = *config_word((uintptr_t)pci_express_infoaddr, i, j, k, 0, 0x0, 2);
+				uint16_t vendor_id = config_read_word((uintptr_t)pci_express_infoaddr, i, j, k, 0, 0x0, 2);
 				if (vendor_id == 0xFFFF)
 					continue;
 
@@ -182,22 +162,24 @@ void load_pcie_entry_info(pci_bus_t* bi) {
 				memset(info, 0, sizeof(pcie_info_t));
 
 				info->base_address = (uintptr_t)pci_express_infoaddr;
-				info->exact_address = (void*)config_dword((uintptr_t)pci_express_infoaddr, i, j, k, 0, 0, 0);
+				info->exact_address = (void*)config_dword((uintptr_t)pci_express_infoaddr, i, j, k, 0, 0);
 				info->bus = i;
 				info->device = j;
 				info->function = k;
 				info->vendor_id = vendor_id;
-				info->device_id = *config_word(info->base_address, info->bus, info->device, info->function, 0, 0x0, 0);
-				info->status = config_word(info->base_address, info->bus, info->device, info->function, 0, 1, 0);
-				info->command = config_word(info->base_address, info->bus, info->device, info->function, 0, 1, 2);
-				info->class = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 3);
-				info->subclass = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 2);
-				info->prog_if = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 1);
-				info->rev_id = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 0);
-				info->bist = config_byte(info->base_address, info->bus, info->device, info->function, 0, 3, 3);
-				info->htype = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 3, 2);
-				info->lat_timer = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 3, 1);
-				info->cache = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 3, 0);
+				info->device_id = config_read_word(info->base_address, info->bus, info->device, info->function, 0, 0x0, 0);
+				info->status = config_dword(info->base_address, info->bus, info->device, info->function, 0, 1);
+				info->command = config_dword(info->base_address, info->bus, info->device, info->function, 0, 1);
+				info->class = config_read_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 0);
+				info->subclass = config_read_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 1);
+				info->prog_if = config_read_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 2);
+				info->rev_id = config_read_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 3);
+
+				info->bist = config_dword(info->base_address, info->bus, info->device, info->function, 0, 3);
+
+				info->htype = config_read_byte(info->base_address, info->bus, info->device, info->function, 0, 3, 1);
+				info->lat_timer = config_read_byte(info->base_address, info->bus, info->device, info->function, 0, 3, 2);
+				info->cache = config_read_byte(info->base_address, info->bus, info->device, info->function, 0, 3, 3);
 
 				info->cdescription = description[info->class];
 				info->ddescription = descriptions[(info->class*128*128)+(info->subclass*128)+info->prog_if];

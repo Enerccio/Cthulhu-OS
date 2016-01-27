@@ -31,16 +31,18 @@
 
 #include <ny/nyarlathotep.h>
 #include <datastruct/array.h>
+#include <cthulhu/mmio.h>
 
 typedef struct {
 	uintptr_t   base_address;
 	void       *exact_address;
 	uint8_t     bus, device, function;
 	uint16_t    device_id, vendor_id;
-	uint16_t   *status, *command;
+	void       *status, *command;
 	uint8_t     class, subclass;
 	uint8_t     prog_if, rev_id;
-	uint8_t    *bist, htype;
+	void       *bist;
+	uint8_t     htype;
 	uint8_t     lat_timer, cache;
 
 	const char *cdescription, *ddescription;
@@ -52,17 +54,21 @@ typedef ARRAY_TYPE(pcie_info_ptr_t) pcie_info_array;
 
 void load_pci_info();
 
-uint64_t* config_qword(uintptr_t address,
-		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
-		uint8_t ereg, uint8_t reg, uint8_t offset);
 uint32_t* config_dword(uintptr_t address,
 		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
-		uint8_t ereg, uint8_t reg, uint8_t offset);
-uint16_t* config_word(uintptr_t address,
+		uint8_t ereg, uint8_t reg);
+
+uint8_t config_read_byte(uintptr_t address,
 		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
 		uint8_t ereg, uint8_t reg, uint8_t offset);
-uint8_t* config_byte(uintptr_t address,
+uint16_t config_read_word(uintptr_t address,
 		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
 		uint8_t ereg, uint8_t reg, uint8_t offset);
+uint32_t config_read_dword(uintptr_t address,
+		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
+		uint8_t ereg, uint8_t reg);
+uint64_t config_read_qword(uintptr_t address,
+		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
+		uint8_t ereg, uint8_t reg);
 
 extern pcie_info_array* pcie_entries;
