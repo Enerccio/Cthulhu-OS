@@ -47,12 +47,12 @@ typedef struct {
 
 	union {
 		struct {
-			uint32_t* bar0;
-			uint32_t* bar1;
-			uint32_t* bar2;
-			uint32_t* bar3;
-			uint32_t* bar4;
-			uint32_t* bar5;
+			uint32_t bar0;
+			uint32_t bar1;
+			uint32_t bar2;
+			uint32_t bar3;
+			uint32_t bar4;
+			uint32_t bar5;
 			uint32_t cardbus_cis_ptr;
 			uint16_t subsystem_id, subsystem_v_id;
 			uint32_t exp_rom_base_address;

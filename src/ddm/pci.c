@@ -183,12 +183,12 @@ void load_pcie_entry_info(pci_bus_t* bi) {
 
 				if ((info->htype & ~0x80) == 0) {
 					// type 0
-					info->header_spec_data.header_0.bar0 = config_dword(info->base_address, info->bus, info->device, info->function, 0, 4);
-					info->header_spec_data.header_0.bar1 = config_dword(info->base_address, info->bus, info->device, info->function, 0, 5);
-					info->header_spec_data.header_0.bar2 = config_dword(info->base_address, info->bus, info->device, info->function, 0, 6);
-					info->header_spec_data.header_0.bar3 = config_dword(info->base_address, info->bus, info->device, info->function, 0, 7);
-					info->header_spec_data.header_0.bar4 = config_dword(info->base_address, info->bus, info->device, info->function, 0, 8);
-					info->header_spec_data.header_0.bar5 = config_dword(info->base_address, info->bus, info->device, info->function, 0, 9);
+					info->header_spec_data.header_0.bar0 = config_read_dword(info->base_address, info->bus, info->device, info->function, 0, 4);
+					info->header_spec_data.header_0.bar1 = config_read_dword(info->base_address, info->bus, info->device, info->function, 0, 5);
+					info->header_spec_data.header_0.bar2 = config_read_dword(info->base_address, info->bus, info->device, info->function, 0, 6);
+					info->header_spec_data.header_0.bar3 = config_read_dword(info->base_address, info->bus, info->device, info->function, 0, 7);
+					info->header_spec_data.header_0.bar4 = config_read_dword(info->base_address, info->bus, info->device, info->function, 0, 8);
+					info->header_spec_data.header_0.bar5 = config_read_dword(info->base_address, info->bus, info->device, info->function, 0, 9);
 					info->header_spec_data.header_0.cardbus_cis_ptr = config_read_dword(info->base_address, info->bus, info->device, info->function, 0, 10);
 					info->header_spec_data.header_0.subsystem_id =
 							config_read_word(info->base_address, info->bus, info->device, info->function, 0, 11, 2);
