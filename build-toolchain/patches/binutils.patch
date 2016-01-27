@@ -20898,17 +20898,19 @@ diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/autom4te.cache/trac
 diff -Naur build-toolchain/sources/binutils/binutils-2.24/ld/configure.tgt binutils/binutils-2.24/ld/configure.tgt
 --- build-toolchain/sources/binutils/binutils-2.24/ld/configure.tgt	2013-11-26 12:37:33.000000000 +0100
 +++ binutils/binutils-2.24/ld/configure.tgt	2015-12-02 21:24:26.426717269 +0100
-@@ -45,6 +45,15 @@
+@@ -45,6 +45,17 @@
  # architecture variants should be kept together even if their names
  # break the alpha sorting.
  case "${targ}" in
 +i[3-7]86-*-fhtagn*)
 +			targ_emul=elf_i386_fhtagn
 +			targ_extra_emuls=elf_i386
++			NATIVE_LIB_DIRS='/sys/dev/lib /cu/lib'
 +			targ64_extra_emuls="elf_x86_64_fhtagn elf_x86_64"
 +			;;
 +x86_64-*-fhtagn*)
 +			targ_emul=elf_x86_64_fhtagn
++			NATIVE_LIB_DIRS='/sys/dev/lib /cu/lib'
 +			targ_extra_emuls="elf_i386_fhtagn elf_x86_64 elf_i386"
 +			;;
  aarch64_be-*-elf)	targ_emul=aarch64elfb

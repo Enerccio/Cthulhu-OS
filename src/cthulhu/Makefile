@@ -1,7 +1,7 @@
 SYSROOT ?= ../../osroot
-PREFIX ?= /usr
-LIBPATH ?= ${SYSROOT}${PREFIX}/lib
-INCPATH ?= ${SYSROOT}${PREFIX}/include
+PREFIX ?= /sys
+LIBPATH ?= ${SYSROOT}${PREFIX}/dev/lib
+INCPATH ?= ${SYSROOT}${PREFIX}/dev/include
 
 include confbase.mk
 include $(MODE).mk
@@ -36,8 +36,8 @@ clean:
 	-rm ${LIBPATH}/libcthulhu.a
 	
 %.o : %.c install-headers
-	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/usr/include" -c $<
-	$(CC) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/usr/include" -c $< -o $@
+	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/sys/dev/include" -c $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/sys/dev/include" -c $< -o $@
 
 %_o.o : %.s 
 	$(AS) $(NASMFLAGS) $< -o $@

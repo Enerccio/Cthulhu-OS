@@ -1,7 +1,7 @@
 TARGETPATH ?= ../../../build/
 
 SYSROOT ?= ../../osroot
-PREFIX ?= /usr
+PREFIX ?= /sys/dev
 INCPATH ?= ${SYSROOT}${PREFIX}/include
 
 include confbase.mk

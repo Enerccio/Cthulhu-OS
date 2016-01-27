@@ -8,9 +8,13 @@ PATH="$PREFIX/bin:$PATH"
 
 rm -rfv ${SYSROOT}/* || true
 rm -rfv ${KERNELLIB}/* || true
-mkdir ${SYSROOT}/usr
-mkdir ${SYSROOT}/usr/lib
-mkdir ${SYSROOT}/usr/include
+mkdir ${SYSROOT}/cu
+mkdir ${SYSROOT}/cu/apps
+mkdir ${SYSROOT}/cu/lib
+mkdir ${SYSROOT}/sys
+mkdir ${SYSROOT}/sys/dev
+mkdir ${SYSROOT}/sys/dev/lib
+mkdir ${SYSROOT}/sys/dev/include
 mkdir ${KERNELLIB}/usr
 mkdir ${KERNELLIB}/usr/include
 mkdir ${KERNELLIB}/usr/lib
@@ -28,7 +32,7 @@ git clone https://github.com/Enerccio/kclib.git
 popd
 
 pushd sources/kclib/kclib
-cp -RT include ${SYSROOT}/usr/include
+cp -RT include ${SYSROOT}/sys/dev/include
 cp -RT include ${KERNELLIB}/usr/include
 popd
 
@@ -39,13 +43,13 @@ cd ..
 
 pushd sources/kclib/kclib
 make clean
-make kclib PREFIX=${SYSROOT}/usr CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar MODE=user
-make crt0 PREFIX=usr SYSROOT=${SYSROOT} MODE=user
+make kclib PREFIX=${SYSROOT}/sys/dev CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar MODE=user
+make crt0 LIBDIR=${SYSROOT}/sys/dev/lib INCLDIR=${SYSROOT}/sys/dev/include SYSROOT=${SYSROOT} MODE=user
 popd
 
 pushd sources/kclib/kclib
 make clean
-make all PREFIX=${KERNELLIB}/usr CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar
+make kclib PREFIX=${KERNELLIB}/usr CC=x86_64-fhtagn-gcc AR=x86_64-fhtagn-ar
 popd
 
 cd build-gcc

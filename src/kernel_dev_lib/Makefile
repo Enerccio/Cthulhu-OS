@@ -1,5 +1,5 @@
 SYSROOT ?= ../../osroot
-PREFIX ?= /usr
+PREFIX ?= /sys/dev
 LIBPATH ?= ${SYSROOT}${PREFIX}/lib
 INCPATH ?= ${SYSROOT}${PREFIX}/include
 
@@ -32,8 +32,8 @@ clean:
 	-rm ${LIBPATH}/libnyarlathotep.a
 	
 %.o : %.c 
-	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/usr/include" -c $<
-	$(CC) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/usr/include" -c $< -o $@
+	$(CC) -MM -MF $(patsubst %.o,%.d,$@) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/sys/dev/include" -c $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -I"../../osroot/sys/dev/include" -c $< -o $@
 
 %_o.o : %.s 
 	$(AS) $(NASMFLAGS) $< -o $@

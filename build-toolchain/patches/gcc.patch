@@ -33,7 +33,7 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/i386/t-x86_64-elf gc
 diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/fhtagn.h gcc/gcc/config/fhtagn.h
 --- build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/fhtagn.h	1970-01-01 01:00:00.000000000 +0100
 +++ gcc/gcc/config/fhtagn.h	2015-12-01 18:14:29.037314293 +0100
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,34 @@
 +/* Useful if you wish to make target-specific gcc changes. */
 +#undef TARGET_FHTAGN
 +#define TARGET_FHTAGN
@@ -50,6 +50,8 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/fhtagn.h gcc/gcc/con
 +#undef LIB_SPEC
 +#endif
 +#define LIB_SPEC "-lc"
++#undef STANDARD_STARTFILE_PREFIX
++#define STANDARD_STARTFILE_PREFIX "/sys/dev/lib/"
 +
 +#undef  STARTFILE_SPEC
 +#define STARTFILE_SPEC "crt0.o%s crti.o%s crtbegin.o%s" 
@@ -69,7 +71,7 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config/fhtagn.h gcc/gcc/con
 diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config.gcc gcc/gcc/config.gcc
 --- build-toolchain/sources/gcc/gcc-5.2.0/gcc/config.gcc	2015-07-02 17:53:33.000000000 +0200
 +++ gcc/gcc/config.gcc	2015-12-02 22:02:26.503277792 +0100
-@@ -598,6 +598,11 @@
+@@ -598,6 +598,12 @@
  
  # Common parts for widely ported systems.
  case ${target} in
@@ -77,6 +79,7 @@ diff -Naur build-toolchain/sources/gcc/gcc-5.2.0/gcc/config.gcc gcc/gcc/config.g
 +  gas=yes
 +  gnu_ld=yes
 +  default_use_cxa_atexit=yes
++  native_system_header_dir=/sys/dev/include
 +  ;;
  *-*-darwin*)
    tmake_file="t-darwin ${cpu_type}/t-darwin"
