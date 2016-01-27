@@ -164,11 +164,11 @@ void config_write_byte(uintptr_t address,
 
 void load_pcie_entry_info(pci_bus_t* bi) {
 	size_t numentries = bi->end_pci_busnum - bi->start_pci_busnum;
-	void* pci_express_infoaddr = self_map_physical(bi->base_address, numentries*4096*8);
+	void* pci_express_infoaddr = self_map_physical(bi->base_address, numentries*4096*8*32);
 	if (pci_express_infoaddr == NULL)
 		return;
 	for (size_t i=0; i<numentries; i++) {
-		for (int j=0; i<32; j++) {
+		for (int j=0; j<32; j++) {
 			uint16_t vendor_id = *config_word((uintptr_t)pci_express_infoaddr, i, j, 0, 0, 0x0, 2);
 			if (vendor_id == 0xFFFF)
 				continue;
@@ -185,16 +185,16 @@ void load_pcie_entry_info(pci_bus_t* bi) {
 			info->device = j;
 			info->vendor_id = vendor_id;
 			info->device_id = *config_word(info->base_address, info->bus, info->device, 0, 0, 0x0, 0);
-			info->status = config_word(info->base_address, info->bus, info->device, 0, 0, 0x4, 0);
-			info->command = config_word(info->base_address, info->bus, info->device, 0, 0, 0x4, 0);
-			info->class = *config_byte(info->base_address, info->bus, info->device, 0, 0, 0x8, 0);
-			info->subclass = *config_byte(info->base_address, info->bus, info->device, 0, 0, 0x8, 1);
-			info->prog_if = *config_byte(info->base_address, info->bus, info->device, 0, 0, 0x8, 2);
-			info->rev_id = *config_byte(info->base_address, info->bus, info->device, 0, 0, 0x8, 3);
-			info->bist = config_byte(info->base_address, info->bus, info->device, 0, 0, 0xC, 0);
-			info->htype = *config_byte(info->base_address, info->bus, info->device, 0, 0, 0xC, 1);
-			info->lat_timer = *config_byte(info->base_address, info->bus, info->device, 0, 0, 0xC, 2);
-			info->cache = *config_byte(info->base_address, info->bus, info->device, 0, 0, 0xC, 3);
+			info->status = config_word(info->base_address, info->bus, info->device, 0, 0, 1, 0);
+			info->command = config_word(info->base_address, info->bus, info->device, 0, 0, 1, 2);
+			info->class = *config_byte(info->base_address, info->bus, info->device, 0, 0, 2, 3);
+			info->subclass = *config_byte(info->base_address, info->bus, info->device, 0, 0, 2, 2);
+			info->prog_if = *config_byte(info->base_address, info->bus, info->device, 0, 0, 2, 1);
+			info->rev_id = *config_byte(info->base_address, info->bus, info->device, 0, 0, 2, 0);
+			info->bist = config_byte(info->base_address, info->bus, info->device, 0, 0, 3, 3);
+			info->htype = *config_byte(info->base_address, info->bus, info->device, 0, 0, 3, 2);
+			info->lat_timer = *config_byte(info->base_address, info->bus, info->device, 0, 0, 3, 1);
+			info->cache = *config_byte(info->base_address, info->bus, info->device, 0, 0, 3, 0);
 
 			info->cdescription = description[info->class];
 			info->ddescription = descriptions[(info->class*128*128)+(info->subclass*128)+info->prog_if];
