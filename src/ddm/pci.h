@@ -34,7 +34,7 @@
 
 typedef struct {
 	uintptr_t base_address;
-	uint8_t  bus, device;
+	uint8_t  bus, device, function;
 	uint16_t device_id, vendor_id;
 	uint16_t *status, *command;
 	uint8_t class, subclass;

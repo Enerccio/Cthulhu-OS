@@ -169,41 +169,44 @@ void load_pcie_entry_info(pci_bus_t* bi) {
 		return;
 	for (size_t i=0; i<numentries; i++) {
 		for (int j=0; j<32; j++) {
-			uint16_t vendor_id = *config_word((uintptr_t)pci_express_infoaddr, i, j, 0, 0, 0x0, 2);
-			if (vendor_id == 0xFFFF)
-				continue;
+			for (int k=0; k<7; k++) {
+				uint16_t vendor_id = *config_word((uintptr_t)pci_express_infoaddr, i, j, k, 0, 0x0, 2);
+				if (vendor_id == 0xFFFF)
+					continue;
 
-			pcie_info_t* info = malloc(sizeof(pcie_info_t));
-			if (info == NULL) {
-				// TODO: add kernel shutdown
-				return;
-			}
-			memset(info, 0, sizeof(pcie_info_t));
+				pcie_info_t* info = malloc(sizeof(pcie_info_t));
+				if (info == NULL) {
+					// TODO: add kernel shutdown
+					return;
+				}
+				memset(info, 0, sizeof(pcie_info_t));
 
-			info->base_address = (uintptr_t)pci_express_infoaddr;
-			info->bus = i;
-			info->device = j;
-			info->vendor_id = vendor_id;
-			info->device_id = *config_word(info->base_address, info->bus, info->device, 0, 0, 0x0, 0);
-			info->status = config_word(info->base_address, info->bus, info->device, 0, 0, 1, 0);
-			info->command = config_word(info->base_address, info->bus, info->device, 0, 0, 1, 2);
-			info->class = *config_byte(info->base_address, info->bus, info->device, 0, 0, 2, 3);
-			info->subclass = *config_byte(info->base_address, info->bus, info->device, 0, 0, 2, 2);
-			info->prog_if = *config_byte(info->base_address, info->bus, info->device, 0, 0, 2, 1);
-			info->rev_id = *config_byte(info->base_address, info->bus, info->device, 0, 0, 2, 0);
-			info->bist = config_byte(info->base_address, info->bus, info->device, 0, 0, 3, 3);
-			info->htype = *config_byte(info->base_address, info->bus, info->device, 0, 0, 3, 2);
-			info->lat_timer = *config_byte(info->base_address, info->bus, info->device, 0, 0, 3, 1);
-			info->cache = *config_byte(info->base_address, info->bus, info->device, 0, 0, 3, 0);
+				info->base_address = (uintptr_t)pci_express_infoaddr;
+				info->bus = i;
+				info->device = j;
+				info->function = k;
+				info->vendor_id = vendor_id;
+				info->device_id = *config_word(info->base_address, info->bus, info->device, info->function, 0, 0x0, 0);
+				info->status = config_word(info->base_address, info->bus, info->device, info->function, 0, 1, 0);
+				info->command = config_word(info->base_address, info->bus, info->device, info->function, 0, 1, 2);
+				info->class = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 3);
+				info->subclass = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 2);
+				info->prog_if = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 1);
+				info->rev_id = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 2, 0);
+				info->bist = config_byte(info->base_address, info->bus, info->device, info->function, 0, 3, 3);
+				info->htype = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 3, 2);
+				info->lat_timer = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 3, 1);
+				info->cache = *config_byte(info->base_address, info->bus, info->device, info->function, 0, 3, 0);
 
-			info->cdescription = description[info->class];
-			info->ddescription = descriptions[(info->class*128*128)+(info->subclass*128)+info->prog_if];
+				info->cdescription = description[info->class];
+				info->ddescription = descriptions[(info->class*128*128)+(info->subclass*128)+info->prog_if];
 
 
-			size_t cac = array_get_size(pcie_info_ptr_t, pcie_entries);
-			if (array_push_data(pcie_info_ptr_t, pcie_entries, info) == cac) {
-				// TODO: add kernel shutdown
-				return;
+				size_t cac = array_get_size(pcie_info_ptr_t, pcie_entries);
+				if (array_push_data(pcie_info_ptr_t, pcie_entries, info) == cac) {
+					// TODO: add kernel shutdown
+					return;
+				}
 			}
 		}
 	}
