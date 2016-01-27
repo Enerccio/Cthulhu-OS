@@ -19,20 +19,68 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * main.c
- *  Created on: Jan 2, 2016
+ * drivers.c
+ *  Created on: Jan 27, 2016
  *      Author: Peter Vanusanik
  *  Contents: 
  */
 
-#include <ny/nyarlathotep.h>
-#include "pci.h"
 #include "drivers.h"
 
-int main() {
-	register_as_service("::device-driver-manager");
-	load_pci_info();
-	load_from_initramfs("/conf/ddm/drivers.conf");
+ARRAY_FUNCDEFS(dlist_entry_ptr_t)
+dlist_entry_array* drivers = NULL;
 
-    while (1) ;
+void load_drivers(char* path) {
+	if (drivers == NULL) {
+		drivers = create_array(dlist_entry_ptr_t);
+	}
+
+	char* driver_entry = strtok(path, "\n");
+	while (driver_entry != NULL) {
+		if (strlen(driver_entry)==0)
+			break;
+
+		char* dd = driver_entry;
+		char* driver_id = driver_entry;
+		while (*dd != 0) {
+			if (*dd == ':') {
+				*dd = 0;
+				break;
+			}
+			++dd;
+		}
+		char* driver_path = dd+1;
+
+		dlist_entry_t* de = malloc(sizeof(dlist_entry_t));
+		if (de == NULL) {
+			// TODO: kernel panic
+		}
+		de->dtype = driver_id;
+		de->path = driver_path;
+
+		size_t cac = array_get_size(dlist_entry_ptr_t, drivers);
+		if (array_push_data(dlist_entry_ptr_t, drivers, de) == cac) {
+			// TODO: add kernel shutdown
+		}
+
+		driver_entry = strtok(NULL, "\n");
+	}
+}
+
+void load_from_initramfs(const char* path) {
+	ifs_file_t f;
+	get_file(path, &f);
+
+	char* contents = malloc(f.entry.num_ent_or_size+1);
+	if (contents == NULL) {
+		// TODO: kernel panic
+		return;
+	}
+	memcpy(contents, f.file_contents, f.entry.num_ent_or_size);
+	contents[f.entry.num_ent_or_size] = 0;
+	load_drivers(contents);
+}
+
+void load_from_disk(const char* path) {
+	// TODO
 }

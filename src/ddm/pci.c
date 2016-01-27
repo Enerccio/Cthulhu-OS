@@ -29,9 +29,9 @@
 
 static char* description [256] = {
 	"Device was built prior definition of the class code field",
-	"Mass Storage Controller ",
-	"Network Controller ",
-	"Display Controller ",
+	"Mass Storage Controller",
+	"Network Controller",
+	"Display Controller",
 	"Multimedia Controller",
 	"Memory Controller",
 	"Bridge Device",
@@ -182,6 +182,7 @@ void load_pcie_entry_info(pci_bus_t* bi) {
 				memset(info, 0, sizeof(pcie_info_t));
 
 				info->base_address = (uintptr_t)pci_express_infoaddr;
+				info->exact_address = (void*)config_dword((uintptr_t)pci_express_infoaddr, i, j, k, 0, 0, 0);
 				info->bus = i;
 				info->device = j;
 				info->function = k;
@@ -201,6 +202,9 @@ void load_pcie_entry_info(pci_bus_t* bi) {
 				info->cdescription = description[info->class];
 				info->ddescription = descriptions[(info->class*128*128)+(info->subclass*128)+info->prog_if];
 
+				if ((info->htype & 0x80) == 0) {
+					k = 7;
+				}
 
 				size_t cac = array_get_size(pcie_info_ptr_t, pcie_entries);
 				if (array_push_data(pcie_info_ptr_t, pcie_entries, info) == cac) {
