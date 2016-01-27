@@ -30,20 +30,12 @@
 #include <stdbool.h>
 
 #include <ny/nyarlathotep.h>
-#include <datastruct/array.h>
+#include <datastruct/hmap.h>
 
-#define SATA "sata"
-
-typedef struct dlist_entry {
-	char* dtype;
-	char* path;
-} dlist_entry_t;
-
-typedef dlist_entry_t* dlist_entry_ptr_t;
-ARRAY_HEADER(dlist_entry_ptr_t)
-typedef ARRAY_TYPE(dlist_entry_ptr_t) dlist_entry_array;
+HMAP_HEADER(string, string)
+typedef HMAP_TYPE(string, string) dlist_entry_map;
 
 void load_from_initramfs(const char* path);
 void load_from_disk(const char* path);
 
-extern dlist_entry_array* drivers;
+extern dlist_entry_map* drivers;

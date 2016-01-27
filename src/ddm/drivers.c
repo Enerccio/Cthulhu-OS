@@ -27,12 +27,12 @@
 
 #include "drivers.h"
 
-ARRAY_FUNCDEFS(dlist_entry_ptr_t)
-dlist_entry_array* drivers = NULL;
+HMAP_FUNCDEFS(string, string)
+dlist_entry_map* drivers = NULL;
 
 void load_drivers(char* path) {
 	if (drivers == NULL) {
-		drivers = create_array(dlist_entry_ptr_t);
+		drivers = create_string_table(string);
 	}
 
 	char* driver_entry = strtok(path, "\n");
@@ -51,15 +51,7 @@ void load_drivers(char* path) {
 		}
 		char* driver_path = dd+1;
 
-		dlist_entry_t* de = malloc(sizeof(dlist_entry_t));
-		if (de == NULL) {
-			// TODO: kernel panic
-		}
-		de->dtype = driver_id;
-		de->path = driver_path;
-
-		size_t cac = array_get_size(dlist_entry_ptr_t, drivers);
-		if (array_push_data(dlist_entry_ptr_t, drivers, de) == cac) {
+		if (table_set(string, string, drivers, driver_id, driver_path)) {
 			// TODO: add kernel shutdown
 		}
 
