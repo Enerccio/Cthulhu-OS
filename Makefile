@@ -2,9 +2,9 @@ MODE ?= debug
 
 .PHONY: clean kernel-clean kernel lib all nyarlathotep nyarlathotep-clean cthulhu cthulhu-clean lds lds-clean lds-u lds-u-clean framebuffer-install-headers ddm ddm-clean
 
-all: lib kernel init framebuffer ddm
+all: lib kernel init framebuffer ddm sata
 
-clean: kernel-clean framebuffer-clean init-clean ddm-clean
+clean: kernel-clean framebuffer-clean init-clean ddm-clean sata-clean
 
 lib:
 	bash build_kclib.sh $(MODE)
@@ -26,6 +26,9 @@ cthulhu-clean:
 
 init-clean: lds-u-clean nyarlathotep-clean cthulhu-clean framebuffer-clean
 	$(MAKE) clean -C src/init MODE=$(MODE)
+	
+sata-clean: lds-u-clean nyarlathotep-clean cthulhu-clean
+	$(MAKE) clean -C src/drivers/sata MODE=$(MODE)
 	
 framebuffer-clean: lds-u-clean nyarlathotep-clean cthulhu-clean
 	$(MAKE) clean -C src/services/framebuffer MODE=$(MODE)
@@ -55,6 +58,9 @@ cthulhu: cthulhu-install-headers
 	
 init: lds-u nyarlathotep cthulhu framebuffer-install-headers
 	$(MAKE) -C src/init MODE=$(MODE)
+	
+sata: lds-u nyarlathotep cthulhu 
+	$(MAKE) -C src/drivers/sata MODE=$(MODE)
 
 framebuffer: lds-u nyarlathotep cthulhu 
 	$(MAKE) -C src/services/framebuffer MODE=$(MODE)
