@@ -37,3 +37,5 @@
 #define SYS_FUTEX_WAKE              9
 #define SYS_ALLOC_CONT              10
 #define SYS_GET_FMESSAGE_BLOCK		11
+
+#define GMI_PROCESS_CREATE_STAGE_1 1

@@ -28,6 +28,7 @@
 #pragma once
 
 #include "ct_commons.h"
+#include "ct_sys.h"
 #include "messages.h"
 
 #ifdef __cplusplus

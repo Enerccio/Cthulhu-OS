@@ -39,6 +39,7 @@
 #include <ds/hmap.h>
 #include <ds/queue.h>
 
+#include <cthulhu/process.h>
 #include <cthulhu/messages.h>
 #include <cthulhu/threading.h>
 
@@ -90,6 +91,8 @@ typedef struct proc {
 
     hash_table_t*           futexes;
     list_t*                 blocked_wait_messages;
+
+    list_t*					temp_processes;
 } proc_t;
 
 struct thread {
@@ -141,3 +144,5 @@ uintptr_t map_virtual_virtual(uintptr_t* vastart, uintptr_t vaend, bool readonly
 uintptr_t map_physical_virtual(puint_t* vastart, puint_t vaend, bool readonly);
 
 void initialize_processes();
+
+int cp_stage_1(cp_stage1* data, ruint_t* process_num);

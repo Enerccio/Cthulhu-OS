@@ -36,11 +36,23 @@
 
 #include <stdatomic.h>
 #include <errno.h>
+#include <ds/hmap.h>
+
+enum proc_state {
+	CP1,
+};
+
+typedef struct temp_proc {
+	enum proc_state cstate;
+	proc_t* process;
+} temp_proc_t;
 
 ruint_t __proclist_lock;
+ruint_t __proclist_lock2;
 ruint_t process_id_num;
 ruint_t thread_id_num;
 list_t* processes;
+hash_table_t* temp_processes;
 
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
@@ -82,6 +94,10 @@ static struct chained_element* __blocked_getter(void* data) {
 
 static struct chained_element* __message_getter(void* data) {
     return &(((_message_t*)data)->target_list);
+}
+
+static struct chained_element* __process_get_function(void* data) {
+    return &((proc_t*)data)->process_list;
 }
 
 proc_t* create_init_process_structure(uintptr_t pml) {
@@ -130,6 +146,11 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     if (process->blocked_wait_messages == NULL) {
         error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
+
+    process->temp_processes = create_list_static(__process_get_function);
+	if (process->blocked_wait_messages == NULL) {
+		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+	}
 
     thread_t* main_thread = malloc(sizeof(thread_t));
     if (main_thread == NULL) {
@@ -184,15 +205,13 @@ void process_init(proc_t* process) {
     }
 }
 
-static struct chained_element* __process_get_function(void* data) {
-    return &((proc_t*)data)->process_list;
-}
-
 void initialize_processes() {
     __proclist_lock = 0;
     process_id_num = 0;
     thread_id_num = 0;
-    processes = create_list_static(&__process_get_function);
+    __proclist_lock2 = 0;
+    processes = create_list_static(__process_get_function);
+    temp_processes = create_uint64_table();
 }
 
 mmap_area_t** mmap_area(proc_t* proc, uintptr_t address) {
@@ -490,8 +509,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         destroy_array(process->threads);
         destroy_array(process->fds);
         free(process);
-        // TODO: free process address page
-        set_active_page((void*)opml4);
         return ENOMEM_INTERNAL;
     }
 
@@ -502,6 +519,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         destroy_array(process->threads);
         destroy_array(process->fds);
         free(process);
+        return ENOMEM_INTERNAL;
     }
 
     process->pq_input_buffer = create_queue_static(__message_getter);
@@ -512,6 +530,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         destroy_array(process->threads);
         destroy_array(process->fds);
         free(process);
+        return ENOMEM_INTERNAL;
     }
 
     process->blocked_wait_messages = create_list_static(__message_getter);
@@ -522,12 +541,26 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         destroy_array(process->threads);
         destroy_array(process->fds);
         free(process);
+        return ENOMEM_INTERNAL;
     }
+
+    process->temp_processes = create_list_static(__process_get_function);
+	if (process->blocked_wait_messages == NULL) {
+		free_list(process->blocked_wait_messages);
+		free_queue(process->pq_input_buffer);
+		free_queue(process->input_buffer);
+		destroy_table(process->futexes);
+		destroy_array(process->threads);
+		destroy_array(process->fds);
+		free(process);
+		return ENOMEM_INTERNAL;
+	}
 
     set_active_page((void*)process->pml4);
 
     thread_t* main_thread = malloc(sizeof(thread_t));
     if (main_thread == NULL) {
+    	free_list(process->temp_processes);
         free_list(process->blocked_wait_messages);
         free_queue(process->pq_input_buffer);
         free_queue(process->input_buffer);
@@ -547,6 +580,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
     main_thread->continuation = malloc(sizeof(continuation_t));
     if (main_thread->continuation == NULL) {
         free(main_thread);
+        free_list(process->temp_processes);
         free_list(process->blocked_wait_messages);
         free_queue(process->pq_input_buffer);
         free_queue(process->input_buffer);
@@ -564,6 +598,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
     if (main_thread->futex_block == NULL) {
         free(main_thread->continuation);
         free(main_thread);
+        free_list(process->temp_processes);
         free_list(process->blocked_wait_messages);
         free_queue(process->pq_input_buffer);
         free_queue(process->input_buffer);
@@ -589,6 +624,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         free_list(main_thread->futex_block);
         free(main_thread->continuation);
         free(main_thread);
+        free_list(process->temp_processes);
         free_list(process->blocked_wait_messages);
         free_queue(process->pq_input_buffer);
         free_queue(process->input_buffer);
@@ -607,6 +643,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         free_list(main_thread->futex_block);
         free(main_thread->continuation);
         free(main_thread);
+        free_list(process->temp_processes);
         free_list(process->blocked_wait_messages);
         free_queue(process->pq_input_buffer);
         free_queue(process->input_buffer);
@@ -622,6 +659,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         free_list(main_thread->futex_block);
         free(main_thread->continuation);
         free(main_thread);
+        free_list(process->temp_processes);
         free_list(process->blocked_wait_messages);
         free_queue(process->pq_input_buffer);
         free_queue(process->input_buffer);
@@ -639,6 +677,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         free_list(main_thread->futex_block);
         free(main_thread->continuation);
         free(main_thread);
+        free_list(process->temp_processes);
         free_list(process->blocked_wait_messages);
         free_queue(process->pq_input_buffer);
         free_queue(process->input_buffer);
@@ -661,6 +700,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
             free_list(main_thread->futex_block);
             free(main_thread->continuation);
             free(main_thread);
+            free_list(process->temp_processes);
             free_list(process->blocked_wait_messages);
             free_queue(process->pq_input_buffer);
             free_queue(process->input_buffer);
@@ -759,4 +799,119 @@ uintptr_t map_physical_virtual(puint_t* _vastart, puint_t vaend, bool readonly) 
         return 0;
     }
     return hole->vastart+vaoffset;
+}
+
+int cp_stage_1(cp_stage1* data, ruint_t* process_num) {
+	int error = 0;
+	*process_num = 0;
+	proc_t* cp = get_current_process();
+
+	temp_proc_t* tp = malloc(sizeof(temp_proc_t));
+	if (tp == NULL) {
+		goto handle_mem_error;
+	}
+
+	proc_t* process = malloc(sizeof(proc_t));
+	if (process == NULL) {
+		goto handle_mem_error;
+	}
+	memset(process, 0, sizeof(proc_t));
+
+	tp->cstate = CP1;
+	tp->process = process;
+
+	process->__ob_lock = 0;
+	process->process_list.data = process;
+
+	process->fds = create_array();
+	if (process->fds == NULL) {
+		goto handle_mem_error;
+	}
+
+	process->threads = create_array();
+	if (process->fds == NULL) {
+		destroy_array(process->fds);
+		goto handle_mem_error;
+	}
+
+	process->mem_maps = NULL;
+	process->proc_random = rg_create_random_generator(get_unix_time());
+	process->parent = NULL;
+	if (data->parent)
+		process->parent = cp;
+	if (data->priority < 0) {
+		process->priority = cp->priority;
+	} else if (data->priority > 4) {
+		error = EINVAL;
+		goto handle_mem_error;
+	} else
+		process->priority = data->priority;
+
+	process->futexes = create_uint64_table();
+
+	if (process->futexes == NULL) {
+		error = ENOMEM_INTERNAL;
+		goto handle_mem_error;
+	}
+
+	process->input_buffer = create_queue_static(__message_getter);
+
+	if (process->input_buffer == NULL) {
+		error = ENOMEM_INTERNAL;
+		goto handle_mem_error;
+	}
+
+	process->pq_input_buffer = create_queue_static(__message_getter);
+
+	if (process->input_buffer == NULL) {
+		error = ENOMEM_INTERNAL;
+		goto handle_mem_error;
+	}
+
+	process->blocked_wait_messages = create_list_static(__message_getter);
+	if (process->blocked_wait_messages == NULL) {
+		error = ENOMEM_INTERNAL;
+		goto handle_mem_error;
+	}
+
+	process->temp_processes = create_list_static(__process_get_function);
+	if (process->blocked_wait_messages == NULL) {
+		error = ENOMEM_INTERNAL;
+		goto handle_mem_error;
+	}
+
+	proc_spinlock_lock(&__proclist_lock);
+	process->proc_id = ++process_id_num;
+	proc_spinlock_unlock(&__proclist_lock);
+
+	proc_spinlock_lock(&__proclist_lock2);
+	if (table_set(temp_processes, (void*)process->proc_id, tp)) {
+		proc_spinlock_unlock(&__proclist_lock2);
+		error = ENOMEM_INTERNAL;
+		goto handle_mem_error;
+	}
+	list_push_right(cp->temp_processes, process);
+	proc_spinlock_unlock(&__proclist_lock2);
+
+	return 0;
+handle_mem_error:
+	if (tp != NULL)	free(tp);
+	if (process != NULL) {
+		if (process->fds != NULL)
+			destroy_array(process->fds);
+		if (process->threads != NULL)
+			destroy_array(process->threads);
+		if (process->futexes != NULL)
+			destroy_table(process->futexes);
+		if (process->input_buffer != NULL)
+			free_queue(process->input_buffer);
+		if (process->pq_input_buffer != NULL)
+			free_queue(process->pq_input_buffer);
+		if (process->blocked_wait_messages != NULL)
+			free_list(process->blocked_wait_messages);
+		if (process->temp_processes != NULL)
+			free_list(process->temp_processes);
+		free(process);
+	}
+	return error;
 }

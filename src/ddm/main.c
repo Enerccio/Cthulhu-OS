@@ -38,9 +38,9 @@ void load_disk_drive(char* driver_path) {
 	}
 
 	message_t* message = get_free_message();
-	memset(message, 0, sizeof(message_t));
 	message->header.flags.no_target = true;
 	message->header.magic = MESSAGE_MAGIC;
+	message->header.gps_id = GMI_PROCESS_CREATE_STAGE_1;
 
 	cp_stage1* cp1 = (cp_stage1*)message->data;
 	cp1->parent = true;

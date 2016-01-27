@@ -91,7 +91,15 @@ bool validate_string(char* string, continuation_t* c) {
 }
 
 bool validate_message(message_t* message, continuation_t* c) {
-	return validate_address((void*)message, sizeof(message_t), c);
+	bool test = validate_address((void*)message, sizeof(message_t), c);
+	if (test)
+		return test;
+	uint64_t cm = 0;
+	uint8_t* mbytes = (uint8_t*)message;
+	for (unsigned int i=0; i<sizeof(message_t); i++) {
+		cm += mbytes[i];
+	}
+	return cm % 16 == 0;
 }
 
 ruint_t allocate_memory_cont(registers_t* r, continuation_t* c, ruint_t from, ruint_t size,
@@ -360,11 +368,37 @@ ruint_t create_process_ivfs(registers_t* r, continuation_t* c, ruint_t _path, ru
 	return rv;
 }
 
-// IPC
+// Kernel messages
+int self_message(uint64_t command, char* data) {
+	if (command == GMI_PROCESS_CREATE_STAGE_1) {
+		ruint_t cp;
+		int error = cp_stage_1((cp_stage1*)data, &cp);
+		if (error != 0) {
+			// TODO: reply system
+		} else
+			return error;
+	}
+	return 0;
+}
 
-ruint_t sys_send_message(registers_t* r, continuation_t* c, ruint_t message) {
-	if (!validate_message((message_t*)message, c))
+// IPC
+ruint_t sys_send_message(registers_t* r, continuation_t* c, ruint_t _message) {
+	message_t* message = (message_t*)_message;
+	if (!validate_message(message, c))
 		return 0;
+
+	int retval = 0;
+
+	if (message->header.flags.no_target) {
+		retval = self_message(message->header.gps_id, message->data);
+	}
+
+	if (retval == ENOMEM_INTERNAL) {
+		// TODO: call swapper
+		c->present = true;
+		return ENOMEM_INTERNAL;
+	}
+
 	return 0;
 }
 

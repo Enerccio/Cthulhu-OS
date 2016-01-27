@@ -47,7 +47,7 @@ typedef struct message_target_container {
 typedef struct message_header {
     pid_t target_process;
     struct {
-        uint64_t no_target  : 1;
+        uint64_t no_target  : 1; // if true, gps_id is used by kernel to determine what to do
         uint64_t broadcast  : 1;
         uint64_t group_cast : 1;
         uint64_t group      : 8;
@@ -61,6 +61,7 @@ typedef struct message_header {
     uint64_t target_thread;
     uint64_t magic;
     uint64_t checksum;
+    uint64_t gps_id;
 } message_header_t;
 
 typedef struct message {
