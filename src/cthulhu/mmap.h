@@ -39,23 +39,23 @@ extern "C" {
 #endif
 
 typedef enum memmap_type {
-	kernel_address, file
+    kernel_address, file
 } memmap_type_t;
 
 typedef struct target_info {
-	uintptr_t asked_address;
-	bool	  requires_static_address;
+    uintptr_t asked_address;
+    bool      requires_static_address;
 } target_info_t;
 
 struct memmap {
-	memmap_type_t memmap_type;
-	target_info_t adressing;
+    memmap_type_t memmap_type;
+    target_info_t adressing;
 };
 
 typedef struct memmap_kernel_address {
-	struct memmap header;
-	uintptr_t from;
-	size_t	  amount;
+    struct memmap header;
+    uintptr_t from;
+    size_t    amount;
 } memmap_ka_t;
 
 void* mmap_kernel_address(uintptr_t kernel_address_start, uintptr_t kernel_address_end);

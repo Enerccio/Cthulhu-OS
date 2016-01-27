@@ -30,9 +30,9 @@
 #include "drivers.h"
 
 int main() {
-	register_as_service("::device-driver-manager");
-	load_pci_info();
-	load_from_initramfs("/conf/ddm/drivers.conf");
+    register_as_service("::device-driver-manager");
+    load_pci_info();
+    load_from_initramfs("/conf/ddm/drivers.conf");
 
     while (1) ;
 }

@@ -156,7 +156,7 @@ int32_t load_elf_stage_one(Elf64_Ehdr* header, uintptr_t base_address, proc_t* p
                 }
                 mmap_area->mtype = program_data;
                 if (!allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false)) {
-                	return ELF_ERROR_ENOMEM;
+                    return ELF_ERROR_ENOMEM;
                 }
                 if (section->sh_type == SHT_NOBITS) {
                     // nobits, just memset
@@ -192,7 +192,7 @@ int32_t load_elf_stage_one(Elf64_Ehdr* header, uintptr_t base_address, proc_t* p
                 }
                 mmap_area->mtype = program_data;
                 if (!allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false)) {
-                	return ELF_ERROR_ENOMEM;
+                    return ELF_ERROR_ENOMEM;
                 }
                 if (section->sh_type == SHT_NOBITS) {
                     // nobits, just memset
@@ -278,7 +278,7 @@ int32_t load_elf_exec(uintptr_t elf_file_data, proc_t* process) {
     }
     mmap_area->mtype = stack_data;
     if (!allocate(mmap_area->vastart, ssize, false, false)) {
-    	return ELF_ERROR_ENOMEM;
+        return ELF_ERROR_ENOMEM;
     }
     memset((void*)mmap_area->vastart, 0, ssize);
     thread->stack_bottom_address = mmap_area->vastart;

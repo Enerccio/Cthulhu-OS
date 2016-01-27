@@ -45,8 +45,8 @@
 #define MESSAGE_BUFFER_CNT (10)
 
 typedef struct file_descriptor {
-    uint32_t 				fd_pid;
-    uint64_t 				owner_daemon;
+    uint32_t                fd_pid;
+    uint64_t                owner_daemon;
 } fd_t;
 
 typedef enum mmap_area_type {
@@ -54,11 +54,11 @@ typedef enum mmap_area_type {
 } ma_type_t;
 
 typedef struct mmap_area {
-    uintptr_t  				vastart;
-    uintptr_t  				vaend;
-    ma_type_t  				mtype;
-    uint64_t   				count;
-    struct mmap_area* 		next;
+    uintptr_t               vastart;
+    uintptr_t               vaend;
+    ma_type_t               mtype;
+    uint64_t                count;
+    struct mmap_area*       next;
 } mmap_area_t;
 
 typedef struct thread thread_t;
@@ -66,52 +66,52 @@ typedef struct thread thread_t;
 typedef struct continuation continuation_t;
 
 typedef struct proc {
-    intmax_t     			proc_id;
-    struct proc* 			parent;
-    uintptr_t    			pml4;
-    rg_t         			proc_random;
+    intmax_t                proc_id;
+    struct proc*            parent;
+    uintptr_t               pml4;
+    rg_t                    proc_random;
 
-    char**       			environ;
-    char**       			argv;
-    unsigned int 			argc;
+    char**                  environ;
+    char**                  argv;
+    unsigned int            argc;
 
-    array_t*     			fds;
-    array_t*     			threads;
-    uint8_t	     			priority;
+    array_t*                fds;
+    array_t*                threads;
+    uint8_t                 priority;
 
-    mmap_area_t* 			mem_maps;
-    struct chained_element 	process_list;
+    mmap_area_t*            mem_maps;
+    struct chained_element  process_list;
 
-    _message_t  		       output_buffer[MESSAGE_BUFFER_CNT];
-    queue_t*				   input_buffer;
-    queue_t*				   pq_input_buffer;
+    _message_t                 output_buffer[MESSAGE_BUFFER_CNT];
+    queue_t*                   input_buffer;
+    queue_t*                   pq_input_buffer;
     message_target_container_t groups[256];
 
-    hash_table_t* 			futexes;
-    list_t*					blocked_wait_messages;
+    hash_table_t*           futexes;
+    list_t*                 blocked_wait_messages;
 } proc_t;
 
 struct thread {
-    tid_t 					tId;
-    proc_t*  				parent_process;
+    tid_t                   tId;
+    proc_t*                 parent_process;
 
-    uint8_t	 				priority;
-    bool					blocked;
-    continuation_t*			continuation;
+    uint8_t                 priority;
+    bool                    blocked;
+    continuation_t*         continuation;
 
     /* Userspace information */
-    ruint_t 				last_rip, last_rsp, last_rax, last_rdi, last_rsi, last_rdx, last_rcx;
-    ruint_t 				last_r8, last_r9, last_r10, last_r11;
-    ruint_t 				last_rbx, last_rbp, last_r12, last_r13, last_r14, last_r15, last_rflags;
+    ruint_t                 last_rip, last_rsp, last_rax, last_rdi, last_rsi, last_rdx, last_rcx;
+    ruint_t                 last_r8, last_r9, last_r10, last_r11;
+    ruint_t                 last_rbx, last_rbp, last_r12, last_r13, last_r14, last_r15, last_rflags;
 
-    uintptr_t 				stack_top_address;
-    uintptr_t 				stack_bottom_address;
+    uintptr_t               stack_top_address;
+    uintptr_t               stack_bottom_address;
 
-    struct chained_element 	schedule_list;
-    struct chained_element 	blocked_list;
+    struct chained_element  schedule_list;
+    struct chained_element  blocked_list;
 
-    tli_t*					local_info;
-    list_t*					futex_block;
+    tli_t*                  local_info;
+    list_t*                 futex_block;
 };
 
 #define BASE_STACK_SIZE 0x1000000
@@ -129,7 +129,7 @@ mmap_area_t** request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_
 mmap_area_t** find_va_hole(proc_t* proc, size_t req_size, size_t align_amount);
 
 int create_process_base(uint8_t* image_data, int argc, char** argv, char** envp, proc_t** cpt,
-		uint8_t priority, registers_t* r);
+        uint8_t priority, registers_t* r);
 
 void* proc_alloc(size_t size);
 void* proc_alloc_direct(proc_t* proc, size_t size);

@@ -28,8 +28,8 @@
 #pragma once
 
 typedef struct thread_local_info {
-	struct thread_local_info* self;
-	tid_t t;
-	void* userspace_info;
-	void* tls;
+    struct thread_local_info* self;
+    tid_t t;
+    void* userspace_info;
+    void* tls;
 } tli_t;

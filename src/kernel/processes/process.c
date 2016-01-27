@@ -63,25 +63,25 @@ pid_t get_current_pid() {
 }
 
 proc_t* get_current_process() {
-	cpu_t* cpu = get_current_cput();
-	proc_spinlock_lock(&cpu->__cpu_lock);
-	proc_spinlock_lock(&cpu->__cpu_sched_lock);
-	proc_spinlock_lock(&__thread_modifier);
+    cpu_t* cpu = get_current_cput();
+    proc_spinlock_lock(&cpu->__cpu_lock);
+    proc_spinlock_lock(&cpu->__cpu_sched_lock);
+    proc_spinlock_lock(&__thread_modifier);
 
-	proc_t* proc = cpu->ct->parent_process;
+    proc_t* proc = cpu->ct->parent_process;
 
-	proc_spinlock_unlock(&__thread_modifier);
-	proc_spinlock_unlock(&cpu->__cpu_lock);
-	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-	return proc;
+    proc_spinlock_unlock(&__thread_modifier);
+    proc_spinlock_unlock(&cpu->__cpu_lock);
+    proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+    return proc;
 }
 
 static struct chained_element* __blocked_getter(void* data) {
-	return &(((thread_t*)data)->blocked_list);
+    return &(((thread_t*)data)->blocked_list);
 }
 
 static struct chained_element* __message_getter(void* data) {
-	return &(((_message_t*)data)->target_list);
+    return &(((_message_t*)data)->target_list);
 }
 
 proc_t* create_init_process_structure(uintptr_t pml) {
@@ -112,23 +112,23 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     process->process_list.data = process;
     process->futexes = create_uint64_table();
     if (process->futexes == NULL) {
-    	error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+        error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
 
     process->input_buffer = create_queue_static(__message_getter);
     if (process->input_buffer == NULL) {
-    	error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+        error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
 
     process->pq_input_buffer = create_queue_static(__message_getter);
-	if (process->pq_input_buffer == NULL) {
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
-	}
+    if (process->pq_input_buffer == NULL) {
+        error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+    }
 
-	process->blocked_wait_messages = create_list_static(__message_getter);
-	if (process->blocked_wait_messages == NULL) {
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
-	}
+    process->blocked_wait_messages = create_list_static(__message_getter);
+    if (process->blocked_wait_messages == NULL) {
+        error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+    }
 
     thread_t* main_thread = malloc(sizeof(thread_t));
     if (main_thread == NULL) {
@@ -140,7 +140,7 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     main_thread->priority = 0;
     main_thread->futex_block = create_list_static(__blocked_getter);
     if (main_thread->futex_block == NULL) {
-    	error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+        error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
     main_thread->blocked = false;
     main_thread->blocked_list.data = main_thread;
@@ -150,41 +150,41 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     main_thread->last_rdx = (ruint_t)(uintptr_t)process->environ;
 
     main_thread->continuation = malloc(sizeof(continuation_t));
-	if (main_thread->continuation == NULL) {
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
-	}
-	main_thread->continuation->present = false;
+    if (main_thread->continuation == NULL) {
+        error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+    }
+    main_thread->continuation->present = false;
 
     if (array_push_data(process->threads, main_thread) == 0) {
-    	error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+        error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
 
     return process;
 }
 
 void process_init(proc_t* process) {
-	thread_t* main_thread = array_get_at(process->threads, 0);
-	main_thread->local_info = proc_alloc_direct(process, sizeof(tli_t));
-	if (main_thread->local_info == NULL) {
-		error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
-	}
-	main_thread->local_info->self = main_thread->local_info;
-	main_thread->local_info->t = main_thread->tId;
+    thread_t* main_thread = array_get_at(process->threads, 0);
+    main_thread->local_info = proc_alloc_direct(process, sizeof(tli_t));
+    if (main_thread->local_info == NULL) {
+        error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+    }
+    main_thread->local_info->self = main_thread->local_info;
+    main_thread->local_info->t = main_thread->tId;
 
 
-	for (int i=0; i<MESSAGE_BUFFER_CNT; i++) {
-		_message_t* m = &process->output_buffer[i];
-		m->owner = process;
-		m->used = false;
-		m->message = proc_alloc_direct(process, 0x200000);
-		if (m->message == NULL) {
-			error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
-		}
-	}
+    for (int i=0; i<MESSAGE_BUFFER_CNT; i++) {
+        _message_t* m = &process->output_buffer[i];
+        m->owner = process;
+        m->used = false;
+        m->message = proc_alloc_direct(process, 0x200000);
+        if (m->message == NULL) {
+            error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
+        }
+    }
 }
 
-static struct chained_element* __process_get_function(void* data){
-	return &((proc_t*)data)->process_list;
+static struct chained_element* __process_get_function(void* data) {
+    return &((proc_t*)data)->process_list;
 }
 
 void initialize_processes() {
@@ -195,29 +195,29 @@ void initialize_processes() {
 }
 
 mmap_area_t** mmap_area(proc_t* proc, uintptr_t address) {
-	mmap_area_t** lm = &proc->mem_maps;
-	uintptr_t x1, x2, y1, y2;
+    mmap_area_t** lm = &proc->mem_maps;
+    uintptr_t x1, x2, y1, y2;
 
-	while (*lm != NULL) {
-		mmap_area_t* mmap = *lm;
+    while (*lm != NULL) {
+        mmap_area_t* mmap = *lm;
 
-		x1 = address;
-		x2 = address;
-		y1 = mmap->vastart;
-		y2 = mmap->vaend;
+        x1 = address;
+        x2 = address;
+        y1 = mmap->vastart;
+        y2 = mmap->vaend;
 
-		if (address >= mmap->vaend) {
-			lm = &mmap->next;
-			continue;
-		} else if (x1 <= y2 && y1 <= x2) {
-			// section overlaps
-			return lm;
-		} else {
-			break;
-		}
-	}
+        if (address >= mmap->vaend) {
+            lm = &mmap->next;
+            continue;
+        } else if (x1 <= y2 && y1 <= x2) {
+            // section overlaps
+            return lm;
+        } else {
+            break;
+        }
+    }
 
-	return NULL;
+    return NULL;
 }
 
 mmap_area_t** request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_size) {
@@ -225,7 +225,7 @@ mmap_area_t** request_va_hole(proc_t* proc, uintptr_t start_address, size_t req_
     uintptr_t x1, x2, y1, y2;
 
     if (start_address < 0x1000)
-    	return NULL;
+        return NULL;
 
     while (*lm != NULL) {
         mmap_area_t* mmap = *lm;
@@ -323,45 +323,45 @@ void* proc_alloc_direct(proc_t* proc, size_t size) {
 
 
 mmap_area_t* free_mmap_area(mmap_area_t* mm, mmap_area_t** pmma) {
-	uint64_t use_count = __atomic_sub_fetch(&mm->count, 1, __ATOMIC_SEQ_CST);
-	switch (mm->mtype) {
-	case program_data:
-	case stack_data:
-	case heap_data:
-	case kernel_allocated_heap_data: {
-		deallocate(mm->vastart, mm->vaend-mm->vastart);
-	} break;
-	case nondealloc_map:
-		break;
-	}
-	mmap_area_t* mmn = mm->next;
-	*pmma = mm->next;
-	if (use_count == 0) {
-		free(mm);
-	}
-	return mmn;
+    uint64_t use_count = __atomic_sub_fetch(&mm->count, 1, __ATOMIC_SEQ_CST);
+    switch (mm->mtype) {
+    case program_data:
+    case stack_data:
+    case heap_data:
+    case kernel_allocated_heap_data: {
+        deallocate(mm->vastart, mm->vaend-mm->vastart);
+    } break;
+    case nondealloc_map:
+        break;
+    }
+    mmap_area_t* mmn = mm->next;
+    *pmma = mm->next;
+    if (use_count == 0) {
+        free(mm);
+    }
+    return mmn;
 }
 
 void proc_dealloc(uintptr_t mem) {
-	cpu_t* cpu = get_current_cput();
-	proc_spinlock_lock(&cpu->__cpu_lock);
-	proc_spinlock_lock(&cpu->__cpu_sched_lock);
-	proc_spinlock_lock(&__thread_modifier);
+    cpu_t* cpu = get_current_cput();
+    proc_spinlock_lock(&cpu->__cpu_lock);
+    proc_spinlock_lock(&cpu->__cpu_sched_lock);
+    proc_spinlock_lock(&__thread_modifier);
 
-	proc_t* proc = cpu->ct->parent_process;
-	proc_dealloc_direct(proc, mem);
+    proc_t* proc = cpu->ct->parent_process;
+    proc_dealloc_direct(proc, mem);
 
-	proc_spinlock_unlock(&__thread_modifier);
-	proc_spinlock_unlock(&cpu->__cpu_lock);
-	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+    proc_spinlock_unlock(&__thread_modifier);
+    proc_spinlock_unlock(&cpu->__cpu_lock);
+    proc_spinlock_unlock(&cpu->__cpu_sched_lock);
 }
 
 void proc_dealloc_direct(proc_t* proc, uintptr_t mem) {
-	mmap_area_t** _hole = mmap_area(proc, mem);
-	mmap_area_t* hole = *_hole;
-	if (hole != NULL) {
-		free_mmap_area(hole, _hole);
-	}
+    mmap_area_t** _hole = mmap_area(proc, mem);
+    mmap_area_t* hole = *_hole;
+    if (hole != NULL) {
+        free_mmap_area(hole, _hole);
+    }
 }
 
 static int cpy_array(int count, char*** a) {
@@ -412,7 +412,7 @@ void free_proc_memory(proc_t* proc) {
     mmap_area_t* mm = proc->mem_maps;
     mmap_area_t** pmm = &proc->mem_maps;
     while (mm != NULL) {
-    	mm = free_mmap_area(mm, pmm);
+        mm = free_mmap_area(mm, pmm);
     }
 }
 
@@ -424,298 +424,298 @@ static void free_array(int count, char** a) {
 }
 
 int create_process_base(uint8_t* image_data, int argc, char** argv,
-		char** envp, proc_t** cpt, uint8_t asked_priority, registers_t* r) {
-	proc_spinlock_lock(&__thread_modifier);
-	uint8_t cpp = get_current_cput()->ct->parent_process->priority;
-	proc_spinlock_unlock(&__thread_modifier);
+        char** envp, proc_t** cpt, uint8_t asked_priority, registers_t* r) {
+    proc_spinlock_lock(&__thread_modifier);
+    uint8_t cpp = get_current_cput()->ct->parent_process->priority;
+    proc_spinlock_unlock(&__thread_modifier);
 
-	if (cpp > asked_priority) {
-		return EINVAL;
-	}
+    if (cpp > asked_priority) {
+        return EINVAL;
+    }
 
-	int envc = 0;
-	char** envt = envp;
-	while (*envt != NULL) {
-		++envc;
-		++envt;
-	}
+    int envc = 0;
+    char** envt = envp;
+    while (*envt != NULL) {
+        ++envc;
+        ++envt;
+    }
 
-	int err;
-	if ((err = cpy_array(argc, &argv)) != 0)
-		return err;
-	if ((err = cpy_array(envc, &envp)) != 0) {
-		free_array(argc, argv);
-		return err;
-	}
-	// envp and argv are now kernel structures
+    int err;
+    if ((err = cpy_array(argc, &argv)) != 0)
+        return err;
+    if ((err = cpy_array(envc, &envp)) != 0) {
+        free_array(argc, argv);
+        return err;
+    }
+    // envp and argv are now kernel structures
 
-	proc_t* process = malloc(sizeof(proc_t));
-	if (process == NULL) {
-		return ENOMEM_INTERNAL;
-	}
-	memset(process, 0, sizeof(proc_t));
+    proc_t* process = malloc(sizeof(proc_t));
+    if (process == NULL) {
+        return ENOMEM_INTERNAL;
+    }
+    memset(process, 0, sizeof(proc_t));
 
-	process->process_list.data = process;
+    process->process_list.data = process;
 
-	process->fds = create_array();
-	if (process->fds == NULL) {
-		free(process);
-		return ENOMEM_INTERNAL;
-	}
+    process->fds = create_array();
+    if (process->fds == NULL) {
+        free(process);
+        return ENOMEM_INTERNAL;
+    }
 
-	process->threads = create_array();
-	if (process->fds == NULL) {
-		destroy_array(process->fds);
-		free(process);
-		return ENOMEM_INTERNAL;
-	}
+    process->threads = create_array();
+    if (process->fds == NULL) {
+        destroy_array(process->fds);
+        free(process);
+        return ENOMEM_INTERNAL;
+    }
 
-	process->mem_maps = NULL;
-	process->proc_random = rg_create_random_generator(get_unix_time());
-	process->parent = NULL;
-	process->priority = asked_priority;
-	process->pml4 = create_pml4();
-	if (process->pml4 == 0) {
-		destroy_array(process->fds);
-		free(process);
-		return ENOMEM_INTERNAL;
-	}
+    process->mem_maps = NULL;
+    process->proc_random = rg_create_random_generator(get_unix_time());
+    process->parent = NULL;
+    process->priority = asked_priority;
+    process->pml4 = create_pml4();
+    if (process->pml4 == 0) {
+        destroy_array(process->fds);
+        free(process);
+        return ENOMEM_INTERNAL;
+    }
 
-	uintptr_t opml4 = (uintptr_t)get_active_page();
-	process->futexes = create_uint64_table();
+    uintptr_t opml4 = (uintptr_t)get_active_page();
+    process->futexes = create_uint64_table();
 
-	if (process->futexes == NULL) {
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-		// TODO: free process address page
-		set_active_page((void*)opml4);
-		return ENOMEM_INTERNAL;
-	}
+    if (process->futexes == NULL) {
+        destroy_array(process->threads);
+        destroy_array(process->fds);
+        free(process);
+        // TODO: free process address page
+        set_active_page((void*)opml4);
+        return ENOMEM_INTERNAL;
+    }
 
-	process->input_buffer = create_queue_static(__message_getter);
+    process->input_buffer = create_queue_static(__message_getter);
 
-	if (process->input_buffer == NULL) {
-		destroy_table(process->futexes);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-	}
+    if (process->input_buffer == NULL) {
+        destroy_table(process->futexes);
+        destroy_array(process->threads);
+        destroy_array(process->fds);
+        free(process);
+    }
 
-	process->pq_input_buffer = create_queue_static(__message_getter);
+    process->pq_input_buffer = create_queue_static(__message_getter);
 
-	if (process->input_buffer == NULL) {
-		free_queue(process->input_buffer);
-		destroy_table(process->futexes);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-	}
+    if (process->input_buffer == NULL) {
+        free_queue(process->input_buffer);
+        destroy_table(process->futexes);
+        destroy_array(process->threads);
+        destroy_array(process->fds);
+        free(process);
+    }
 
-	process->blocked_wait_messages = create_list_static(__message_getter);
-	if (process->blocked_wait_messages == NULL) {
-		free_queue(process->pq_input_buffer);
-		free_queue(process->input_buffer);
-		destroy_table(process->futexes);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-	}
+    process->blocked_wait_messages = create_list_static(__message_getter);
+    if (process->blocked_wait_messages == NULL) {
+        free_queue(process->pq_input_buffer);
+        free_queue(process->input_buffer);
+        destroy_table(process->futexes);
+        destroy_array(process->threads);
+        destroy_array(process->fds);
+        free(process);
+    }
 
-	set_active_page((void*)process->pml4);
+    set_active_page((void*)process->pml4);
 
-	thread_t* main_thread = malloc(sizeof(thread_t));
-	if (main_thread == NULL) {
-		free_list(process->blocked_wait_messages);
-		free_queue(process->pq_input_buffer);
-		free_queue(process->input_buffer);
-		destroy_table(process->futexes);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-		// TODO: free process address page
-		set_active_page((void*)opml4);
-		return ENOMEM_INTERNAL;
-	}
-	memset(main_thread, 0, sizeof(thread_t));
-	main_thread->parent_process = process;
-	main_thread->priority = asked_priority;
-	main_thread->blocked = false;
+    thread_t* main_thread = malloc(sizeof(thread_t));
+    if (main_thread == NULL) {
+        free_list(process->blocked_wait_messages);
+        free_queue(process->pq_input_buffer);
+        free_queue(process->input_buffer);
+        destroy_table(process->futexes);
+        destroy_array(process->threads);
+        destroy_array(process->fds);
+        free(process);
+        // TODO: free process address page
+        set_active_page((void*)opml4);
+        return ENOMEM_INTERNAL;
+    }
+    memset(main_thread, 0, sizeof(thread_t));
+    main_thread->parent_process = process;
+    main_thread->priority = asked_priority;
+    main_thread->blocked = false;
 
-	main_thread->continuation = malloc(sizeof(continuation_t));
-	if (main_thread->continuation == NULL) {
-		free(main_thread);
-		free_list(process->blocked_wait_messages);
-		free_queue(process->pq_input_buffer);
-		free_queue(process->input_buffer);
-		destroy_table(process->futexes);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-		// TODO: free process address page
-		set_active_page((void*)opml4);
-		return ENOMEM_INTERNAL;
-	}
-	main_thread->continuation->present = false;
+    main_thread->continuation = malloc(sizeof(continuation_t));
+    if (main_thread->continuation == NULL) {
+        free(main_thread);
+        free_list(process->blocked_wait_messages);
+        free_queue(process->pq_input_buffer);
+        free_queue(process->input_buffer);
+        destroy_table(process->futexes);
+        destroy_array(process->threads);
+        destroy_array(process->fds);
+        free(process);
+        // TODO: free process address page
+        set_active_page((void*)opml4);
+        return ENOMEM_INTERNAL;
+    }
+    main_thread->continuation->present = false;
 
-	main_thread->futex_block = create_list_static(__blocked_getter);
-	if (main_thread->futex_block == NULL) {
-		free(main_thread->continuation);
-		free(main_thread);
-		free_list(process->blocked_wait_messages);
-		free_queue(process->pq_input_buffer);
-		free_queue(process->input_buffer);
-		destroy_table(process->futexes);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-		// TODO: free process address page
-		set_active_page((void*)opml4);
-		return ENOMEM_INTERNAL;
-	}
+    main_thread->futex_block = create_list_static(__blocked_getter);
+    if (main_thread->futex_block == NULL) {
+        free(main_thread->continuation);
+        free(main_thread);
+        free_list(process->blocked_wait_messages);
+        free_queue(process->pq_input_buffer);
+        free_queue(process->input_buffer);
+        destroy_table(process->futexes);
+        destroy_array(process->threads);
+        destroy_array(process->fds);
+        free(process);
+        // TODO: free process address page
+        set_active_page((void*)opml4);
+        return ENOMEM_INTERNAL;
+    }
 
-	array_push_data(process->threads, main_thread);
+    array_push_data(process->threads, main_thread);
 
-	err = load_elf_exec((uintptr_t)image_data, process);
-	if (err == ELF_ERROR_ENOMEM) {
-		err = ENOMEM_INTERNAL;
-	} else if (err != 0) {
-		err = EINVAL;
-	}
+    err = load_elf_exec((uintptr_t)image_data, process);
+    if (err == ELF_ERROR_ENOMEM) {
+        err = ENOMEM_INTERNAL;
+    } else if (err != 0) {
+        err = EINVAL;
+    }
 
-	if (err != 0) {
-		free_list(main_thread->futex_block);
-		free(main_thread->continuation);
-		free(main_thread);
-		free_list(process->blocked_wait_messages);
-		free_queue(process->pq_input_buffer);
-		free_queue(process->input_buffer);
-		destroy_table(process->futexes);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-		// TODO: free process address page
-		set_active_page((void*)opml4);
-		return err;
-	}
+    if (err != 0) {
+        free_list(main_thread->futex_block);
+        free(main_thread->continuation);
+        free(main_thread);
+        free_list(process->blocked_wait_messages);
+        free_queue(process->pq_input_buffer);
+        free_queue(process->input_buffer);
+        destroy_table(process->futexes);
+        destroy_array(process->threads);
+        destroy_array(process->fds);
+        free(process);
+        // TODO: free process address page
+        set_active_page((void*)opml4);
+        return err;
+    }
 
-	char** argvu = argv;
-	char** envpu = envp;
-	if ((err = cpy_array_user(argc, &argvu, process)) != 0) {
-		free_list(main_thread->futex_block);
-		free(main_thread->continuation);
-		free(main_thread);
-		free_list(process->blocked_wait_messages);
-		free_queue(process->pq_input_buffer);
-		free_queue(process->input_buffer);
-		destroy_table(process->futexes);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-		// TODO: free process address page
-		set_active_page((void*)opml4);
-		return err;
-	}
-	if ((err = cpy_array_user(envc, &envpu, process)) != 0) {
-		free_list(main_thread->futex_block);
-		free(main_thread->continuation);
-		free(main_thread);
-		free_list(process->blocked_wait_messages);
-		free_queue(process->pq_input_buffer);
-		free_queue(process->input_buffer);
-		destroy_table(process->futexes);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-		// TODO: free process address page
-		set_active_page((void*)opml4);
-		return err;
-	}
+    char** argvu = argv;
+    char** envpu = envp;
+    if ((err = cpy_array_user(argc, &argvu, process)) != 0) {
+        free_list(main_thread->futex_block);
+        free(main_thread->continuation);
+        free(main_thread);
+        free_list(process->blocked_wait_messages);
+        free_queue(process->pq_input_buffer);
+        free_queue(process->input_buffer);
+        destroy_table(process->futexes);
+        destroy_array(process->threads);
+        destroy_array(process->fds);
+        free(process);
+        // TODO: free process address page
+        set_active_page((void*)opml4);
+        return err;
+    }
+    if ((err = cpy_array_user(envc, &envpu, process)) != 0) {
+        free_list(main_thread->futex_block);
+        free(main_thread->continuation);
+        free(main_thread);
+        free_list(process->blocked_wait_messages);
+        free_queue(process->pq_input_buffer);
+        free_queue(process->input_buffer);
+        destroy_table(process->futexes);
+        destroy_array(process->threads);
+        destroy_array(process->fds);
+        free(process);
+        // TODO: free process address page
+        set_active_page((void*)opml4);
+        return err;
+    }
 
-	main_thread->local_info = proc_alloc_direct(process, sizeof(tli_t));
-	if (main_thread->local_info == NULL) {
-		free_list(main_thread->futex_block);
-		free(main_thread->continuation);
-		free(main_thread);
-		free_list(process->blocked_wait_messages);
-		free_queue(process->pq_input_buffer);
-		free_queue(process->input_buffer);
-		destroy_table(process->futexes);
-		destroy_array(process->threads);
-		destroy_array(process->fds);
-		free(process);
-		// TODO: free process address page
-		set_active_page((void*)opml4);
-		return ENOMEM_INTERNAL;
-	}
-	main_thread->local_info->self = main_thread->local_info;
+    main_thread->local_info = proc_alloc_direct(process, sizeof(tli_t));
+    if (main_thread->local_info == NULL) {
+        free_list(main_thread->futex_block);
+        free(main_thread->continuation);
+        free(main_thread);
+        free_list(process->blocked_wait_messages);
+        free_queue(process->pq_input_buffer);
+        free_queue(process->input_buffer);
+        destroy_table(process->futexes);
+        destroy_array(process->threads);
+        destroy_array(process->fds);
+        free(process);
+        // TODO: free process address page
+        set_active_page((void*)opml4);
+        return ENOMEM_INTERNAL;
+    }
+    main_thread->local_info->self = main_thread->local_info;
 
-	for (int i=0; i<MESSAGE_BUFFER_CNT; i++) {
-		_message_t* m = &process->output_buffer[i];
-		m->owner = process;
-		m->used = false;
-		m->message = proc_alloc_direct(process, 0x200000);
-		if (m->message == NULL) {
-			free_list(main_thread->futex_block);
-			free(main_thread->continuation);
-			free(main_thread);
-			free_list(process->blocked_wait_messages);
-			free_queue(process->pq_input_buffer);
-			free_queue(process->input_buffer);
-			destroy_table(process->futexes);
-			destroy_array(process->threads);
-			destroy_array(process->fds);
-			free(process);
-			// TODO: free process address page
-			set_active_page((void*)opml4);
-			return ENOMEM_INTERNAL;
-		}
-	}
+    for (int i=0; i<MESSAGE_BUFFER_CNT; i++) {
+        _message_t* m = &process->output_buffer[i];
+        m->owner = process;
+        m->used = false;
+        m->message = proc_alloc_direct(process, 0x200000);
+        if (m->message == NULL) {
+            free_list(main_thread->futex_block);
+            free(main_thread->continuation);
+            free(main_thread);
+            free_list(process->blocked_wait_messages);
+            free_queue(process->pq_input_buffer);
+            free_queue(process->input_buffer);
+            destroy_table(process->futexes);
+            destroy_array(process->threads);
+            destroy_array(process->fds);
+            free(process);
+            // TODO: free process address page
+            set_active_page((void*)opml4);
+            return ENOMEM_INTERNAL;
+        }
+    }
 
-	process->argc = argc;
-	process->argv = argvu;
-	process->environ = envpu;
+    process->argc = argc;
+    process->argv = argvu;
+    process->environ = envpu;
 
-	main_thread->last_r12 = 0;
-	main_thread->last_r11 = 0;
-	main_thread->last_r10 = 0;
-	main_thread->last_r9 = 0;
-	main_thread->last_r8 = 0;
-	main_thread->last_rax = 0;
-	main_thread->last_rbx = 0;
-	main_thread->last_rcx = 0;
-	main_thread->last_rdx = 0;
-	main_thread->last_rdi = 0;
-	main_thread->last_rsi = 0;
-	main_thread->last_rbp = 0;
-	main_thread->last_rflags = 0x200; // enable interrupts
+    main_thread->last_r12 = 0;
+    main_thread->last_r11 = 0;
+    main_thread->last_r10 = 0;
+    main_thread->last_r9 = 0;
+    main_thread->last_r8 = 0;
+    main_thread->last_rax = 0;
+    main_thread->last_rbx = 0;
+    main_thread->last_rcx = 0;
+    main_thread->last_rdx = 0;
+    main_thread->last_rdi = 0;
+    main_thread->last_rsi = 0;
+    main_thread->last_rbp = 0;
+    main_thread->last_rflags = 0x200; // enable interrupts
 
-	proc_spinlock_lock(&__proclist_lock);
-	main_thread->tId = __atomic_add_fetch(&thread_id_num, 1, __ATOMIC_SEQ_CST);
-	process->proc_id = ++process_id_num;
-	list_push_right(processes, process);
-	proc_spinlock_unlock(&__proclist_lock);
+    proc_spinlock_lock(&__proclist_lock);
+    main_thread->tId = __atomic_add_fetch(&thread_id_num, 1, __ATOMIC_SEQ_CST);
+    process->proc_id = ++process_id_num;
+    list_push_right(processes, process);
+    proc_spinlock_unlock(&__proclist_lock);
 
-	main_thread->local_info->t = main_thread->tId;
-	main_thread->last_rdi = (ruint_t)(uintptr_t)process->argc;
-	main_thread->last_rsi = (ruint_t)(uintptr_t)process->argv;
-	main_thread->last_rdx = (ruint_t)(uintptr_t)process->environ;
-	main_thread->blocked_list.data = main_thread;
-	main_thread->schedule_list.data = main_thread;
+    main_thread->local_info->t = main_thread->tId;
+    main_thread->last_rdi = (ruint_t)(uintptr_t)process->argc;
+    main_thread->last_rsi = (ruint_t)(uintptr_t)process->argv;
+    main_thread->last_rdx = (ruint_t)(uintptr_t)process->environ;
+    main_thread->blocked_list.data = main_thread;
+    main_thread->schedule_list.data = main_thread;
 
-	free_array(argc, argv);
-	free_array(envc, envp);
+    free_array(argc, argv);
+    free_array(envc, envp);
 
-	// TODO: add split option?
-	main_thread->last_rax = process->proc_id;
-	enschedule_best(main_thread);
-	*cpt = process;
-	set_active_page((void*)opml4);
-	return 0;
+    // TODO: add split option?
+    main_thread->last_rax = process->proc_id;
+    enschedule_best(main_thread);
+    *cpt = process;
+    set_active_page((void*)opml4);
+    return 0;
 }
 
 uintptr_t map_virtual_virtual(uintptr_t* _vastart, uintptr_t vaend, bool readonly) {
-	uintptr_t vastart = *_vastart;
+    uintptr_t vastart = *_vastart;
     uintptr_t vaoffset = vastart % 0x1000;
     vastart = ALIGN_DOWN(vastart, 0x1000);
     vaend = ALIGN_UP(vaend, 0x1000);
@@ -725,19 +725,19 @@ uintptr_t map_virtual_virtual(uintptr_t* _vastart, uintptr_t vaend, bool readonl
     mmap_area_t** _hole = find_va_hole(proc, vaend-vastart, 0x1000);
     mmap_area_t* hole = *_hole;
     if (hole == NULL) {
-		return 0;
-	}
+        return 0;
+    }
     hole->mtype = kernel_allocated_heap_data;
     uintptr_t temporary = hole->vastart;
     if (!map_range(_vastart, vaend, &temporary, hole->vaend, true, readonly, false)) {
-    	free_mmap_area(hole, _hole);
-    	return 0;
+        free_mmap_area(hole, _hole);
+        return 0;
     }
     return hole->vastart+vaoffset;
 }
 
 uintptr_t map_physical_virtual(puint_t* _vastart, puint_t vaend, bool readonly) {
-	puint_t vastart = *_vastart;
+    puint_t vastart = *_vastart;
     uintptr_t vaoffset = vastart % 0x1000;
     vastart = ALIGN_DOWN(vastart, 0x1000);
     vaend = ALIGN_UP(vaend, 0x1000);
@@ -747,14 +747,14 @@ uintptr_t map_physical_virtual(puint_t* _vastart, puint_t vaend, bool readonly) 
     mmap_area_t** _hole = find_va_hole(proc, vaend-vastart, 0x1000);
     mmap_area_t* hole = *_hole;
     if (hole == NULL) {
-    	return 0;
+        return 0;
     }
     hole->mtype = kernel_allocated_heap_data;
     uintptr_t temporary = hole->vastart;
     if (!map_range(_vastart, vaend, &temporary, hole->vaend, false, readonly, false)) {
-    	*_vastart = vastart;
-    	free_mmap_area(hole, _hole);
-    	return 0;
+        *_vastart = vastart;
+        free_mmap_area(hole, _hole);
+        return 0;
     }
     return hole->vastart+vaoffset;
 }

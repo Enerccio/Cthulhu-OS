@@ -45,7 +45,7 @@ extern bool __print_initialized;
 extern void write_byte_com(uint8_t com, uint8_t data);
 
 static struct chained_element* __log_entry_getter(void* data) {
-	return &((log_entry_t*)data)->le;
+    return &((log_entry_t*)data)->le;
 }
 
 void initialize_logger() {
@@ -69,7 +69,7 @@ void log(log_level_t log_level, const char* message) {
     // write message that we are in the kernel
     log_entry_t* le = malloc(sizeof(log_entry_t));
     if (le == NULL)
-    	return;
+        return;
     le->ll = log_level;
 
     // display log level

@@ -33,12 +33,12 @@
 #define DS_ERROR_NOT_AUTHORIZED -3
 #define DS_ERROR_MODE_UNSUPPORTED -4
 
-#define DEV_SYS_FRAMEBUFFER_GET_WIDTH   		(1 + 2048)
-#define DEV_SYS_FRAMEBUFFER_GET_HEIGHT  		(2 + 2048)
-#define DEV_SYS_IVFS_GET_PATH_ELEMENT   		(3 + 2048)
-#define DEV_SYS_SERVICE_EXISTS					(4 + 2048)
-#define DEV_SYS_SERVICE_REGISTER				(5 + 2048)
-#define DEV_SYS_INITRAMFS_EXECVE				(6 + 2048)
-#define DEV_SYS_PCIe_BUS_COUNT					(7 + 2048)
-#define DEV_SYS_PCIe_INFO						(8 + 2048)
-#define DEV_SYS_MAP_PHYSICAL_SELF				(9 + 2048)
+#define DEV_SYS_FRAMEBUFFER_GET_WIDTH           (1 + 2048)
+#define DEV_SYS_FRAMEBUFFER_GET_HEIGHT          (2 + 2048)
+#define DEV_SYS_IVFS_GET_PATH_ELEMENT           (3 + 2048)
+#define DEV_SYS_SERVICE_EXISTS                  (4 + 2048)
+#define DEV_SYS_SERVICE_REGISTER                (5 + 2048)
+#define DEV_SYS_INITRAMFS_EXECVE                (6 + 2048)
+#define DEV_SYS_PCIe_BUS_COUNT                  (7 + 2048)
+#define DEV_SYS_PCIe_INFO                       (8 + 2048)
+#define DEV_SYS_MAP_PHYSICAL_SELF               (9 + 2048)

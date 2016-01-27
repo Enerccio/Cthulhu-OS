@@ -45,7 +45,7 @@ void* __kclib_heap_start() {
 void*     __kclib_allocate(size_t aamount) {
     uintptr_t ha = heap_start_address;
     if (!allocate(heap_start_address, aamount, true, false))
-    	return NULL;
+        return NULL;
     heap_start_address += ALIGN_UP(aamount, 0x1000); // fix deallocation
     return (void*)ha;
 }
@@ -87,7 +87,7 @@ tid_t __kclib_get_tid() {
 }
 
 extern void __kclib_futex_wait(void* futex, int v) {
-	__asm__ __volatile__ ("\npause\t");
+    __asm__ __volatile__ ("\npause\t");
 }
 
 extern void __kclib_futex_wake(void* futex, int v) {

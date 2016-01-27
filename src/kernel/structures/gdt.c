@@ -107,12 +107,12 @@ void reinitialize_gdt() {
     load_gdt(&gdt, 48);
 
     uint8_t localcpu = get_local_apic_id();
-	uint32_t proclen = array_get_size(cpus);
-	for (uint32_t i=0; i<proclen; i++) {
-		cpu_t* cpu = array_get_at(cpus, i);
-		if (cpu->apic_id == localcpu) {
-			write_gs((ruint_t)cpu);
-			return;
-		}
-	}
+    uint32_t proclen = array_get_size(cpus);
+    for (uint32_t i=0; i<proclen; i++) {
+        cpu_t* cpu = array_get_at(cpus, i);
+        if (cpu->apic_id == localcpu) {
+            write_gs((ruint_t)cpu);
+            return;
+        }
+    }
 }

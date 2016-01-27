@@ -29,9 +29,9 @@
 
 int main() {
     if (!init_framebuffer()) {
-    	// TODO: add cleanup
+        // TODO: add cleanup
 
-    	while (1) ;
+        while (1) ;
     }
 
     while (1) ;

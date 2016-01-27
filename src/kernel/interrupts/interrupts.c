@@ -85,7 +85,7 @@ void ss_exception(ruint_t ecode, registers_t* registers) {
 
 void gp_exception(ruint_t ecode, registers_t* registers) {
     //error(ERROR_KERNEL_GENERAL_PROTECTION_EXC, registers->rip, ecode, registers);
-	debug_break;
+    debug_break;
 }
 
 void pf_exception(ruint_t ecode, registers_t* registers) {
@@ -93,8 +93,8 @@ void pf_exception(ruint_t ecode, registers_t* registers) {
     if (registers->cs == 0x8) {
         // kernel page fault
         // TODO: add swap
-    	debug_break;
-    	return;
+        debug_break;
+        return;
         // error(ERROR_KERNEL_PAGE_FAULT_IN_NONPAGED_AREA, (ruint_t)fa, ecode, (void*)registers->rip);
     } else {
         if (!page_fault((uintptr_t)fa, registers->ecode)) {

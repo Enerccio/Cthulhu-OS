@@ -28,13 +28,13 @@
 #include "ny_dman.h"
 
 int64_t get_pci_bus_count() {
-	return dev_sys_0arg(DEV_SYS_PCIe_BUS_COUNT);
+    return dev_sys_0arg(DEV_SYS_PCIe_BUS_COUNT);
 }
 
-int	get_pci_info(pci_bus_t* addr) {
-	return dev_sys_1arg(DEV_SYS_PCIe_INFO, addr);
+int get_pci_info(pci_bus_t* addr) {
+    return dev_sys_1arg(DEV_SYS_PCIe_INFO, addr);
 }
 
 void* self_map_physical(puint_t physaddr, size_t size) {
-	return dev_sys_2arg(DEV_SYS_MAP_PHYSICAL_SELF, physaddr, size);
+    return dev_sys_2arg(DEV_SYS_MAP_PHYSICAL_SELF, physaddr, size);
 }

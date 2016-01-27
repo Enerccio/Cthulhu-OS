@@ -106,8 +106,8 @@ cpu_t* get_current_cput() {
     cpu_t* cpu;
 
     __asm__ __volatile__ (
-    	"mov %%gs:0, %0"
-    		: "=r" (cpu)
+        "mov %%gs:0, %0"
+            : "=r" (cpu)
     );
 
     return cpu;
@@ -249,7 +249,7 @@ void initialize_mp(unsigned int localcpu) {
 #define PAGE_ALIGN(x) ((x) & (~(0xFFF)))
 
 static struct chained_element* __thread_queue_get(void* data) {
-	return &((thread_t*)data)->schedule_list;
+    return &((thread_t*)data)->schedule_list;
 }
 
 /**
@@ -272,7 +272,7 @@ cpu_t* make_cpu(MADT_LOCAL_APIC* apic, size_t insertid) {
 
     cpu->insert_id = insertid;
     cpu->syscall_stack = (void*) PAGE_ALIGN((uintptr_t)malloc(KERNEL_SYSCALL_STACK_SIZE)
-    		+KERNEL_SYSCALL_STACK_SIZE);
+            +KERNEL_SYSCALL_STACK_SIZE);
     cpu->self = cpu;
     cpu->__cpu_lock = 0;
     cpu->__ipi_lock = 0;

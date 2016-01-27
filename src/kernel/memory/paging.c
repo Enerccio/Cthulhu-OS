@@ -247,7 +247,7 @@ static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
         memset(&pdpt, 0, sizeof(pdpt_t));
         pdpt.number = get_free_frame();
         if (pdpt.number == 0)
-        	return 0;
+            return 0;
         pdpt.flaggable.present = 1;
         pdpt.flaggable.us = user;
         pdpt.flaggable.rw = 1;
@@ -264,7 +264,7 @@ static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
         memset(&dir, 0, sizeof(page_directory_t));
         dir.number = get_free_frame();
         if (dir.number == 0) {
-        	return 0;
+            return 0;
         }
         dir.flaggable.present = 1;
         dir.flaggable.us = user;
@@ -282,7 +282,7 @@ static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
         memset(&pt, 0, sizeof(page_table_t));
         pt.number = get_free_frame();
         if (pt.number == 0) {
-        	return 0;
+            return 0;
         }
         pt.flaggable.present = 1;
         pt.flaggable.us = user;
@@ -788,17 +788,17 @@ static puint_t allocate_frame(puint_t* paddress, bool kernel, bool readonly, boo
     page_t page;
     memset(&page, 0, sizeof(page_t));
     if (!PRESENT(*paddress)) {
-    	page.address = *paddress;
-    	if (page.internal.valid) {
-    		// TODO: only this should happen here
-    		if (page.internal.allocondem) {
-    			exec = page.internal.exec;
-    		}
-    	}
-		new = true;
-		page.address = get_free_frame();
-		if (page.address == 0)
-			return 0;
+        page.address = *paddress;
+        if (page.internal.valid) {
+            // TODO: only this should happen here
+            if (page.internal.allocondem) {
+                exec = page.internal.exec;
+            }
+        }
+        new = true;
+        page.address = get_free_frame();
+        if (page.address == 0)
+            return 0;
     } else {
         new = false;
         page.address = ALIGN(*paddress);
@@ -811,12 +811,12 @@ static puint_t allocate_frame(puint_t* paddress, bool kernel, bool readonly, boo
 
     if (new) {
         if (__mem_mirror_present) {
-        	if (page.flaggable.xd) {
-        		memset((void*)physical_to_virtual((ALIGN(page.address) &
-								(0x7FFFFFFFFFFFFFFF))), 0xCC, 0x1000);
-        	} else {
-        		memset((void*)physical_to_virtual(ALIGN(page.address)), 0xCC, 0x1000);
-        	}
+            if (page.flaggable.xd) {
+                memset((void*)physical_to_virtual((ALIGN(page.address) &
+                                (0x7FFFFFFFFFFFFFFF))), 0xCC, 0x1000);
+            } else {
+                memset((void*)physical_to_virtual(ALIGN(page.address)), 0xCC, 0x1000);
+            }
         }
 
     }
@@ -849,52 +849,52 @@ static void deallocate_frame(puint_t* paddress, uintptr_t va) {
  * Repeatedly calls allocate_frame for every frame.
  */
 bool allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
-	size_t dif = from-ALIGN(from);
-	amount = _ALIGN_UP(amount+dif);
-	from = ALIGN(from);
+    size_t dif = from-ALIGN(from);
+    amount = _ALIGN_UP(amount+dif);
+    from = ALIGN(from);
     uintptr_t addr;
     for (addr = from; addr < from + amount; addr += 0x1000) {
         proc_spinlock_lock(&__frame_lock);
         uint64_t* frame = kernel ? get_page(addr, true) : get_page_user(addr, true);
         if (frame == NULL) {
-        	goto dealloc;
+            goto dealloc;
         }
         if (allocate_frame(frame, kernel, readonly, false) == 0) {
-        	goto dealloc;
+            goto dealloc;
         }
         proc_spinlock_unlock(&__frame_lock);
     }
     return true;
 
 dealloc:
-	proc_spinlock_unlock(&__frame_lock);
-	deallocate(from, addr-from);
-	return false;
+    proc_spinlock_unlock(&__frame_lock);
+    deallocate(from, addr-from);
+    return false;
 }
 
 void allocate_mem(alloc_info_t* ainfo, bool kernel, bool readonly) {
-	size_t dif = ainfo->from-ALIGN(ainfo->from);
+    size_t dif = ainfo->from-ALIGN(ainfo->from);
     ainfo->amount = _ALIGN_UP(ainfo->amount+dif);
     ainfo->from = ALIGN(ainfo->from);
     for (uintptr_t addr = ainfo->from; addr < ainfo->from + ainfo->amount; addr += 0x1000) {
         proc_spinlock_lock(&__frame_lock);
         uint64_t* frame = kernel ? get_page(addr, true) : get_page_user(addr, true);
         if (frame == NULL) {
-        	ainfo->finished = false;
-        	proc_spinlock_unlock(&__frame_lock);
-        	return;
+            ainfo->finished = false;
+            proc_spinlock_unlock(&__frame_lock);
+            return;
         }
         if (ainfo->aod) {
-        	page_t page;
-        	page.internal.present = 0;
-        	page.internal.valid = 1;
-        	page.internal.allocondem = 1;
-        	page.internal.exec = ainfo->exec;
-        	*frame = page.address;
+            page_t page;
+            page.internal.present = 0;
+            page.internal.valid = 1;
+            page.internal.allocondem = 1;
+            page.internal.exec = ainfo->exec;
+            *frame = page.address;
         } else if (allocate_frame(frame, kernel, readonly, ainfo->exec) == 0) {
-        	ainfo->finished = false;
-        	proc_spinlock_unlock(&__frame_lock);
-			return;
+            ainfo->finished = false;
+            proc_spinlock_unlock(&__frame_lock);
+            return;
         }
         ainfo->from += 0x1000;
         ainfo->amount -= 0x1000;
@@ -1098,63 +1098,63 @@ puint_t clone_paging_structures() {
 */
 
 puint_t create_pml4() {
-	puint_t active_page = get_active_page();
-	proc_spinlock_lock(&__frame_lock);
-	puint_t target_page = get_free_frame();
-	proc_spinlock_unlock(&__frame_lock);
+    puint_t active_page = get_active_page();
+    proc_spinlock_lock(&__frame_lock);
+    puint_t target_page = get_free_frame();
+    proc_spinlock_unlock(&__frame_lock);
 
-	if (target_page == 0)
-		return 0;
+    if (target_page == 0)
+        return 0;
 
-	cr3_page_entry_t apentry;
-	cr3_page_entry_t tentry;
+    cr3_page_entry_t apentry;
+    cr3_page_entry_t tentry;
 
-	apentry.number = active_page;
-	tentry.pml = target_page;
-	tentry.copyinfo.copy = apentry.copyinfo.copy;
+    apentry.number = active_page;
+    tentry.pml = target_page;
+    tentry.copyinfo.copy = apentry.copyinfo.copy;
 
-	uint64_t* sent = (uint64_t*) physical_to_virtual(ALIGN(active_page));
-	uint64_t* tent = (uint64_t*) physical_to_virtual(target_page);
-	memset(tent, 0, 0x1000);
+    uint64_t* sent = (uint64_t*) physical_to_virtual(ALIGN(active_page));
+    uint64_t* tent = (uint64_t*) physical_to_virtual(target_page);
+    memset(tent, 0, 0x1000);
 
-	for (uint16_t i=0; i<512; i++) {
-		if (i >= 256) {
-			// kernel pages
-			tent[i] = sent[i];
-		}
-	}
-	return tentry.number;
+    for (uint16_t i=0; i<512; i++) {
+        if (i >= 256) {
+            // kernel pages
+            tent[i] = sent[i];
+        }
+    }
+    return tentry.number;
 }
 
 // TODO: add swap?
 bool page_fault(uintptr_t address, ruint_t errcode) {
 
-	//proc_t* process = get_current_process();
+    //proc_t* process = get_current_process();
 
-	if ((errcode & (1<<0)) == 0) {
-		uint64_t* paddr = get_page(address, false);
-		if (paddr != NULL) {
-			page_t page;
-			page.address = *paddr;
-			if (page.internal.valid) {
-				if (page.internal.allocondem) {
-					alloc_info_t ainfo;
-					ainfo.amount = 0x1000;
-					ainfo.finished = false;
-					ainfo.aod = false;
-					ainfo.exec = false;
-					ainfo.from = ALIGN(address);
-					allocate_mem(&ainfo, false, false);
-					if (!ainfo.finished) {
-						// TODO: send message to swapper
-					}
-					return true;
-				} else if (page.internal.swapped) {
-					// TODO: send message to swapper
-				}
-			}
-		}
-	} else if ((errcode & (1<<1)) != 0) {
+    if ((errcode & (1<<0)) == 0) {
+        uint64_t* paddr = get_page(address, false);
+        if (paddr != NULL) {
+            page_t page;
+            page.address = *paddr;
+            if (page.internal.valid) {
+                if (page.internal.allocondem) {
+                    alloc_info_t ainfo;
+                    ainfo.amount = 0x1000;
+                    ainfo.finished = false;
+                    ainfo.aod = false;
+                    ainfo.exec = false;
+                    ainfo.from = ALIGN(address);
+                    allocate_mem(&ainfo, false, false);
+                    if (!ainfo.finished) {
+                        // TODO: send message to swapper
+                    }
+                    return true;
+                } else if (page.internal.swapped) {
+                    // TODO: send message to swapper
+                }
+            }
+        }
+    } else if ((errcode & (1<<1)) != 0) {
         // write error
         uint64_t* page = get_page(address, false);
         if (page != NULL) {
@@ -1247,23 +1247,23 @@ void mem_change_type(uintptr_t from, size_t amount,
 // only works within same cr3!
 bool map_range(uintptr_t* _start, uintptr_t end, uintptr_t* _tostart, uintptr_t toend, bool virtual_memory,
         bool readonly, bool kernel) {
-	uintptr_t tostart = *_tostart;
-	uintptr_t start = *_start;
+    uintptr_t tostart = *_tostart;
+    uintptr_t start = *_start;
     uintptr_t offs=0;
     for (; offs<(end-start); offs+=0x1000) {
         uintptr_t smem = start+offs;
         uintptr_t tmem = tostart+offs;
 
         uint64_t* tp = kernel ? get_page(tmem, true) : get_page_user(tmem, true);
-		if (tp == NULL) {
-			goto on_error;
-		}
+        if (tp == NULL) {
+            goto on_error;
+        }
 
         puint_t frame;
         if (virtual_memory) {
             frame = ALIGN(*get_page(smem, true));
             if (frame == 0) {
-            	goto on_error;
+                goto on_error;
             }
             proc_spinlock_lock(&__frame_lock);
             frame_info_t* fi = get_frame_info(frame);
@@ -1285,10 +1285,10 @@ bool map_range(uintptr_t* _start, uintptr_t end, uintptr_t* _tostart, uintptr_t 
 
         continue;
     on_error:
-		*_tostart += offs;
-		*_start += offs;
-		broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, offs, NULL);
-		return false;
+        *_tostart += offs;
+        *_start += offs;
+        broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, offs, NULL);
+        return false;
     }
 
     broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, toend, NULL);
@@ -1296,49 +1296,49 @@ bool map_range(uintptr_t* _start, uintptr_t end, uintptr_t* _tostart, uintptr_t 
 }
 
 memstate_t check_mem_state(uintptr_t address, size_t size, uint64_t* storeptr,
-		size_t maxc, size_t* usedentries) {
-	memstate_t mstate = ms_einvalid;
+        size_t maxc, size_t* usedentries) {
+    memstate_t mstate = ms_einvalid;
 
-	for (uintptr_t addr=address; addr<address+size; addr+=0x1000) {
-		puint_t* entry = get_page(addr, false);
-		if (entry == NULL) {
-			return ms_notpresent;
-		}
-		page_t page;
-		page.address = *entry;
-		if (page.flaggable.present == 1) {
-			// page is present and thus valid
-			// TODO: check for CoW
-		} else {
-			if (page.internal.valid == 1) {
-				// not present but valid, find out why
-				if (page.internal.swapped == 1) {
-					if (mstate == ms_einvalid) {
-						mstate = ms_swapped;
-					}
-					if (mstate == ms_swapped || *usedentries >= maxc) {
-						storeptr[*usedentries] = page.internal.gps_id;
-						++*usedentries;
-					} else {
-						return mstate;
-					}
-				} else if (page.internal.allocondem) {
-					if (mstate == ms_einvalid) {
-						mstate = ms_allocondem;
-					}
-					if (mstate == ms_allocondem || *usedentries >= maxc) {
-						storeptr[*usedentries] = addr;
-						++*usedentries;
-					} else {
-						return mstate;
-					}
-				}
-			} else {
-				return ms_notpresent;
-			}
-		}
-	}
+    for (uintptr_t addr=address; addr<address+size; addr+=0x1000) {
+        puint_t* entry = get_page(addr, false);
+        if (entry == NULL) {
+            return ms_notpresent;
+        }
+        page_t page;
+        page.address = *entry;
+        if (page.flaggable.present == 1) {
+            // page is present and thus valid
+            // TODO: check for CoW
+        } else {
+            if (page.internal.valid == 1) {
+                // not present but valid, find out why
+                if (page.internal.swapped == 1) {
+                    if (mstate == ms_einvalid) {
+                        mstate = ms_swapped;
+                    }
+                    if (mstate == ms_swapped || *usedentries >= maxc) {
+                        storeptr[*usedentries] = page.internal.gps_id;
+                        ++*usedentries;
+                    } else {
+                        return mstate;
+                    }
+                } else if (page.internal.allocondem) {
+                    if (mstate == ms_einvalid) {
+                        mstate = ms_allocondem;
+                    }
+                    if (mstate == ms_allocondem || *usedentries >= maxc) {
+                        storeptr[*usedentries] = addr;
+                        ++*usedentries;
+                    } else {
+                        return mstate;
+                    }
+                }
+            } else {
+                return ms_notpresent;
+            }
+        }
+    }
 
-	mstate = ms_okay;
-	return mstate;
+    mstate = ms_okay;
+    return mstate;
 }

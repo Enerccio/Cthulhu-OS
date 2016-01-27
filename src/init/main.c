@@ -43,17 +43,17 @@ int main(void) {
             break;
 
 
-		char** args = malloc(16);
-		char* arg = malloc(strlen(daemon_path)+1);
-		memcpy(arg, daemon_path, strlen(daemon_path)+1);
+        char** args = malloc(16);
+        char* arg = malloc(strlen(daemon_path)+1);
+        memcpy(arg, daemon_path, strlen(daemon_path)+1);
 
-		args[0] = arg;
-		args[1] = NULL;
+        args[0] = arg;
+        args[1] = NULL;
 
-		char** envp = malloc(8);
-		envp[0] = NULL;
+        char** envp = malloc(8);
+        envp[0] = NULL;
 
-		execve_ifs(daemon_path, args, envp, 0);
+        execve_ifs(daemon_path, args, envp, 0);
         daemon_path = strtok(NULL, "\n");
     }
 

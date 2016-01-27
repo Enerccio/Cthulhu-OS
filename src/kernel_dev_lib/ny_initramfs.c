@@ -51,8 +51,8 @@ int get_file(const char* path, ifs_file_t* file) {
 }
 
 int execve_ifs(const char* ifs_path, char** argv, char** envp, int priority) {
-	if (priority < 0 || priority >= 5)
-		return EINVAL;
+    if (priority < 0 || priority >= 5)
+        return EINVAL;
 
     int argc = 0;
     char** argt = argv;
@@ -62,6 +62,6 @@ int execve_ifs(const char* ifs_path, char** argv, char** envp, int priority) {
     }
 
     return dev_sys_4arg(DEV_SYS_INITRAMFS_EXECVE,
-    		(ruint_t)ifs_path, (ruint_t)argc, (ruint_t)argv, (ruint_t)envp);
+            (ruint_t)ifs_path, (ruint_t)argc, (ruint_t)argv, (ruint_t)envp);
 }
 

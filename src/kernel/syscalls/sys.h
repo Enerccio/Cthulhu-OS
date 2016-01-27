@@ -61,9 +61,9 @@ syscall_t make_syscall_5(syscall_5 sfnc, bool e, bool unsafe);
 
 
 typedef struct continuation {
-	syscall_t continuation;
-	ruint_t _0, _1, _2, _3, _4;
-	bool present;
+    syscall_t continuation;
+    ruint_t _0, _1, _2, _3, _4;
+    bool present;
 } continuation_t;
 
 void register_syscall(bool system, uint16_t syscall_id, syscall_t syscall);

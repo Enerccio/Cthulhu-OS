@@ -32,13 +32,13 @@
 #include "devsys.h"
 
 typedef struct pci_bus {
-	uint64_t base_address;
-	uint16_t segment_group_num;
-	uint8_t  start_pci_busnum;
-	uint8_t  end_pci_busnum;
-	uint32_t _reserved;
+    uint64_t base_address;
+    uint16_t segment_group_num;
+    uint8_t  start_pci_busnum;
+    uint8_t  end_pci_busnum;
+    uint32_t _reserved;
 } pci_bus_t;
 
 int64_t get_pci_bus_count();
-int		get_pci_info(pci_bus_t* addr);
-void* 	self_map_physical(puint_t physaddr, size_t size);
+int     get_pci_info(pci_bus_t* addr);
+void*   self_map_physical(puint_t physaddr, size_t size);

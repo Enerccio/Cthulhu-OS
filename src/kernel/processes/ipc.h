@@ -36,9 +36,9 @@
 typedef struct proc proc_t;
 
 typedef struct _message {
-	bool used;
-	proc_t* owner;
-	struct chained_element 	target_list;
+    bool used;
+    proc_t* owner;
+    struct chained_element  target_list;
 
-	message_t* message;
+    message_t* message;
 } _message_t;

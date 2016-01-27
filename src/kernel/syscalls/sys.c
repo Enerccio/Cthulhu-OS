@@ -52,47 +52,47 @@ void register_syscall(bool system, uint16_t syscall_id, syscall_t syscall) {
 }
 
 void do_sys_handler(registers_t* registers, syscall_t* sc, continuation_t* cnt) {
-	if (sc->uses_error) {
-		int error;
-		switch (sc->args) {
-		case 1: registers->rax = sc->syscall._1(registers, cnt, (ruint_t)&error);
-			registers->rsi = (ruint_t)error;
-			break;
-		case 2: registers->rax = sc->syscall._2(registers, cnt, (ruint_t)&error, registers->rdi);
-			registers->rdx = (ruint_t)error;
-			break;
-		case 3: registers->rax = sc->syscall._3(registers, cnt, (ruint_t)&error, registers->rdi,
-												registers->rsi);
-				registers->r8 = (ruint_t)error;
-				break;
-		case 4: registers->rax = sc->syscall._4(registers, cnt, (ruint_t)&error, registers->rdi,
-												registers->rsi, registers->rdx);
-				registers->r8 = (ruint_t)error;
-				break;
-		case 5: registers->rax = sc->syscall._5(registers, cnt, (ruint_t)&error, registers->rdi,
-												registers->rsi, registers->rdx, registers->r8);
-				registers->r9 = (ruint_t)error;
-				break;
-		}
-	} else {
-		switch (sc->args) {
-		case 0: registers->rax = sc->syscall._0(registers, cnt);
-			break;
-		case 1: registers->rax = sc->syscall._1(registers, cnt, registers->rdi);
-			break;
-		case 2: registers->rax = sc->syscall._2(registers, cnt, registers->rdi, registers->rsi);
-			break;
-		case 3: registers->rax = sc->syscall._3(registers, cnt, registers->rdi, registers->rsi,
-												registers->rdx);
-				break;
-		case 4: registers->rax = sc->syscall._4(registers, cnt, registers->rdi, registers->rsi,
-												registers->rdx, registers->r8);
-				break;
-		case 5: registers->rax = sc->syscall._5(registers, cnt, registers->rdi,
-												registers->rsi, registers->rdx, registers->r8, registers->r9);
-				break;
-		}
-	}
+    if (sc->uses_error) {
+        int error;
+        switch (sc->args) {
+        case 1: registers->rax = sc->syscall._1(registers, cnt, (ruint_t)&error);
+            registers->rsi = (ruint_t)error;
+            break;
+        case 2: registers->rax = sc->syscall._2(registers, cnt, (ruint_t)&error, registers->rdi);
+            registers->rdx = (ruint_t)error;
+            break;
+        case 3: registers->rax = sc->syscall._3(registers, cnt, (ruint_t)&error, registers->rdi,
+                                                registers->rsi);
+                registers->r8 = (ruint_t)error;
+                break;
+        case 4: registers->rax = sc->syscall._4(registers, cnt, (ruint_t)&error, registers->rdi,
+                                                registers->rsi, registers->rdx);
+                registers->r8 = (ruint_t)error;
+                break;
+        case 5: registers->rax = sc->syscall._5(registers, cnt, (ruint_t)&error, registers->rdi,
+                                                registers->rsi, registers->rdx, registers->r8);
+                registers->r9 = (ruint_t)error;
+                break;
+        }
+    } else {
+        switch (sc->args) {
+        case 0: registers->rax = sc->syscall._0(registers, cnt);
+            break;
+        case 1: registers->rax = sc->syscall._1(registers, cnt, registers->rdi);
+            break;
+        case 2: registers->rax = sc->syscall._2(registers, cnt, registers->rdi, registers->rsi);
+            break;
+        case 3: registers->rax = sc->syscall._3(registers, cnt, registers->rdi, registers->rsi,
+                                                registers->rdx);
+                break;
+        case 4: registers->rax = sc->syscall._4(registers, cnt, registers->rdi, registers->rsi,
+                                                registers->rdx, registers->r8);
+                break;
+        case 5: registers->rax = sc->syscall._5(registers, cnt, registers->rdi,
+                                                registers->rsi, registers->rdx, registers->r8, registers->r9);
+                break;
+        }
+    }
 }
 
 void sys_handler(registers_t* registers) {
@@ -107,8 +107,8 @@ void sys_handler(registers_t* registers) {
     }
 
     if (rnum == SYS_ALLOC_CONT) {
-    	registers->rax = EINVAL;
-    	return;
+        registers->rax = EINVAL;
+        return;
     }
 
     syscall_t* sc = &syscalls[rnum];
@@ -116,20 +116,20 @@ void sys_handler(registers_t* registers) {
 
     proc_spinlock_lock(&cpu->__cpu_lock);
     proc_spinlock_lock(&cpu->__cpu_sched_lock);
-	proc_spinlock_lock(&__thread_modifier);
+    proc_spinlock_lock(&__thread_modifier);
 
-	thread_t* ct = cpu->ct;
-	continuation_t* cnt = ct->continuation;
-	cnt->continuation = *sc;
-	cnt->_0 = registers->rdi;
-	cnt->_1 = registers->rsi;
-	cnt->_2 = registers->r8;
-	cnt->_3 = registers->r9;
-	cnt->_4 = registers->r10;
+    thread_t* ct = cpu->ct;
+    continuation_t* cnt = ct->continuation;
+    cnt->continuation = *sc;
+    cnt->_0 = registers->rdi;
+    cnt->_1 = registers->rsi;
+    cnt->_2 = registers->r8;
+    cnt->_3 = registers->r9;
+    cnt->_4 = registers->r10;
 
-	proc_spinlock_unlock(&__thread_modifier);
-	proc_spinlock_unlock(&cpu->__cpu_sched_lock);
-	proc_spinlock_unlock(&cpu->__cpu_lock);
+    proc_spinlock_unlock(&__thread_modifier);
+    proc_spinlock_unlock(&cpu->__cpu_sched_lock);
+    proc_spinlock_unlock(&cpu->__cpu_lock);
 
     do_sys_handler(registers, sc, cnt);
 }
@@ -188,7 +188,7 @@ syscall_t make_syscall_5(syscall_5 sfnc, bool e, bool unsafe) {
 }
 
 void initialize_system_calls() {
-	register_syscall_handler();
+    register_syscall_handler();
     memset(syscalls, 0, sizeof(syscalls));
 
     register_syscall(false, SYS_ALLOCATE, make_syscall_1(allocate_memory, false, false));

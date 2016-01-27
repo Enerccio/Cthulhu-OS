@@ -46,8 +46,8 @@ extern void write_gs(ruint_t addr);
 typedef void (*jmp_handler_t)(jmp_buf b, void* fa, ruint_t errno);
 
 typedef struct cpu {
-	struct cpu*   self;
-	void*  		  syscall_stack;
+    struct cpu*   self;
+    void*         syscall_stack;
 
     void*    stack;
     void*    handler_stack;
@@ -82,8 +82,8 @@ typedef struct cpu {
     volatile bool started;
 
     struct {
-    	jmp_handler_t handler;
-    	jmp_buf		  jmp;
+        jmp_handler_t handler;
+        jmp_buf       jmp;
     } pf_handler;
 } cpu_t;
 

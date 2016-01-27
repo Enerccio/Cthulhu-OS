@@ -79,30 +79,30 @@ bool valid_xsdt(XSDT* xsdt) {
 }
 
 void* find_table_general(const char* name) {
-	if (acpi_version == 1) {
-		if (rsdt == NULL)
-			return NULL;
-		int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
-		for (int i=0; i<entries; i++) {
-			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&rsdt->PointerToOtherSDT)[i]);
-			if (!strncmp(h->Signature, name, 4)) {
-				if (acpisdt_checksum(h))
-					return h;
-			}
-		}
-	} else {
-		if (xsdt == NULL)
-			return NULL;
-		int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
-		for (int i=0; i<entries; i++) {
-			ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&xsdt->PointerToOtherSDT)[i]);
-			if (!strncmp(h->Signature, name, 4)) {
-				if (acpisdt_checksum(h))
-					return h;
-			}
-		}
-	}
-	return NULL;
+    if (acpi_version == 1) {
+        if (rsdt == NULL)
+            return NULL;
+        int entries = (rsdt->h.Length - sizeof(rsdt->h)) / 4;
+        for (int i=0; i<entries; i++) {
+            ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&rsdt->PointerToOtherSDT)[i]);
+            if (!strncmp(h->Signature, name, 4)) {
+                if (acpisdt_checksum(h))
+                    return h;
+            }
+        }
+    } else {
+        if (xsdt == NULL)
+            return NULL;
+        int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
+        for (int i=0; i<entries; i++) {
+            ACPISDTHeader* h = (ACPISDTHeader*) physical_to_virtual((uintptr_t)(&xsdt->PointerToOtherSDT)[i]);
+            if (!strncmp(h->Signature, name, 4)) {
+                if (acpisdt_checksum(h))
+                    return h;
+            }
+        }
+    }
+    return NULL;
 }
 
 /**
@@ -225,44 +225,44 @@ void init_table_acpi() {
 }
 
 int64_t get_pcie_numcount() {
-	ACPI_MCFG* mcfg = find_table_general("MCFG");
-	if (mcfg == NULL)
-		return -1; // no MCFG table found
+    ACPI_MCFG* mcfg = find_table_general("MCFG");
+    if (mcfg == NULL)
+        return -1; // no MCFG table found
 
-	size_t bytes = mcfg->header.Length;
-	bytes -= sizeof(ACPI_MCFG);
-	uintptr_t addr = ((uintptr_t)mcfg)+sizeof(ACPI_MCFG);
-	int64_t num = 0;
+    size_t bytes = mcfg->header.Length;
+    bytes -= sizeof(ACPI_MCFG);
+    uintptr_t addr = ((uintptr_t)mcfg)+sizeof(ACPI_MCFG);
+    int64_t num = 0;
 
-	while (bytes > 0) {
-		bytes -= sizeof(MCFG_ALLOCATION);
-		addr += sizeof(MCFG_ALLOCATION);
-		++num;
-	}
-	return num;
+    while (bytes > 0) {
+        bytes -= sizeof(MCFG_ALLOCATION);
+        addr += sizeof(MCFG_ALLOCATION);
+        ++num;
+    }
+    return num;
 }
 
 void get_pcie_info(pci_bus_t* entry) {
-	ACPI_MCFG* mcfg = find_table_general("MCFG");
-	if (mcfg == NULL)
-		return; // no MCFG table found
+    ACPI_MCFG* mcfg = find_table_general("MCFG");
+    if (mcfg == NULL)
+        return; // no MCFG table found
 
-	size_t bytes = mcfg->header.Length;
-	bytes -= sizeof(ACPI_MCFG);
-	uintptr_t addr = ((uintptr_t)mcfg)+sizeof(ACPI_MCFG);
-	int64_t num = 0;
+    size_t bytes = mcfg->header.Length;
+    bytes -= sizeof(ACPI_MCFG);
+    uintptr_t addr = ((uintptr_t)mcfg)+sizeof(ACPI_MCFG);
+    int64_t num = 0;
 
-	while (bytes > 0) {
-		pci_bus_t* e = &entry[num];
+    while (bytes > 0) {
+        pci_bus_t* e = &entry[num];
 
-		MCFG_ALLOCATION* h = (MCFG_ALLOCATION*)addr;
-		e->base_address = h->address;
-		e->end_pci_busnum = h->end_bus_number;
-		e->segment_group_num = h->pci_segment;
-		e->start_pci_busnum = h->start_bus_number;
+        MCFG_ALLOCATION* h = (MCFG_ALLOCATION*)addr;
+        e->base_address = h->address;
+        e->end_pci_busnum = h->end_bus_number;
+        e->segment_group_num = h->pci_segment;
+        e->start_pci_busnum = h->start_bus_number;
 
-		bytes -= sizeof(MCFG_ALLOCATION);
-		addr += sizeof(MCFG_ALLOCATION);
-		++num;
-	}
+        bytes -= sizeof(MCFG_ALLOCATION);
+        addr += sizeof(MCFG_ALLOCATION);
+        ++num;
+    }
 }

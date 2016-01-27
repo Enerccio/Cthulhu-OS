@@ -31,7 +31,7 @@
 #include "ny_commons.h"
 #include "devsys.h"
 
-#define	E_EINVAL			 -2
+#define E_EINVAL             -2
 #define E_IFS_INITRAMFS_GONE -1
 #define E_IFS_ACTION_SUCCESS  0
 #define E_IFS_PATH_INCORRECT  1

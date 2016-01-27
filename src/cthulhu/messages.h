@@ -41,31 +41,31 @@ extern "C" {
 #define MESSAGE_MAGIC (0x86454D4D)
 
 typedef struct message_target_container {
-	pid_t target[64];
+    pid_t target[64];
 } message_target_container_t;
 
 typedef struct message_header {
-	pid_t target_process;
-	struct {
-		uint64_t no_target  : 1;
-		uint64_t broadcast  : 1;
-		uint64_t group_cast : 1;
-		uint64_t group		: 8;
-		uint64_t self_state : 2; // 00 - block until reply, 01 - block all threads until reply,
-								 // 10 block other threads until reply, 11 - reserved
-		uint64_t deli_state : 2; // 00 - normal message, 01 - interrupt any,
-								 // 10 - interrupt one by tid specified in target_thread
-		uint64_t ignore_im  : 1;
-		uint64_t reserved   : 48;
-	} flags;
-	uint64_t target_thread;
-	uint64_t magic;
-	uint64_t checksum;
+    pid_t target_process;
+    struct {
+        uint64_t no_target  : 1;
+        uint64_t broadcast  : 1;
+        uint64_t group_cast : 1;
+        uint64_t group      : 8;
+        uint64_t self_state : 2; // 00 - block until reply, 01 - block all threads until reply,
+                                 // 10 block other threads until reply, 11 - reserved
+        uint64_t deli_state : 2; // 00 - normal message, 01 - interrupt any,
+                                 // 10 - interrupt one by tid specified in target_thread
+        uint64_t ignore_im  : 1;
+        uint64_t reserved   : 48;
+    } flags;
+    uint64_t target_thread;
+    uint64_t magic;
+    uint64_t checksum;
 } message_header_t;
 
 typedef struct message {
-	message_header_t header;
-	char data[MESSAGE_BODY_SIZE];
+    message_header_t header;
+    char data[MESSAGE_BODY_SIZE];
 } message_t;
 
 #ifdef __cplusplus

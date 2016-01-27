@@ -35,7 +35,7 @@
 #include <stdlib.h>
 
 typedef enum memory_state {
-	ms_okay, ms_swapped, ms_allocondem, ms_cow, ms_notpresent, ms_einvalid
+    ms_okay, ms_swapped, ms_allocondem, ms_cow, ms_notpresent, ms_einvalid
 } memstate_t;
 
 #define BITMASK(b) (1 << ((b) % CHAR_BIT))
@@ -68,14 +68,14 @@ typedef union page {
     }                       copyinfo;
     uint64_t                address;
     struct {
-    	uint64_t present	: 1;	// same present bit as above
-    	uint64_t valid		: 1;
-    	uint64_t swapped	: 1;	// whether page was swapped out or not
-    	uint64_t allocondem : 1;	// whether allocation on demand is required
-    	uint64_t exec		: 1;		// alloc on demand is data only
-    	uint64_t reserved   : 11;	// reserved future bits
-    	uint64_t gps_id		: 48;	// general purpose id
-    }						internal;
+        uint64_t present    : 1;    // same present bit as above
+        uint64_t valid      : 1;
+        uint64_t swapped    : 1;    // whether page was swapped out or not
+        uint64_t allocondem : 1;    // whether allocation on demand is required
+        uint64_t exec       : 1;        // alloc on demand is data only
+        uint64_t reserved   : 11;   // reserved future bits
+        uint64_t gps_id     : 48;   // general purpose id
+    }                       internal;
 } page_t;
 
 typedef union page_table {
@@ -215,11 +215,11 @@ struct frame_info {
 };
 
 typedef struct alloc_info {
-	uintptr_t from;
-	size_t	  amount;
-	bool      exec;
-	bool      finished;
-	bool	  aod;
+    uintptr_t from;
+    size_t    amount;
+    bool      exec;
+    bool      finished;
+    bool      aod;
 } alloc_info_t;
 
 /**

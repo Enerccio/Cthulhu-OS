@@ -39,7 +39,7 @@ bool init_framebuffer() {
     fh = framebuffer_height();
 
     if (fw <= 0 || fh <= 0)
-    	return false;
+        return false;
 
     uint64_t fbitsize = fw*fh;
     uint64_t fbsize = fbitsize*4;

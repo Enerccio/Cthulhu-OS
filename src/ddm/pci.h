@@ -34,33 +34,33 @@
 #include <cthulhu/mmio.h>
 
 typedef struct {
-	uintptr_t   base_address;
-	void       *exact_address;
-	uint8_t     bus, device, function;
-	uint16_t    device_id, vendor_id;
-	void       *status, *command;
-	uint8_t     class, subclass;
-	uint8_t     prog_if, rev_id;
-	void       *bist;
-	uint8_t     htype;
-	uint8_t     lat_timer, cache;
+    uintptr_t   base_address;
+    void       *exact_address;
+    uint8_t     bus, device, function;
+    uint16_t    device_id, vendor_id;
+    void       *status, *command;
+    uint8_t     class, subclass;
+    uint8_t     prog_if, rev_id;
+    void       *bist;
+    uint8_t     htype;
+    uint8_t     lat_timer, cache;
 
-	union {
-		struct {
-			uint32_t bar0;
-			uint32_t bar1;
-			uint32_t bar2;
-			uint32_t bar3;
-			uint32_t bar4;
-			uint32_t bar5;
-			uint32_t cardbus_cis_ptr;
-			uint16_t subsystem_id, subsystem_v_id;
-			uint32_t exp_rom_base_address;
-			uint8_t cap_ptr, maxlat, mingrant, ipin, iline;
-		} header_0;
-	} header_spec_data;
+    union {
+        struct {
+            uint32_t bar0;
+            uint32_t bar1;
+            uint32_t bar2;
+            uint32_t bar3;
+            uint32_t bar4;
+            uint32_t bar5;
+            uint32_t cardbus_cis_ptr;
+            uint16_t subsystem_id, subsystem_v_id;
+            uint32_t exp_rom_base_address;
+            uint8_t cap_ptr, maxlat, mingrant, ipin, iline;
+        } header_0;
+    } header_spec_data;
 
-	const char *cdescription, *ddescription;
+    const char *cdescription, *ddescription;
 } pcie_info_t;
 
 typedef pcie_info_t* pcie_info_ptr_t;
@@ -70,20 +70,20 @@ typedef ARRAY_TYPE(pcie_info_ptr_t) pcie_info_array;
 void load_pci_info();
 
 uint32_t* config_dword(uintptr_t address,
-		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
-		uint8_t ereg, uint8_t reg);
+        uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
+        uint8_t ereg, uint8_t reg);
 
 uint8_t config_read_byte(uintptr_t address,
-		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
-		uint8_t ereg, uint8_t reg, uint8_t offset);
+        uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
+        uint8_t ereg, uint8_t reg, uint8_t offset);
 uint16_t config_read_word(uintptr_t address,
-		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
-		uint8_t ereg, uint8_t reg, uint8_t offset);
+        uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
+        uint8_t ereg, uint8_t reg, uint8_t offset);
 uint32_t config_read_dword(uintptr_t address,
-		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
-		uint8_t ereg, uint8_t reg);
+        uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
+        uint8_t ereg, uint8_t reg);
 uint64_t config_read_qword(uintptr_t address,
-		uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
-		uint8_t ereg, uint8_t reg);
+        uint8_t busnum, uint8_t devicenum, uint8_t funcnum,
+        uint8_t ereg, uint8_t reg);
 
 extern pcie_info_array* pcie_entries;
