@@ -45,6 +45,7 @@ void load_disk_drive(char* driver_path) {
 	cp_stage1* cp1 = (cp_stage1*)message->data;
 	cp1->parent = true;
 	cp1->priority = -1;
+	cp1->privilege = true;
 
 	send_message(message);
 	receive_message(reply);

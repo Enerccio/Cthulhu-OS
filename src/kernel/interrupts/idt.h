@@ -152,3 +152,6 @@ typedef void (*isr_t)(uintptr_t error_code, registers_t*);
  * Registers ISR function for interrupt.
  */
 void register_interrupt_handler(uint8_t interrupt_id, isr_t handler_func);
+
+void IRQ_set_mask(unsigned char IRQline);
+void IRQ_clear_mask(unsigned char IRQline);

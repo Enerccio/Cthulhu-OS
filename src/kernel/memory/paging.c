@@ -1435,6 +1435,6 @@ void* different_page_mem(uintptr_t cr3, void* addr) {
 	if (phys == NULL) {
 		return NULL;
 	} else {
-		return physical_to_virtual(ALIGN(*phys)+offs);
+		return (void*)physical_to_virtual(ALIGN(*phys)+offs);
 	}
 }

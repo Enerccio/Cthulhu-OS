@@ -37,6 +37,7 @@ extern "C" {
 
 typedef struct create_process_stage1 {
 	bool parent;
+	bool privilege; // whether this process has privilege to access some operations (ddm, drivers etc)
 	int8_t priority; // -1 parent process priority
 } cp_stage1;
 

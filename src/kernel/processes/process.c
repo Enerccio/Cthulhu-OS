@@ -113,6 +113,7 @@ proc_t* create_init_process_structure(uintptr_t pml) {
     proc_spinlock_unlock(&__proclist_lock);
 
     process->fds = create_array();
+    process->pprocess = true;
     if (process->fds == NULL) {
         error(ERROR_MINIMAL_MEMORY_FAILURE, 0, 0, &create_init_process_structure);
     }
@@ -477,6 +478,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 
     process->__ob_lock = 0;
     process->process_list.data = process;
+    process->pprocess = true;
 
     process->fds = create_array();
     if (process->fds == NULL) {
@@ -811,6 +813,11 @@ int cp_stage_1(cp_stage1* data, ruint_t* process_num) {
 
 	process->__ob_lock = 0;
 	process->process_list.data = process;
+
+	if (data->privilege && cp->pprocess)
+		process->pprocess = true;
+	else
+		process->pprocess = false;
 
 	process->fds = create_array();
 	if (process->fds == NULL) {

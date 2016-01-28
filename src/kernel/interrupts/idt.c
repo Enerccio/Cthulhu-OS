@@ -121,6 +121,9 @@ void initialize_interrupts() {
     idt_set_gate(31, (uintptr_t) isr31);
     idt_set_gate(255, (uintptr_t) isr255);
 
+    for (unsigned int i=32; i<47; i++)
+    	IRQ_set_mask(i);
+
     // INTERRUPTS FROM THE BOARD
     // remapping interrupts from irq
     outb(0x20, 0x11);
@@ -152,6 +155,8 @@ void initialize_interrupts() {
     idt_set_gate(47, (uintptr_t) isr47);
 
     idt_flush(&idt_ptr);
+
+    IRQ_clear_mask(32);
 }
 
 /**
@@ -213,4 +218,32 @@ void isr_handler(registers_t* r) {
  */
 void register_interrupt_handler(uint8_t interrupt_id, isr_t handler_func) {
     interrupt_handlers[interrupt_id] = handler_func;
+}
+
+void IRQ_set_mask(unsigned char IRQline) {
+    uint16_t port;
+    uint8_t value;
+
+    if(IRQline < 8) {
+        port = PIC1_DATA;
+    } else {
+        port = PIC2_DATA;
+        IRQline -= 8;
+    }
+    value = inb(port) | (1 << IRQline);
+    outb(port, value);
+}
+
+void IRQ_clear_mask(unsigned char IRQline) {
+    uint16_t port;
+    uint8_t value;
+
+    if(IRQline < 8) {
+        port = PIC1_DATA;
+    } else {
+        port = PIC2_DATA;
+        IRQline -= 8;
+    }
+    value = inb(port) & ~(1 << IRQline);
+    outb(port, value);
 }

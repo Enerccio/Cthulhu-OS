@@ -69,6 +69,7 @@ typedef struct continuation continuation_t;
 typedef struct proc {
     intmax_t                proc_id;
     struct proc*            parent;
+    bool					pprocess;
     uintptr_t               pml4;
     rg_t                    proc_random;
 
