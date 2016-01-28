@@ -334,22 +334,22 @@ void* proc_alloc(size_t size) {
 }
 
 void* proc_alloc_direct(proc_t* proc, size_t size) {
-    mmap_area_t** _hole = find_va_hole(proc, size, 16);
+    mmap_area_t** _hole = find_va_hole(proc, size, 0x1000);
     mmap_area_t* hole = *_hole;
     hole->mtype = kernel_allocated_heap_data;
-    allocate(hole->vastart, size, false, false);
+    allocate(hole->vastart, size, false, false, proc->pml4);
     return (void*)hole->vastart;
 }
 
 
-mmap_area_t* free_mmap_area(mmap_area_t* mm, mmap_area_t** pmma) {
+mmap_area_t* free_mmap_area(mmap_area_t* mm, mmap_area_t** pmma, proc_t* proc) {
     uint64_t use_count = __atomic_sub_fetch(&mm->count, 1, __ATOMIC_SEQ_CST);
     switch (mm->mtype) {
     case program_data:
     case stack_data:
     case heap_data:
     case kernel_allocated_heap_data: {
-        deallocate(mm->vastart, mm->vaend-mm->vastart);
+        deallocate(mm->vastart, mm->vaend-mm->vastart, proc->pml4);
     } break;
     case nondealloc_map:
         break;
@@ -380,7 +380,7 @@ void proc_dealloc_direct(proc_t* proc, uintptr_t mem) {
     mmap_area_t** _hole = mmap_area(proc, mem);
     mmap_area_t* hole = *_hole;
     if (hole != NULL) {
-        free_mmap_area(hole, _hole);
+        free_mmap_area(hole, _hole, proc);
     }
 }
 
@@ -410,7 +410,7 @@ static int cpy_array(int count, char*** a) {
 
 static int cpy_array_user(int count, char*** a, proc_t* p) {
     char** array = *a;
-    char** na = proc_alloc_direct(p, 8*(count+1));
+    char** na = different_page_mem(p->pml4, proc_alloc_direct(p, 8*(count+1))); // TODO: possible bug with small align
     if (na == NULL)
         return ENOMEM_INTERNAL;
 
@@ -420,7 +420,7 @@ static int cpy_array_user(int count, char*** a, proc_t* p) {
         if (cpy == NULL) {
             return ENOMEM_INTERNAL;
         }
-        memcpy(cpy, array[i], strlen(array[i])+1);
+        memcpy_dpgs(p->pml4, (uintptr_t)get_active_page(), cpy, array[i], strlen(array[i])+1);
         na[i] = cpy;
     }
     na[count] = NULL;
@@ -432,7 +432,7 @@ void free_proc_memory(proc_t* proc) {
     mmap_area_t* mm = proc->mem_maps;
     mmap_area_t** pmm = &proc->mem_maps;
     while (mm != NULL) {
-        mm = free_mmap_area(mm, pmm);
+        mm = free_mmap_area(mm, pmm, proc);
     }
 }
 
@@ -502,7 +502,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         return ENOMEM_INTERNAL;
     }
 
-    uintptr_t opml4 = (uintptr_t)get_active_page();
     process->futexes = create_uint64_table();
 
     if (process->futexes == NULL) {
@@ -556,8 +555,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
 		return ENOMEM_INTERNAL;
 	}
 
-    set_active_page((void*)process->pml4);
-
     thread_t* main_thread = malloc(sizeof(thread_t));
     if (main_thread == NULL) {
     	free_list(process->temp_processes);
@@ -569,7 +566,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         destroy_array(process->fds);
         free(process);
         // TODO: free process address page
-        set_active_page((void*)opml4);
         return ENOMEM_INTERNAL;
     }
     memset(main_thread, 0, sizeof(thread_t));
@@ -589,7 +585,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         destroy_array(process->fds);
         free(process);
         // TODO: free process address page
-        set_active_page((void*)opml4);
         return ENOMEM_INTERNAL;
     }
     main_thread->continuation->present = false;
@@ -607,7 +602,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         destroy_array(process->fds);
         free(process);
         // TODO: free process address page
-        set_active_page((void*)opml4);
         return ENOMEM_INTERNAL;
     }
 
@@ -633,7 +627,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         destroy_array(process->fds);
         free(process);
         // TODO: free process address page
-        set_active_page((void*)opml4);
         return err;
     }
 
@@ -652,7 +645,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         destroy_array(process->fds);
         free(process);
         // TODO: free process address page
-        set_active_page((void*)opml4);
         return err;
     }
     if ((err = cpy_array_user(envc, &envpu, process)) != 0) {
@@ -668,7 +660,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         destroy_array(process->fds);
         free(process);
         // TODO: free process address page
-        set_active_page((void*)opml4);
         return err;
     }
 
@@ -686,10 +677,10 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
         destroy_array(process->fds);
         free(process);
         // TODO: free process address page
-        set_active_page((void*)opml4);
         return ENOMEM_INTERNAL;
     }
-    main_thread->local_info->self = main_thread->local_info;
+    tli_t* li = different_page_mem(process->pml4, main_thread->local_info);
+    li->self = main_thread->local_info;
 
     for (int i=0; i<MESSAGE_BUFFER_CNT; i++) {
         _message_t* m = &process->output_buffer[i];
@@ -709,7 +700,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
             destroy_array(process->fds);
             free(process);
             // TODO: free process address page
-            set_active_page((void*)opml4);
             return ENOMEM_INTERNAL;
         }
     }
@@ -738,7 +728,7 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
     list_push_right(processes, process);
     proc_spinlock_unlock(&__proclist_lock);
 
-    main_thread->local_info->t = main_thread->tId;
+    li->t = main_thread->tId;
     main_thread->last_rdi = (ruint_t)(uintptr_t)process->argc;
     main_thread->last_rsi = (ruint_t)(uintptr_t)process->argv;
     main_thread->last_rdx = (ruint_t)(uintptr_t)process->environ;
@@ -752,7 +742,6 @@ int create_process_base(uint8_t* image_data, int argc, char** argv,
     main_thread->last_rax = process->proc_id;
     enschedule_best(main_thread);
     *cpt = process;
-    set_active_page((void*)opml4);
     return 0;
 }
 
@@ -771,8 +760,8 @@ uintptr_t map_virtual_virtual(uintptr_t* _vastart, uintptr_t vaend, bool readonl
     }
     hole->mtype = kernel_allocated_heap_data;
     uintptr_t temporary = hole->vastart;
-    if (!map_range(_vastart, vaend, &temporary, hole->vaend, true, readonly, false)) {
-        free_mmap_area(hole, _hole);
+    if (!map_range(_vastart, vaend, &temporary, hole->vaend, true, readonly, false, proc->pml4)) {
+        free_mmap_area(hole, _hole, proc);
         return 0;
     }
     return hole->vastart+vaoffset;
@@ -793,9 +782,9 @@ uintptr_t map_physical_virtual(puint_t* _vastart, puint_t vaend, bool readonly) 
     }
     hole->mtype = kernel_allocated_heap_data;
     uintptr_t temporary = hole->vastart;
-    if (!map_range(_vastart, vaend, &temporary, hole->vaend, false, readonly, false)) {
+    if (!map_range(_vastart, vaend, &temporary, hole->vaend, false, readonly, false, proc->pml4)) {
         *_vastart = vastart;
-        free_mmap_area(hole, _hole);
+        free_mmap_area(hole, _hole, proc);
         return 0;
     }
     return hole->vastart+vaoffset;

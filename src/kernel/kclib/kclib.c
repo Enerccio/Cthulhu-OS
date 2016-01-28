@@ -34,6 +34,8 @@
 #include "../cpus/ipi.h"
 #include "../cpus/cpu_mgmt.h"
 
+extern uint64_t get_active_page();
+
 __noreturn __kclib_assert_failure_k(uint32_t lineno, const char* file, const char* func) {
     error(ERROR_INTERNAL_LIBC, 0, lineno, 0);
 }
@@ -44,14 +46,14 @@ void* __kclib_heap_start() {
 
 void*     __kclib_allocate(size_t aamount) {
     uintptr_t ha = heap_start_address;
-    if (!allocate(heap_start_address, aamount, true, false))
+    if (!allocate(heap_start_address, aamount, true, false, get_active_page()))
         return NULL;
     heap_start_address += ALIGN_UP(aamount, 0x1000); // fix deallocation
     return (void*)ha;
 }
 
 void      __kclib_deallocate(uintptr_t afrom, size_t aamount) {
-    deallocate(afrom, aamount);
+    deallocate(afrom, aamount, get_active_page());
 }
 
 void*     __kclib_open_std_stream(uint8_t request_mode) {

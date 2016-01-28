@@ -143,7 +143,7 @@ _gpInitial_PD_MIRROR:                   ; Page Directory Mirror
 _gpInitial_PD_KS:                       ; Page Directory Kernel Section
     dq _gpInitial_PT_KS + 3
     times 511 dq 0
-_gpInitial_PT_MIRROR:                   ; Page Table Mirrpr
+_gpInitial_PT_MIRROR:                   ; Page Table Mirror
     %assign i 0
     %rep 512
     dq   i*4096+3

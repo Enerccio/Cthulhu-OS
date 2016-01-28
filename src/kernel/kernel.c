@@ -60,6 +60,8 @@ extern void* get_active_page();
 ruint_t kernel_tmp_heap_start;
 
 void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
+	debug_break;
+
     __ports_initialized = false;
     __print_initialized = false;
     cpus = NULL;
@@ -137,7 +139,7 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     initialize_scheduler();
     log_msg("Scheduler initialized");
 
-    broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_SCHEDULER_INIT_WAIT, 0, NULL);
+    broadcast_ipi_message(false, IPI_WAKE_UP_FROM_WUA, WAIT_SCHEDULER_INIT_WAIT, 0, 0, NULL);
 
     path_element_t* pe = get_path("sys/init");
     if (pe == NULL || pe->type != PE_FILE) {
@@ -156,8 +158,6 @@ void kernel_main(struct multiboot_info* mboot_addr, ruint_t heap_start) {
     }
 
     process_init(initp);
-
-    debug_break;
 
     log_msg("Init loaded.");
     log_msg("Scheduling init.");

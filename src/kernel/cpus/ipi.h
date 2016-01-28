@@ -37,9 +37,9 @@
 #define IPI_RUN_SCHEDULER     (4)
 
 void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message, ruint_t message2,
-        registers_t* internalcall);
+        ruint_t message3, registers_t* internalcall);
 void send_ipi_nowait(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message, ruint_t message2,
-        registers_t* internalcall);
+        ruint_t message3, registers_t* internalcall);
 void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t message, ruint_t message2,
-        registers_t* internalcall);
+        ruint_t message3, registers_t* internalcall);
 void initialize_ipi_subsystem();

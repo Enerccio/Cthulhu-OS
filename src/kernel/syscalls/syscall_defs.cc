@@ -15,6 +15,7 @@
 static volatile bool initramfs_exists = true;
 extern void proc_spinlock_lock(volatile void* memaddr);
 extern void proc_spinlock_unlock(volatile void* memaddr);
+extern uintptr_t get_active_page();
 
 bool repair_memory(memstate_t state, uint64_t* b, size_t elements, continuation_t* c) {
 	// TODO: dispatch crap here
@@ -37,7 +38,7 @@ bool repair_memory(memstate_t state, uint64_t* b, size_t elements, continuation_
 			ainfo.exec = false;
 			ainfo.aod = false;
 
-			allocate_mem(&ainfo, false, false);
+			allocate_mem(&ainfo, false, false, get_active_page());
 			if (!ainfo.finished) {
 				// TODO: add swapper dispatch call here
 				c->present = true;
@@ -143,7 +144,7 @@ ruint_t allocate_memory_cont(registers_t* r, continuation_t* c, ruint_t from, ru
 	ainfo.finished = false;
 	ainfo.aod = true;
 
-	allocate_mem(&ainfo, false, false);
+	allocate_mem(&ainfo, false, false, get_active_page());
 
 	if (!ainfo.finished) {
 		c->_0 = ainfo.from;
@@ -181,7 +182,7 @@ ruint_t deallocate_memory(registers_t* r, continuation_t* c, ruint_t from, ruint
 		return 1;
 	}
 
-	deallocate(mmap_area->vastart, aamount);
+	deallocate(mmap_area->vastart, aamount, get_active_page());
 	*prev = mmap_area->next;
 	free(mmap_area);
 

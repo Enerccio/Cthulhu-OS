@@ -165,7 +165,7 @@ void error(uint16_t ecode, ruint_t speccode, ruint_t speccode2, void* eaddress) 
     if (cpus == NULL)
         kp_halt();
     else {
-        broadcast_ipi_message(true, IPI_HALT_IMMEDIATELLY, ecode+1, 0, NULL);
+        broadcast_ipi_message(true, IPI_HALT_IMMEDIATELLY, ecode+1, 0, 0, NULL);
     }
 
     while (true) ;

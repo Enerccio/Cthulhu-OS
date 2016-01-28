@@ -65,6 +65,7 @@ typedef struct cpu {
     volatile ruint_t __message_clear_lock;
     volatile ruint_t apic_message;
     volatile ruint_t apic_message2;
+    volatile ruint_t apic_message3;
     volatile bool apic_message_handled;
     volatile uint8_t apic_message_type;
     volatile struct cpu* apic_message_cpu;

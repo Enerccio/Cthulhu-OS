@@ -232,7 +232,7 @@ void initialize_physical_memory_allocation(struct multiboot_info* mb);
  * Translates virtual address to physical. valid pointer will
  * contain true if address is translated to valid one.
  */
-puint_t virtual_to_physical(uint64_t vaddress, uint8_t* valid);
+puint_t virtual_to_physical(uint64_t vaddress, uintptr_t cr3, uint8_t* valid);
 /**
  * Translates physical address to virtual using memory identity map.
  */
@@ -242,16 +242,16 @@ uint64_t physical_to_virtual(puint_t paddress);
  * Allocates memory from specified address and amount, using
  * kernel and readonly as source flags.
  */
-bool allocate(uintptr_t from, size_t amount, bool kernel, bool readonly);
-void allocate_mem(alloc_info_t* ainfo, bool kernel, bool readonly);
+bool allocate(uintptr_t from, size_t amount, bool kernel, bool readonly, uintptr_t cr3);
+void allocate_mem(alloc_info_t* ainfo, bool kernel, bool readonly, uintptr_t cr3);
 /**
  * Deallocates memory from specified address and amount.
  */
-void deallocate(uintptr_t from, size_t amount);
+void deallocate(uintptr_t from, size_t amount, uintptr_t cr3);
 /**
  * Returns whether specific virtual address is allocated or not.
  */
-bool allocated(uintptr_t addr);
+bool allocated(uintptr_t addr, uintptr_t cr3);
 
 /**
  * Deallocates starting memory.
@@ -270,14 +270,19 @@ puint_t create_pml4();
 
 bool page_fault(uintptr_t address, ruint_t errcode);
 
-void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool rw, bool exec);
+void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool rw, bool exec, uintptr_t cr3);
 
 #define CHNG_TYPE_RW 0
 #define CHNG_TYPE_SU 1
 
-void mem_change_type(uintptr_t start, size_t len, int change_type, bool new_value, bool invalidate_others);
+void mem_change_type(uintptr_t start, size_t len, int change_type, bool new_value, bool invalidate_others, uintptr_t cr3);
 
 bool map_range(uintptr_t* start, uintptr_t end, uintptr_t* tostart, uintptr_t toend, bool virtual_memory,
-        bool readonly, bool kernel);
+        bool readonly, bool kernel, uintptr_t cr3);
 
 memstate_t check_mem_state(uintptr_t address, size_t size, uint64_t* storeptr, size_t maxc, size_t* usedentries);
+
+void memcpy_dpgs(uintptr_t cr3a, uintptr_t cr3b, void* to, void* from, size_t n);
+void memset_dpgs(uintptr_t cr3, void* from, int v, size_t n);
+
+void* different_page_mem(uintptr_t cr3, void* addr);

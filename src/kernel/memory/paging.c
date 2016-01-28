@@ -95,12 +95,12 @@ typedef struct v_address1GB {
  * 1GB page sector (ram identity map) behaves slightly different, because it
  * needs different v_address_t type.
  */
-ruint_t virtual_to_physical(uintptr_t vaddress, uint8_t* valid) {
+ruint_t virtual_to_physical(uintptr_t vaddress, uintptr_t cr3, uint8_t* valid) {
     *valid = 1;
     v_address_t va;
     memcpy(&va, &vaddress, 8);
 
-    puint_t* address = (puint_t*)ALIGN(physical_to_virtual(get_active_page()));
+    puint_t* address = (puint_t*)ALIGN(physical_to_virtual(cr3));
     address = (puint_t*)ALIGN(physical_to_virtual(address[va.pml]));
 
     if (!PRESENT(address)) {
@@ -143,7 +143,7 @@ ruint_t virtual_to_physical(uintptr_t vaddress, uint8_t* valid) {
 /**
  * Returns address + physical identity map offset
  */
-uintptr_t physical_to_virtual(ruint_t paddress) {
+uintptr_t physical_to_virtual(puint_t paddress) {
     if (!__mem_mirror_present)
         return paddress;
     if (paddress == 0)
@@ -233,12 +233,12 @@ static frame_info_t* get_frame_info(puint_t fa) {
  * on the way to the virtual address. Returned pointer points to page in page
  * table.
  */
-static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
+static puint_t* __get_page(uintptr_t vaddress, uintptr_t cr3, bool allocate_new, bool user) {
 
     v_address_t va;
     memcpy(&va, &vaddress, 8);
 
-    puint_t* pml4 = (puint_t*)ALIGN(physical_to_virtual(get_active_page()));
+    puint_t* pml4 = (puint_t*)ALIGN(physical_to_virtual(cr3));
     if (!PRESENT(pml4[va.pml])) {
         if (!allocate_new) {
             return 0;
@@ -295,19 +295,19 @@ static puint_t* __get_page(uintptr_t vaddress, bool allocate_new, bool user) {
     return &pt[va.table];
 }
 
-static puint_t* get_page(uintptr_t vaddress, bool allocate_new) {
-    return __get_page(vaddress, allocate_new, false);
+static puint_t* get_page(uintptr_t vaddress, uintptr_t cr3, bool allocate_new) {
+    return __get_page(vaddress, cr3, allocate_new, false);
 }
 
-static puint_t* get_page_user(uintptr_t vaddress, bool allocate_new) {
-    return __get_page(vaddress, allocate_new, true);
+static puint_t* get_page_user(uintptr_t vaddress, uintptr_t cr3, bool allocate_new) {
+    return __get_page(vaddress, cr3, allocate_new, true);
 }
 
-void free_page_structure(uintptr_t vaddress) {
+void free_page_structure(uintptr_t vaddress, uintptr_t cr3) {
     v_address_t va;
     memcpy(&va, &vaddress, 8);
 
-    puint_t* pml4 = (puint_t*)ALIGN(physical_to_virtual(get_active_page()));
+    puint_t* pml4 = (puint_t*)ALIGN(physical_to_virtual(cr3));
     if (!PRESENT(pml4[va.pml])) {
         return;
     }
@@ -356,7 +356,7 @@ void free_page_structure(uintptr_t vaddress) {
 
 void deallocate_start_memory() {
     memset((void*)physical_to_virtual((uintptr_t)get_active_page()), 0, 256*sizeof(uintptr_t));
-    broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, 0, 0x200000, NULL);
+    broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, 0, 0x200000, get_active_page(), NULL);
 }
 
 /**
@@ -412,7 +412,7 @@ static void* remap(puint_t phys_address) {
         return (void*)phys_address;
 
     uintptr_t map_address = (uintptr_t)_frame_block;
-    puint_t* paddress = get_page(map_address, false);
+    puint_t* paddress = get_page(map_address, get_active_page(), false);
 
     page_t page;
     memset(&page, 0, sizeof(page_t));
@@ -422,7 +422,7 @@ static void* remap(puint_t phys_address) {
     page.flaggable.us = 0;
     *paddress = page.address;
 
-    paddress = get_page(map_address+0x1000, false);
+    paddress = get_page(map_address+0x1000, get_active_page(), false);
     memset(&page, 0, sizeof(page_t));
     page.address = ALIGN(phys_address) + 0x1000;
     page.flaggable.present = 1;
@@ -520,7 +520,7 @@ section_info_t* make_pool(size_t length, puint_t base_addr, section_info_t* last
 
     // allocate base_addr and size of metadata header in virt. memory
     for (puint_t addr = base_addr; addr < base_addr + total_size; addr += 0x1000) {
-        puint_t* paddress = get_page(addr, true);
+        puint_t* paddress = get_page(addr, get_active_page(), true);
         page_t page;
         memset(&page, 0, sizeof(page_t));
         page.address = addr;
@@ -734,7 +734,7 @@ void initialize_memory_mirror() {
             }
 
             puint_t vaddress = start + ADDRESS_OFFSET(RESERVED_KBLOCK_RAM_MAPPINGS);
-            puint_t* paddress = get_page(vaddress, true);
+            puint_t* paddress = get_page(vaddress, get_active_page(), true);
             page_t page;
             memset(&page, 0, sizeof(page_t));
             page.address = start;
@@ -829,7 +829,7 @@ static puint_t allocate_frame(puint_t* paddress, bool kernel, bool readonly, boo
  *
  * If paddress is NULL or is already free, does nothing.
  */
-static void deallocate_frame(puint_t* paddress, uintptr_t va) {
+static void deallocate_frame(puint_t* paddress, uintptr_t va, uintptr_t cr3) {
     if (paddress == 0)
         return; // no upper memory structures, we are done
     if (!PRESENT(*paddress))
@@ -839,7 +839,7 @@ static void deallocate_frame(puint_t* paddress, uintptr_t va) {
     puint_t address = ALIGN(page.address);
     free_frame(address);
     *paddress = 0;
-    free_page_structure(va);
+    free_page_structure(va, cr3);
 }
 
 /**
@@ -848,14 +848,14 @@ static void deallocate_frame(puint_t* paddress, uintptr_t va) {
  *
  * Repeatedly calls allocate_frame for every frame.
  */
-bool allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
+bool allocate(uintptr_t from, size_t amount, bool kernel, bool readonly, uintptr_t cr3) {
     size_t dif = from-ALIGN(from);
     amount = _ALIGN_UP(amount+dif);
     from = ALIGN(from);
     uintptr_t addr;
     for (addr = from; addr < from + amount; addr += 0x1000) {
         proc_spinlock_lock(&__frame_lock);
-        uint64_t* frame = kernel ? get_page(addr, true) : get_page_user(addr, true);
+        uint64_t* frame = kernel ? get_page(addr, cr3, true) : get_page_user(addr, cr3, true);
         if (frame == NULL) {
             goto dealloc;
         }
@@ -868,17 +868,17 @@ bool allocate(uintptr_t from, size_t amount, bool kernel, bool readonly) {
 
 dealloc:
     proc_spinlock_unlock(&__frame_lock);
-    deallocate(from, addr-from);
+    deallocate(from, addr-from, cr3);
     return false;
 }
 
-void allocate_mem(alloc_info_t* ainfo, bool kernel, bool readonly) {
+void allocate_mem(alloc_info_t* ainfo, bool kernel, bool readonly, uintptr_t cr3) {
     size_t dif = ainfo->from-ALIGN(ainfo->from);
     ainfo->amount = _ALIGN_UP(ainfo->amount+dif);
     ainfo->from = ALIGN(ainfo->from);
     for (uintptr_t addr = ainfo->from; addr < ainfo->from + ainfo->amount; addr += 0x1000) {
         proc_spinlock_lock(&__frame_lock);
-        uint64_t* frame = kernel ? get_page(addr, true) : get_page_user(addr, true);
+        uint64_t* frame = kernel ? get_page(addr, cr3, true) : get_page_user(addr, cr3, true);
         if (frame == NULL) {
             ainfo->finished = false;
             proc_spinlock_unlock(&__frame_lock);
@@ -910,7 +910,7 @@ void allocate_mem(alloc_info_t* ainfo, bool kernel, bool readonly) {
  * Aligns the addresses to page boundaries and then
  * deallocates them all.
  */
-void deallocate(uintptr_t from, size_t amount) {
+void deallocate(uintptr_t from, size_t amount, uintptr_t cr3) {
     uintptr_t aligned = from;
     if ((from % 0x1000) != 0) {
         amount += from-ALIGN(from);
@@ -925,10 +925,10 @@ void deallocate(uintptr_t from, size_t amount) {
         for (uintptr_t addr = aligned; addr < end_addr; addr += 0x1000) {
 
             proc_spinlock_lock(&__frame_lock);
-            deallocate_frame(get_page(addr, false), addr);
+            deallocate_frame(get_page(addr, cr3, false), addr, cr3);
             proc_spinlock_unlock(&__frame_lock);
         }
-        broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, aligned, end_addr, NULL);
+        broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, aligned, end_addr, cr3, NULL);
     }
 }
 
@@ -937,9 +937,9 @@ void deallocate(uintptr_t from, size_t amount) {
  *
  * Uses get_page to determine the address status.
  */
-bool allocated(uintptr_t addr) {
+bool allocated(uintptr_t addr, uintptr_t cr3) {
     proc_spinlock_lock(&__frame_lock);
-    puint_t* page = get_page(addr, false);
+    puint_t* page = get_page(addr, cr3, false);
     if (page == NULL) {
         proc_spinlock_unlock(&__frame_lock);
         return false;
@@ -1132,7 +1132,8 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
     //proc_t* process = get_current_process();
 
     if ((errcode & (1<<0)) == 0) {
-        uint64_t* paddr = get_page(address, false);
+    	uintptr_t cr3 = get_active_page();
+        uint64_t* paddr = get_page(address, cr3, false);
         if (paddr != NULL) {
             page_t page;
             page.address = *paddr;
@@ -1144,7 +1145,7 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
                     ainfo.aod = false;
                     ainfo.exec = false;
                     ainfo.from = ALIGN(address);
-                    allocate_mem(&ainfo, false, false);
+                    allocate_mem(&ainfo, false, false, cr3);
                     if (!ainfo.finished) {
                         // TODO: send message to swapper
                     }
@@ -1156,7 +1157,8 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
         }
     } else if ((errcode & (1<<1)) != 0) {
         // write error
-        uint64_t* page = get_page(address, false);
+    	uintptr_t cr3 = get_active_page();
+        uint64_t* page = get_page(address, cr3, false);
         if (page != NULL) {
             ruint_t frame = ALIGN(*page);
 
@@ -1183,7 +1185,7 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
                 *page = porig.address;
 
                 proc_spinlock_unlock(&__frame_lock);
-                broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, ALIGN(address), ALIGN(address)+0x1000, NULL);
+                broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, ALIGN(address), ALIGN(address)+0x1000, cr3, NULL);
                 return true;
             }
 
@@ -1207,7 +1209,7 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
             --frame_info->usage_count;
 
             proc_spinlock_unlock(&__frame_lock);
-            broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, ALIGN(address), ALIGN(address)+0x1000, NULL);
+            broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, ALIGN(address), ALIGN(address)+0x1000, cr3, NULL);
             return true;
         }
     }
@@ -1215,15 +1217,15 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
     return false;
 }
 
-void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool rw, bool exec) {
-    *physmem = allocate_frame(get_page(block_addr, true), kernel, rw, exec);
+void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool rw, bool exec, uintptr_t cr3) {
+    *physmem = allocate_frame(get_page(block_addr, cr3, true), kernel, rw, exec);
 }
 
 void mem_change_type(uintptr_t from, size_t amount,
-        int change_type, bool new_value, bool invalidate_others) {
+        int change_type, bool new_value, bool invalidate_others, uintptr_t cr3) {
     amount = _ALIGN_UP(amount);
     for (uintptr_t addr = from; addr < from + amount; addr += 0x1000) {
-        puint_t* paddress = get_page(addr, true);
+        puint_t* paddress = get_page(addr, cr3, true);
         if (!PRESENT(*paddress)) {
             page_t page;
             memset(&page, 0, sizeof(page_t));
@@ -1238,15 +1240,15 @@ void mem_change_type(uintptr_t from, size_t amount,
     }
 
     if (invalidate_others) {
-        send_ipi_message(get_local_apic_id(), IPI_INVALIDATE_PAGE, from, amount, NULL);
+        send_ipi_message(get_local_apic_id(), IPI_INVALIDATE_PAGE, from, amount, cr3, NULL);
     } else {
-        broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, from, amount, NULL);
+        broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, from, amount, cr3, NULL);
     }
 }
 
 // only works within same cr3!
 bool map_range(uintptr_t* _start, uintptr_t end, uintptr_t* _tostart, uintptr_t toend, bool virtual_memory,
-        bool readonly, bool kernel) {
+        bool readonly, bool kernel, uintptr_t cr3) {
     uintptr_t tostart = *_tostart;
     uintptr_t start = *_start;
     uintptr_t offs=0;
@@ -1254,14 +1256,14 @@ bool map_range(uintptr_t* _start, uintptr_t end, uintptr_t* _tostart, uintptr_t 
         uintptr_t smem = start+offs;
         uintptr_t tmem = tostart+offs;
 
-        uint64_t* tp = kernel ? get_page(tmem, true) : get_page_user(tmem, true);
+        uint64_t* tp = kernel ? get_page(tmem, cr3, true) : get_page_user(tmem, cr3, true);
         if (tp == NULL) {
             goto on_error;
         }
 
         puint_t frame;
         if (virtual_memory) {
-            frame = ALIGN(*get_page(smem, true));
+            frame = ALIGN(*get_page(smem, cr3, true));
             if (frame == 0) {
                 goto on_error;
             }
@@ -1287,11 +1289,11 @@ bool map_range(uintptr_t* _start, uintptr_t end, uintptr_t* _tostart, uintptr_t 
     on_error:
         *_tostart += offs;
         *_start += offs;
-        broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, offs, NULL);
+        broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, offs, cr3, NULL);
         return false;
     }
 
-    broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, toend, NULL);
+    broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, toend, cr3, NULL);
     return true;
 }
 
@@ -1300,7 +1302,7 @@ memstate_t check_mem_state(uintptr_t address, size_t size, uint64_t* storeptr,
     memstate_t mstate = ms_einvalid;
 
     for (uintptr_t addr=address; addr<address+size; addr+=0x1000) {
-        puint_t* entry = get_page(addr, false);
+        puint_t* entry = get_page(addr, get_active_page(), false);
         if (entry == NULL) {
             return ms_notpresent;
         }
@@ -1341,4 +1343,98 @@ memstate_t check_mem_state(uintptr_t address, size_t size, uint64_t* storeptr,
 
     mstate = ms_okay;
     return mstate;
+}
+
+bool is_physical(uintptr_t mem) {
+	return mem >= 0xFFFF000000000000;
+}
+
+void memcpy_dpgs(uintptr_t cr3a, uintptr_t cr3b, void* _to, void* _from, size_t n) {
+	uint8_t* from = (uint8_t*)_from;
+	uintptr_t offs = ((uintptr_t)from) - ((uintptr_t)ALIGN(from));
+	uint8_t* to = (uint8_t*)_to;
+	uintptr_t offs2 = ((uintptr_t)to) - ((uintptr_t)ALIGN(to));
+	while (n != 0) {
+		if (is_physical((uintptr_t)from) && is_physical((uintptr_t)to)) {
+			memcpy(from, to, n);
+			return;
+		}
+
+		puint_t* phys = NULL;
+		if (!is_physical((uintptr_t)from))
+			phys = get_page((uintptr_t)from, cr3b, false);
+		puint_t* phys2 = NULL;
+		if (!is_physical((uintptr_t)to))
+			phys2 = get_page((uintptr_t)to, cr3a, false);
+		if (phys != NULL || phys2 != NULL) {
+			uintptr_t pos1, pos2;
+
+			if (phys != NULL) {
+				pos1 = physical_to_virtual(ALIGN(*phys))+offs;
+			} else {
+				pos1 = ((uintptr_t)from);
+			}
+
+			if (phys2 != NULL) {
+				pos2 = physical_to_virtual(ALIGN(*phys2))+offs2;
+			} else {
+				pos2 = ((uintptr_t)to);
+			}
+
+			size_t maxcpy = offs < offs2 ? (0x1000-offs2) : (0x1000-offs);
+
+			memcpy(((void*)pos2), ((void*)pos1),
+					n > maxcpy ? maxcpy : n);
+			if (n <= maxcpy) {
+				n = 0;
+			} else {
+				n -= maxcpy;
+				from += maxcpy;
+				to += maxcpy;
+
+				offs = ((uintptr_t)from) - ((uintptr_t)ALIGN(from));
+				offs2 = ((uintptr_t)to) - ((uintptr_t)ALIGN(to));
+			}
+		} else {
+			return;
+		}
+	}
+}
+
+void memset_dpgs(uintptr_t cr3, void* _from, int v, size_t n) {
+	uint8_t* from = (uint8_t*)_from;
+	uintptr_t offs = ((uintptr_t)from) - ((uintptr_t)ALIGN(from));
+	while (n != 0) {
+
+		if (is_physical((uintptr_t)from)) {
+			memset(from, v, n);
+			return;
+		}
+
+		puint_t* phys = get_page((uintptr_t)from, cr3, false);
+		if (phys != NULL) {
+			puint_t pl = ALIGN(*phys);
+			memset((void*)(physical_to_virtual(pl)+offs), v, n > 0x1000-offs ? 0x1000-offs : n);
+			if (n <= 0x1000-offs) {
+				n = 0;
+			} else {
+				n -= 0x1000-offs;
+				from += 0x1000-offs;
+				offs = 0;
+			}
+		} else {
+			return;
+		}
+	}
+}
+
+void* different_page_mem(uintptr_t cr3, void* addr) {
+	uintptr_t mem = (uintptr_t)addr;
+	uintptr_t offs = mem - ALIGN(mem);
+	puint_t* phys = get_page((uintptr_t)addr, cr3, false);
+	if (phys == NULL) {
+		return NULL;
+	} else {
+		return physical_to_virtual(ALIGN(*phys)+offs);
+	}
 }

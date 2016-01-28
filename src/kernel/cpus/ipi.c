@@ -51,8 +51,7 @@ void ipi_received(ruint_t ecode, registers_t* registers) {
         break;
     case IPI_INVALIDATE_PAGE: {
             uintptr_t active_page = get_active_page();
-            uintptr_t target_page = __atomic_load_n(&cpu->apic_message_cpu->current_address_space,
-                    __ATOMIC_SEQ_CST);
+            uintptr_t target_page = cpu->apic_message3;
             if (active_page == target_page) {
                 for (uintptr_t i=cpu->apic_message; i<cpu->apic_message2; i+=0x1000)
                     invalidate_address(i);
@@ -80,7 +79,7 @@ void ipi_received(ruint_t ecode, registers_t* registers) {
 }
 
 void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message, ruint_t message2,
-        registers_t* internalcall) {
+        ruint_t message3, registers_t* internalcall) {
     cpu_t* cpu = array_find_by_pred(cpus, search_for_cpu_by_apic, (void*)(uintptr_t)cpu_apic_id);
 
     if (cpu == NULL)
@@ -92,6 +91,7 @@ void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message
         cpu->apic_message_type = message_type;
         cpu->apic_message = message;
         cpu->apic_message2 = message2;
+        cpu->apic_message3 = message3;
         cpu->apic_message_cpu = cpu;
         ipi_received(0, internalcall);
         proc_spinlock_unlock(&cpu->__ipi_lock);
@@ -110,6 +110,7 @@ void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message
     cpu->apic_message_type = message_type;
     cpu->apic_message = message;
     cpu->apic_message2 = message2;
+    cpu->apic_message3 = message3;
     cpu->apic_message_cpu = get_current_cput();
 
     send_ipi_to(cpu->apic_id, 0xFF, 0, false);
@@ -125,7 +126,7 @@ void send_ipi_message(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message
 }
 
 void send_ipi_nowait(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message, ruint_t message2,
-        registers_t* internalcall) {
+        ruint_t message3, registers_t* internalcall) {
     cpu_t* cpu = array_find_by_pred(cpus, search_for_cpu_by_apic, (void*)(uintptr_t)cpu_apic_id);
 
     if (cpu == NULL)
@@ -137,6 +138,7 @@ void send_ipi_nowait(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message,
         cpu->apic_message_type = message_type;
         cpu->apic_message = message;
         cpu->apic_message2 = message2;
+        cpu->apic_message3 = message3;
         cpu->apic_message_cpu = get_current_cput();
         ipi_received(0, internalcall);
         proc_spinlock_unlock(&cpu->__ipi_lock);
@@ -151,6 +153,7 @@ void send_ipi_nowait(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message,
     cpu->apic_message_type = message_type;
     cpu->apic_message = message;
     cpu->apic_message2 = message2;
+    cpu->apic_message3 = message3;
 
     send_ipi_to(cpu->apic_id, 0xFF, 0, false);
 
@@ -158,16 +161,16 @@ void send_ipi_nowait(uint8_t cpu_apic_id, uint8_t message_type, ruint_t message,
 }
 
 void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t message, ruint_t message2,
-        registers_t* internalcall) {
+        ruint_t message3, registers_t* internalcall) {
     uint8_t self_apic = get_local_apic_id();
     for (unsigned int i=0; i<array_get_size(cpus); i++) {
         cpu_t* cpu = array_get_at(cpus, i);
         if (cpu->apic_id != self_apic) {
-            send_ipi_message(cpu->apic_id, message_type, message, message2, NULL);
+            send_ipi_message(cpu->apic_id, message_type, message, message2, message3, NULL);
         }
     }
     if (self)
-        send_ipi_message(self_apic, message_type, message, message2, internalcall);
+        send_ipi_message(self_apic, message_type, message, message2, message3, internalcall);
 }
 
 void initialize_ipi_subsystem() {

@@ -84,7 +84,7 @@ void attemp_to_run_scheduler(registers_t* r) {
                 if (cpu->__cpu_lock == 1)
                     continue;
             }
-            send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, r);
+            send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, 0, r);
             break;
         }
         ++ticks;
@@ -253,7 +253,7 @@ void do_enschedule(thread_t* t, cpu_t* cpu) {
     queue_push(queues[t->priority], t);
 
     if (cpu != get_current_cput()) {
-        send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, NULL);
+        send_ipi_nowait(cpu->apic_id, IPI_RUN_SCHEDULER, 0, 0, 0, NULL);
     }
 }
 

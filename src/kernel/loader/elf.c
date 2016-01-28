@@ -29,6 +29,8 @@
 #include "../memory/paging.h"
 #include "../cpus/ipi.h"
 
+extern uintptr_t get_active_page();
+
 int32_t check_elf_header(Elf64_Ehdr* header) {
     if (header->e_ident[EI_MAG0] != ELFMAG0) {
         return ELF_ERROR_HEADER_MAGIC_INCORRECT;
@@ -155,16 +157,17 @@ int32_t load_elf_stage_one(Elf64_Ehdr* header, uintptr_t base_address, proc_t* p
                     return ELF_ERROR_SECTION_OVERLAPS;
                 }
                 mmap_area->mtype = program_data;
-                if (!allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false)) {
+                if (!allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false, process->pml4)) {
                     return ELF_ERROR_ENOMEM;
                 }
                 if (section->sh_type == SHT_NOBITS) {
                     // nobits, just memset
-                    memset((void*)mmap_area->vastart, 0, mmap_area->vaend-mmap_area->vastart);
+                	memset_dpgs(process->pml4, (void*)mmap_area->vastart, 0, mmap_area->vaend-mmap_area->vastart);
                     section->sh_offset = base_address - mmap_area->vastart;
                 } else if (section->sh_type == SHT_PROGBITS) {
                     // progbits, copy over
-                    memcpy((void*)mmap_area->vastart, (void*)base_address+section->sh_offset,
+                    memcpy_dpgs(process->pml4, get_active_page(),
+                    		(void*)mmap_area->vastart, (void*)base_address+section->sh_offset,
                             mmap_area->vaend-mmap_area->vastart);
                 } else {
                     return ELF_ERROR_UNSUPPORTED_SECTION_TYPE_FIXADDR;
@@ -191,16 +194,18 @@ int32_t load_elf_stage_one(Elf64_Ehdr* header, uintptr_t base_address, proc_t* p
                     return ELF_ERROR_SECTION_OVERLAPS;
                 }
                 mmap_area->mtype = program_data;
-                if (!allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false)) {
+                if (!allocate(mmap_area->vastart, mmap_area->vaend-mmap_area->vastart, false, false, process->pml4)) {
                     return ELF_ERROR_ENOMEM;
                 }
                 if (section->sh_type == SHT_NOBITS) {
                     // nobits, just memset
-                    memset((void*)mmap_area->vastart, 0, mmap_area->vaend-mmap_area->vastart);
+                    memset_dpgs(process->pml4,
+                    		(void*)mmap_area->vastart, 0, mmap_area->vaend-mmap_area->vastart);
                     section->sh_offset = base_address - mmap_area->vastart;
                 } else if (section->sh_type == SHT_PROGBITS) {
                     // progbits, copy over
-                    memcpy((void*)mmap_area->vastart, (void*)base_address+section->sh_offset,
+                	memcpy_dpgs(process->pml4, get_active_page(),
+                			(void*)mmap_area->vastart, (void*)base_address+section->sh_offset,
                             mmap_area->vaend-mmap_area->vastart);
                     section->sh_addr = mmap_area->vastart;
                 } else {
@@ -228,7 +233,7 @@ int32_t load_elf_stage_two(Elf64_Ehdr* header, uintptr_t base_address, proc_t* p
                 if (section->sh_addr != 0) {
                     if ((section->sh_flags & SHF_WRITE) == 0)
                         mem_change_type(section->sh_addr, section->sh_size,
-                                CHNG_TYPE_RW, false, false);
+                                CHNG_TYPE_RW, false, false, process->pml4);
                 }
             }
     }
@@ -277,10 +282,10 @@ int32_t load_elf_exec(uintptr_t elf_file_data, proc_t* process) {
         return ELF_ERROR_ENOMEM;
     }
     mmap_area->mtype = stack_data;
-    if (!allocate(mmap_area->vastart, ssize, false, false)) {
+    if (!allocate(mmap_area->vastart, ssize, false, false, process->pml4)) {
         return ELF_ERROR_ENOMEM;
     }
-    memset((void*)mmap_area->vastart, 0, ssize);
+    memset_dpgs(process->pml4, (void*)mmap_area->vastart, 0, ssize);
     thread->stack_bottom_address = mmap_area->vastart;
     thread->stack_top_address = mmap_area->vaend;
     thread->last_rsp = thread->stack_top_address;
