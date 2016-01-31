@@ -355,8 +355,9 @@ void free_page_structure(uintptr_t vaddress, uintptr_t cr3) {
 }
 
 void deallocate_start_memory() {
+	tlb_shootdown(get_active_page(), 0, 0x200000);
     memset((void*)physical_to_virtual((uintptr_t)get_active_page()), 0, 256*sizeof(uintptr_t));
-    broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, 0, 0x200000, get_active_page(), NULL);
+    tlb_shootdown_end();
 }
 
 /**
@@ -922,13 +923,13 @@ void deallocate(uintptr_t from, size_t amount, uintptr_t cr3) {
     }
 
     if (aligned < end_addr) {
+    	tlb_shootdown(cr3, aligned, end_addr-aligned);
         for (uintptr_t addr = aligned; addr < end_addr; addr += 0x1000) {
-
             proc_spinlock_lock(&__frame_lock);
             deallocate_frame(get_page(addr, cr3, false), addr, cr3);
             proc_spinlock_unlock(&__frame_lock);
         }
-        broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, aligned, end_addr, cr3, NULL);
+        tlb_shootdown_end();
     }
 }
 
@@ -1160,6 +1161,7 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
     	uintptr_t cr3 = get_active_page();
         uint64_t* page = get_page(address, cr3, false);
         if (page != NULL) {
+        	tlb_shootdown(cr3, ALIGN(address), 0x1000);
             ruint_t frame = ALIGN(*page);
 
             proc_spinlock_lock(&__frame_lock);
@@ -1185,7 +1187,7 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
                 *page = porig.address;
 
                 proc_spinlock_unlock(&__frame_lock);
-                broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, ALIGN(address), ALIGN(address)+0x1000, cr3, NULL);
+                tlb_shootdown_end();
                 return true;
             }
 
@@ -1209,7 +1211,7 @@ bool page_fault(uintptr_t address, ruint_t errcode) {
             --frame_info->usage_count;
 
             proc_spinlock_unlock(&__frame_lock);
-            broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, ALIGN(address), ALIGN(address)+0x1000, cr3, NULL);
+            tlb_shootdown_end();
             return true;
         }
     }
@@ -1222,8 +1224,11 @@ void allocate_physret(uintptr_t block_addr, puint_t* physmem, bool kernel, bool 
 }
 
 void mem_change_type(uintptr_t from, size_t amount,
-        int change_type, bool new_value, bool invalidate_others, uintptr_t cr3) {
+        int change_type, bool new_value, uintptr_t cr3) {
     amount = _ALIGN_UP(amount);
+
+    tlb_shootdown(cr3, from, amount);
+
     for (uintptr_t addr = from; addr < from + amount; addr += 0x1000) {
         puint_t* paddress = get_page(addr, cr3, true);
         if (!PRESENT(*paddress)) {
@@ -1239,11 +1244,7 @@ void mem_change_type(uintptr_t from, size_t amount,
         }
     }
 
-    if (invalidate_others) {
-        send_ipi_message(get_local_apic_id(), IPI_INVALIDATE_PAGE, from, amount, cr3, NULL);
-    } else {
-        broadcast_ipi_message(true, IPI_INVALIDATE_PAGE, from, amount, cr3, NULL);
-    }
+    tlb_shootdown_end();
 }
 
 // only works within same cr3!
@@ -1252,6 +1253,9 @@ bool map_range(uintptr_t* _start, uintptr_t end, uintptr_t* _tostart, uintptr_t 
     uintptr_t tostart = *_tostart;
     uintptr_t start = *_start;
     uintptr_t offs=0;
+
+    tlb_shootdown(cr3, start, end-start);
+
     for (; offs<(end-start); offs+=0x1000) {
         uintptr_t smem = start+offs;
         uintptr_t tmem = tostart+offs;
@@ -1289,11 +1293,11 @@ bool map_range(uintptr_t* _start, uintptr_t end, uintptr_t* _tostart, uintptr_t 
     on_error:
         *_tostart += offs;
         *_start += offs;
-        broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, offs, cr3, NULL);
+        tlb_shootdown_end();
         return false;
     }
 
-    broadcast_ipi_message(false, IPI_INVALIDATE_PAGE, tostart, toend, cr3, NULL);
+    tlb_shootdown_end();
     return true;
 }
 

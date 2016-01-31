@@ -36,7 +36,7 @@ extern "C" {
 #define NO_RECEIVER_PROCESS_SPECIFIED __UINT64_MAX__
 #define NO_RECEIVER_THREAD_SPECIFIED  __TID_MAX__
 
-#define MESSAGE_BODY_SIZE ((0x200000)-sizeof(message_header_t))
+#define MESSAGE_BODY_SIZE ((0x19980)-sizeof(message_header_t))
 
 #define MESSAGE_MAGIC (0x86454D4D)
 
@@ -46,6 +46,8 @@ typedef struct message_target_container {
 
 typedef struct message_header {
     pid_t target_process;
+    pid_t sender_process;
+    tid_t sender_thread;
     struct {
         uint64_t no_target  : 1; // if true, gps_id is used by kernel to determine what to do
         uint64_t broadcast  : 1;
@@ -71,7 +73,7 @@ typedef struct message {
 
 message_t* get_free_message();
 int		   send_message(message_t* message);
-int		   receive_message(void* bodyptr);
+int		   receive_message(message_t* bodyptr);
 
 #ifdef __cplusplus
 }

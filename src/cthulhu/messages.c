@@ -27,6 +27,8 @@
 
 #include "messages.h"
 
+#include <threads.h>
+
 message_t* get_free_message() {
 	message_t* mp;
 	int error = 0;
@@ -50,6 +52,9 @@ uint64_t compute_message_checksum(message_t* message) {
 }
 
 int	send_message(message_t* message) {
+	thrd_t ct = thrd_current();
+	message->header.sender_process = ct->pid;
+	message->header.sender_thread = ct->tid;
 	message->header.checksum = compute_message_checksum(message);
 	int error = 0;
 	do {
@@ -58,6 +63,6 @@ int	send_message(message_t* message) {
 	return error;
 }
 
-int receive_message(void* bodyptr) {
+int receive_message(message_t* bodyptr) {
 	return sys_1arg(SYS_RECEIVE_MESSAGE, (ruint_t)bodyptr);
 }

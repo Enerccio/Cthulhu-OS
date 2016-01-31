@@ -196,7 +196,7 @@ void initialize_system_calls() {
     register_syscall(false, SYS_DEALLOCATE, make_syscall_2(deallocate_memory, false, false));
     register_syscall(false, SYS_GET_PID, make_syscall_0(get_pid, false, false));
     register_syscall(false, SYS_SEND_MESSAGE, make_syscall_1(sys_send_message, false, true));
-
+    register_syscall(false, SYS_RECEIVE_MESSAGE, make_syscall_1(sys_recv_message, false, true));
     register_syscall(false, SYS_GET_CTHREAD_PRIORITY, make_syscall_0(get_ct_priority, false, false));
     register_syscall(false, SYS_FUTEX_WAIT, make_syscall_2(__futex_wait, false, false));
     register_syscall(false, SYS_FUTEX_WAKE, make_syscall_2(__futex_wake, false, false));

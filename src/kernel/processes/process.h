@@ -43,7 +43,7 @@
 #include <cthulhu/messages.h>
 #include <cthulhu/threading.h>
 
-#define MESSAGE_BUFFER_CNT (10)
+#define MESSAGE_BUFFER_CNT (30)
 
 typedef struct file_descriptor {
     uint32_t                fd_pid;

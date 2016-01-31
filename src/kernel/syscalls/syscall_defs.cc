@@ -427,6 +427,10 @@ ruint_t get_empty_message(registers_t* r, continuation_t* c, ruint_t _mp) {
 	return ETRYAGAIN;
 }
 
+ruint_t sys_recv_message(registers_t* r, continuation_t* c, ruint_t _message) {
+
+}
+
 // mutex
 
 ruint_t __futex_wait(registers_t* r, continuation_t* c, ruint_t _ftx_addr, ruint_t _state) {

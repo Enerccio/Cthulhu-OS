@@ -39,6 +39,9 @@ extern void invalidate_address(uintptr_t address);
 extern uintptr_t get_active_page();
 extern void set_active_page(uintptr_t address);
 
+uint64_t tlb_shootdown_processor;
+uint64_t tlb_shootdown_counter;
+
 void ipi_received(ruint_t ecode, registers_t* registers) {
     // WATCH OUT: registers might be null if it is local interrupt
     cpu_t* cpu = get_current_cput();
@@ -53,8 +56,20 @@ void ipi_received(ruint_t ecode, registers_t* registers) {
             uintptr_t active_page = get_active_page();
             uintptr_t target_page = cpu->apic_message3;
             if (active_page == target_page) {
-                for (uintptr_t i=cpu->apic_message; i<cpu->apic_message2; i+=0x1000)
+                for (uintptr_t i=cpu->apic_message; i<cpu->apic_message+cpu->apic_message2; i+=0x1000)
                     invalidate_address(i);
+
+                __atomic_fetch_add(&tlb_shootdown_counter, 1, __ATOMIC_SEQ_CST);
+                if (tlb_shootdown_processor != get_local_apic_id()) {
+                	while (true) {
+                		uint64_t cnt = __atomic_load_n(&tlb_shootdown_counter, __ATOMIC_SEQ_CST);
+                		if (cnt == 0)
+                			break;
+                		__asm__ ("pause");
+                	}
+                }
+            } else {
+            	__atomic_fetch_add(&tlb_shootdown_counter, 1, __ATOMIC_SEQ_CST);
             }
         }
         break;
@@ -174,5 +189,7 @@ void broadcast_ipi_message(bool self, uint8_t message_type, ruint_t message, rui
 }
 
 void initialize_ipi_subsystem() {
+	tlb_shootdown_processor = 0;
+	tlb_shootdown_counter = 0;
     register_interrupt_handler(EXC_IPI, ipi_received);
 }

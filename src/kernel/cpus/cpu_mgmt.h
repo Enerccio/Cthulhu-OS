@@ -142,6 +142,9 @@ void enable_ipi_interrupts();
  */
 void disable_ipi_interrupts();
 
+void tlb_shootdown(uintptr_t cr3, uintptr_t from, size_t amount);
+void tlb_shootdown_end();
+
 /**
  * Initializes lapic
  */

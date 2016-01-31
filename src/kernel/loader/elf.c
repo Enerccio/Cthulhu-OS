@@ -233,7 +233,7 @@ int32_t load_elf_stage_two(Elf64_Ehdr* header, uintptr_t base_address, proc_t* p
                 if (section->sh_addr != 0) {
                     if ((section->sh_flags & SHF_WRITE) == 0)
                         mem_change_type(section->sh_addr, section->sh_size,
-                                CHNG_TYPE_RW, false, false, process->pml4);
+                                CHNG_TYPE_RW, false, process->pml4);
                 }
             }
     }

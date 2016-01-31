@@ -45,6 +45,10 @@ extern void load_gdt(gdt_ptr_t* gdt, uint16_t tssid);
 extern gdt_ptr_t gdt;
 extern void kp_halt();
 extern uintptr_t get_active_page();
+extern uint64_t tlb_shootdown_processor;
+extern uint64_t tlb_shootdown_counter;
+extern void proc_spinlock_lock(void* a);
+extern void proc_spinlock_unlock(void* a);
 
 #define AP_INIT_LOAD_ADDRESS (2)
 #define INIT_IPI_FLAGS (5<<8)
@@ -56,6 +60,7 @@ array_t* cpus;
 uint32_t cpuid_to_cputord[256];
 /** Contains LAPIC address from ACPI */
 uint32_t apicaddr;
+uint64_t __tlb_lock;
 
 bool multiprocessing_ready = false;
 
@@ -302,6 +307,20 @@ cpu_t* make_cpu_default() {
     return make_cpu(NULL, 0);
 }
 
+void tlb_shootdown(uintptr_t cr3, uintptr_t from, size_t amount) {
+	proc_spinlock_lock(&__tlb_lock);
+	tlb_shootdown_processor = get_local_apic_id();
+	send_ipi_message(get_local_apic_id(), IPI_INVALIDATE_PAGE, from, amount, cr3, NULL);
+	while (__atomic_load_n(&tlb_shootdown_counter, __ATOMIC_SEQ_CST) != array_get_size(cpus)) {
+		__asm__ ("pause");
+	}
+}
+
+void tlb_shootdown_end() {
+	__atomic_store_n(&tlb_shootdown_counter, 0, __ATOMIC_SEQ_CST);
+	proc_spinlock_unlock(&__tlb_lock);
+}
+
 /**
  * Initializes cpu information. Initializes SMP if available.
  *
@@ -313,6 +332,7 @@ void initialize_cpus() {
     memset(cpuid_to_cputord, 0, sizeof(cpuid_to_cputord));
 
     apicaddr = 0xFEE00000;
+    __tlb_lock = 0;
 
     cpus = create_array_spec(256);
     unsigned int cnt = 0;
